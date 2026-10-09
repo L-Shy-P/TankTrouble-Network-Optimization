@@ -1,0 +1,652 @@
+{
+  "en": {
+    "name": "English",
+    "flag": "🇬🇧",
+    "title": "TankTrouble Network Optimization",
+    "tag": "Richer, more real-time and more accurate network display — plus real optimization.",
+    "intro": [
+      "A Tampermonkey userscript for **tanktrouble.com**: it shows what your connection is really doing, and turns the TCP head-of-line-blocking \"freeze → teleport\" into a smooth glide.",
+      "**No server, no network configuration, not a VPN.** Pure client-side — the server sees exactly the same bytes as before.",
+      "The optimization only changes *what you see*: the position is smoothed at render time, while the game logic, physics and server validation always use the real values. Your own tank is locally authoritative, so a reconnect will not drag you back."
+    ],
+    "features": [
+      [
+        "Richer",
+        "line / avg / live / max / jitter / stalls / stability, updating in real time"
+      ],
+      [
+        "More real-time",
+        "a dedicated 2-second ping probe — real RTT instead of frame intervals"
+      ],
+      [
+        "More accurate",
+        "real stalls (head-of-line blocking) are separated from lobby / between-rounds idle gaps"
+      ],
+      [
+        "Real optimization",
+        "render-time smoothing + local authority + dead reckoning, with a live A/B switch"
+      ]
+    ],
+    "steps": [
+      [
+        "Install Tampermonkey",
+        "Chrome/Edge: open the [Chrome Web Store page](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). Click *Add to browser* → *Add extension*."
+      ],
+      [
+        "Enable developer mode (Chrome/Edge only)",
+        "Open `chrome://extensions` (or `edge://extensions`) and turn on **Developer mode** in the top-right corner. Recent Chrome requires it for userscripts."
+      ],
+      [
+        "Install this script",
+        "Click **Install the script** below — Tampermonkey opens an install page. Press **Install**."
+      ],
+      [
+        "Open the game",
+        "Go to <https://tanktrouble.com/game> and join a match. A panel appears in the top-left corner."
+      ],
+      [
+        "Use it",
+        "Drag the title bar to move it. Click the dot to collapse into the floating ball (avg / live latency / stability); click the ball to expand. `Ctrl+Shift+S` toggles the optimization, `Ctrl+Shift+L` hides the HUD, `Ctrl+Shift+E` exports a report."
+      ]
+    ],
+    "trouble": [
+      [
+        "Nothing appears",
+        "Check that the URL matches `*://*.tanktrouble.com/*` and the script is enabled, then `Ctrl+F5`."
+      ],
+      [
+        "The panel is gone",
+        "Press `Ctrl+Shift+L`. Position and collapsed state are remembered."
+      ],
+      [
+        "Still choppy",
+        "That is your line, not the script. Export a report (`Ctrl+Shift+E`) and compare regions in the panel."
+      ]
+    ]
+  },
+  "zh": {
+    "name": "中文",
+    "flag": "🇨🇳",
+    "title": "TankTrouble 网络优化",
+    "tag": "更丰富、更实时、更准确的网络情况显示，以及真正的网络优化。",
+    "intro": [
+      "给 **tanktrouble.com** 写的油猴脚本：把你这局的网络情况如实显示出来，并把 TCP 队头阻塞造成的「僵住 → 瞬移」抹平成滑行。",
+      "**不用服务器、不用改任何网络配置、不是加速器**：纯客户端，服务端看到的数据一个字节都没变。",
+      "优化只改**你看到的东西**：渲染那一瞬间的位置被平滑，游戏逻辑 / 物理 / 服务端校验全程用真值；你自己的坦克以本地为准，断线重连不会被拉回去。"
+    ],
+    "features": [
+      [
+        "更丰富",
+        "线路 / 平均 / 实时 / 最大 / 小抖动 / 卡顿 / 稳定度，实时刷新"
+      ],
+      [
+        "更实时",
+        "独立的 2 秒 ping 探测，量的是真 RTT，不是帧间隔"
+      ],
+      [
+        "更准确",
+        "把「真卡顿（队头阻塞）」和「大厅/局间空闲」分开算"
+      ],
+      [
+        "真优化",
+        "渲染期平滑 + 本地权威 + 静默外推，开关可实时 A/B 对比"
+      ]
+    ],
+    "steps": [
+      [
+        "安装油猴（Tampermonkey）",
+        "Chrome/Edge 打开 [Chrome 应用商店页](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)；Firefox 打开 [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/)。点「添加到浏览器」→「添加扩展程序」。"
+      ],
+      [
+        "打开开发者模式（仅 Chrome/Edge 需要）",
+        "进入 `chrome://extensions`（或 `edge://extensions`），打开右上角的**开发者模式**。新版 Chrome 需要它才能跑用户脚本。"
+      ],
+      [
+        "安装本脚本",
+        "点下面的**安装脚本**，油猴会弹安装页，点**安装**。"
+      ],
+      [
+        "打开游戏",
+        "访问 <https://tanktrouble.com/game> 并进一局。左上角会出现面板。"
+      ],
+      [
+        "怎么用",
+        "拖标题栏可移动；点左上角圆点收起成悬浮球（平均 / 实时延迟 / 稳定度）；点球展开。`Ctrl+Shift+S` 开关优化，`Ctrl+Shift+L` 隐藏 HUD，`Ctrl+Shift+E` 导出报告。"
+      ]
+    ],
+    "trouble": [
+      [
+        "什么都没出现",
+        "确认地址匹配 `*://*.tanktrouble.com/*`、脚本是启用状态，然后 `Ctrl+F5` 强制刷新。"
+      ],
+      [
+        "面板不见了",
+        "按 `Ctrl+Shift+L`。HUD 会记住位置和「是否收起成球」。"
+      ],
+      [
+        "还是卡",
+        "那是线路问题，不是脚本。用 `Ctrl+Shift+E` 导出报告，在面板里对比各个区域。"
+      ]
+    ]
+  },
+  "ja": {
+    "name": "日本語",
+    "flag": "🇯🇵",
+    "title": "TankTrouble ネットワーク最適化",
+    "tag": "より豊富・よりリアルタイム・より正確な回線表示と、実際の最適化。",
+    "intro": [
+      "**tanktrouble.com** 用の Tampermonkey ユーザースクリプト。回線の実情を表示し、TCP の隊頭ブロッキングによる「固まる → ワープ」を滑らかな移動に変えます。",
+      "**サーバー不要・ネットワーク設定不要・VPN ではありません。** 完全にクライアント側で、サーバーが見るデータは 1 バイトも変わりません。",
+      "最適化が変えるのは*見た目だけ*：描画の瞬間だけ位置を滑らかにし、ゲームロジック・物理・サーバー検証は常に真値を使います。自分の戦車はローカル優先なので、再接続後も引き戻されません。"
+    ],
+    "features": [
+      [
+        "豊富",
+        "回線 / 平均 / リアルタイム / 最大 / ジッター / スタール / 安定度をリアルタイム表示"
+      ],
+      [
+        "リアルタイム",
+        "独立した 2 秒間隔の ping プローブで真の RTT を測定"
+      ],
+      [
+        "正確",
+        "「本当のスタール（隊頭ブロッキング）」と「ロビー/ラウンド間のアイドル」を分離"
+      ],
+      [
+        "最適化",
+        "描画時補間 + ローカル権威 + デッドレコニング、A/B スイッチ付き"
+      ]
+    ],
+    "steps": [
+      [
+        "Tampermonkey を入れる",
+        "Chrome/Edge は [Chrome ウェブストア](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)、Firefox は [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) を開き、「ブラウザに追加」→「拡張機能を追加」。"
+      ],
+      [
+        "開発者モードを有効化（Chrome/Edge のみ）",
+        "`chrome://extensions`（または `edge://extensions`）を開き、右上の**開発者モード**をオンにします。"
+      ],
+      [
+        "スクリプトをインストール",
+        "下の**スクリプトをインストール**をクリック → Tampermonkey の画面で**インストール**。"
+      ],
+      [
+        "ゲームを開く",
+        "<https://tanktrouble.com/game> で対戦に入ると、左上にパネルが出ます。"
+      ],
+      [
+        "使い方",
+        "タイトルバーをドラッグで移動。左上の点をクリックするとボールに折りたたまれ（平均 / リアルタイム / 安定度）、ボールをクリックで展開。`Ctrl+Shift+S` 最適化、`Ctrl+Shift+L` HUD 表示切替、`Ctrl+Shift+E` レポート出力。"
+      ]
+    ],
+    "trouble": [
+      [
+        "何も出ない",
+        "URL が `*://*.tanktrouble.com/*` に一致し、スクリプトが有効か確認して `Ctrl+F5`。"
+      ],
+      [
+        "パネルが消えた",
+        "`Ctrl+Shift+L`。位置と折りたたみ状態は記憶されています。"
+      ],
+      [
+        "まだ重い",
+        "それは回線の問題です。`Ctrl+Shift+E` でレポートを出して地域を比較してください。"
+      ]
+    ]
+  },
+  "ko": {
+    "name": "한국어",
+    "flag": "🇰🇷",
+    "title": "TankTrouble 네트워크 최적화",
+    "tag": "더 풍부하고, 더 실시간이며, 더 정확한 네트워크 표시와 실제 최적화.",
+    "intro": [
+      "**tanktrouble.com**용 Tampermonkey 사용자 스크립트입니다. 회선 상태를 있는 그대로 보여주고, TCP 헤드오브라인 블로킹으로 생기는 \"멈춤 → 순간이동\"을 부드러운 이동으로 바꿉니다.",
+      "**서버 불필요, 네트워크 설정 불필요, VPN 아님.** 순수 클라이언트이며 서버가 보는 데이터는 1바이트도 바뀌지 않습니다.",
+      "최적화가 바꾸는 것은 *보이는 것*뿐입니다. 렌더링 순간의 위치만 부드럽게 하고, 게임 로직·물리·서버 검증은 항상 실제 값을 씁니다. 내 탱크는 로컬 기준이라 재접속해도 끌려가지 않습니다."
+    ],
+    "features": [
+      [
+        "풍부",
+        "회선 / 평균 / 실시간 / 최대 / 지터 / 스톨 / 안정도를 실시간 표시"
+      ],
+      [
+        "실시간",
+        "2초 간격 전용 ping 프로브로 실제 RTT 측정"
+      ],
+      [
+        "정확",
+        "\"진짜 스톨(헤드오브라인 블로킹)\"과 \"로비/라운드 사이 유휴\"를 분리"
+      ],
+      [
+        "최적화",
+        "렌더링 시점 보간 + 로컬 권위 + 데드레코닝, A/B 스위치 포함"
+      ]
+    ],
+    "steps": [
+      [
+        "Tampermonkey 설치",
+        "Chrome/Edge는 [Chrome 웹스토어](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo), Firefox는 [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/)에서 \"브라우저에 추가\" → \"확장 프로그램 추가\"."
+      ],
+      [
+        "개발자 모드 켜기 (Chrome/Edge)",
+        "`chrome://extensions`(또는 `edge://extensions`)에서 우측 상단 **개발자 모드**를 켭니다."
+      ],
+      [
+        "스크립트 설치",
+        "아래 **스크립트 설치**를 누르고 Tampermonkey 화면에서 **설치**."
+      ],
+      [
+        "게임 열기",
+        "<https://tanktrouble.com/game>에서 경기에 들어가면 좌측 상단에 패널이 나타납니다."
+      ],
+      [
+        "사용법",
+        "제목 표시줄을 끌어 이동. 좌측 상단 점을 클릭하면 공으로 접히고(평균 / 실시간 / 안정도), 공을 클릭하면 펼쳐집니다. `Ctrl+Shift+S` 최적화, `Ctrl+Shift+L` HUD 숨기기, `Ctrl+Shift+E` 보고서 내보내기."
+      ]
+    ],
+    "trouble": [
+      [
+        "아무것도 안 보임",
+        "URL이 `*://*.tanktrouble.com/*`인지, 스크립트가 켜져 있는지 확인 후 `Ctrl+F5`."
+      ],
+      [
+        "패널이 사라짐",
+        "`Ctrl+Shift+L`. 위치와 접힘 상태는 기억됩니다."
+      ],
+      [
+        "여전히 버벅임",
+        "회선 문제입니다. `Ctrl+Shift+E`로 보고서를 내보내 지역을 비교하세요."
+      ]
+    ]
+  },
+  "ru": {
+    "name": "Русский",
+    "flag": "🇷🇺",
+    "title": "TankTrouble — оптимизация сети",
+    "tag": "Богаче, актуальнее и точнее: состояние сети плюс настоящая оптимизация.",
+    "intro": [
+      "Пользовательский скрипт Tampermonkey для **tanktrouble.com**. Показывает реальное состояние соединения и превращает «зависание → телепорт» (блокировку головы очереди TCP) в плавное скольжение.",
+      "**Без сервера, без настройки сети, это не VPN.** Только клиент: сервер видит те же байты, что и раньше.",
+      "Оптимизация меняет только *то, что вы видите*: сглаживается позиция в момент отрисовки, а логика, физика и проверка на сервере всегда используют истинные значения. Ваш танк — локально авторитетный, поэтому после переподключения вас не отбросит назад."
+    ],
+    "features": [
+      [
+        "Богаче",
+        "линия / средний / текущий / максимум / джиттер / сталы / стабильность в реальном времени"
+      ],
+      [
+        "Реальнее",
+        "отдельный ping-зонд каждые 2 с: настоящий RTT, а не интервалы кадров"
+      ],
+      [
+        "Точнее",
+        "«настоящие сталы» (блокировка головы очереди) отделены от простоя в лобби"
+      ],
+      [
+        "Оптимизация",
+        "сглаживание при отрисовке + локальный авторитет + экстраполяция, с переключателем A/B"
+      ]
+    ],
+    "steps": [
+      [
+        "Установите Tampermonkey",
+        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). «Добавить в браузер» → «Добавить расширение»."
+      ],
+      [
+        "Включите режим разработчика (Chrome/Edge)",
+        "Откройте `chrome://extensions` (или `edge://extensions`) и включите **Режим разработчика** справа вверху."
+      ],
+      [
+        "Установите скрипт",
+        "Нажмите **Установить скрипт** ниже и подтвердите **Установить**."
+      ],
+      [
+        "Откройте игру",
+        "Зайдите на <https://tanktrouble.com/game> и в бой — панель появится в левом верхнем углу."
+      ],
+      [
+        "Как пользоваться",
+        "Перетаскивайте за заголовок. Клик по точке слева сверху сворачивает в шар (средний / текущий / стабильность), клик по шару разворачивает. `Ctrl+Shift+S` — оптимизация, `Ctrl+Shift+L` — скрыть HUD, `Ctrl+Shift+E` — отчёт."
+      ]
+    ],
+    "trouble": [
+      [
+        "Ничего не появилось",
+        "Проверьте, что URL совпадает с `*://*.tanktrouble.com/*` и скрипт включён, затем `Ctrl+F5`."
+      ],
+      [
+        "Панель исчезла",
+        "Нажмите `Ctrl+Shift+L`. Позиция и свёрнутость запоминаются."
+      ],
+      [
+        "Всё ещё лагает",
+        "Это ваша линия. Экспортируйте отчёт (`Ctrl+Shift+E`) и сравните регионы."
+      ]
+    ]
+  },
+  "ar": {
+    "name": "العربية",
+    "flag": "🇸🇦",
+    "title": "TankTrouble — تحسين الشبكة",
+    "tag": "عرض أغنى وأكثر لحظية ودقة لحالة الشبكة، مع تحسين حقيقي.",
+    "intro": [
+      "سكربت Tampermonkey لموقع **tanktrouble.com**. يعرض حالة اتصالك الحقيقية ويحوّل لحظات «التجمّد ← الانتقال المفاجئ» الناتجة عن احتجاز رأس الطابور في TCP إلى انزلاق سلس.",
+      "**بدون سيرفر، بدون أي إعدادات شبكة، وليس VPN.** كل شيء في المتصفح: الخادم يرى نفس البيانات بايت ببايت.",
+      "التحسين يغيّر *ما تراه فقط*: يتم تنعيم الموضع لحظة الرسم، بينما المنطق والفيزياء والتحقق على الخادم تستخدم القيم الحقيقية دائمًا. دبابتك محليّة السلطة، لذا لن يعيدك الخادم بعد انقطاع."
+    ],
+    "features": [
+      [
+        "أغنى",
+        "الخط / المتوسط / اللحظي / الأقصى / الاهتزاز / التوقفات / الاستقرار لحظيًا"
+      ],
+      [
+        "أكثر لحظية",
+        "مسبار ping مستقل كل ثانيتين لقياس RTT حقيقي لا فواصل الإطارات"
+      ],
+      [
+        "أدق",
+        "فصل «التوقفات الحقيقية» عن فترات الخمول في الردهة/بين الجولات"
+      ],
+      [
+        "تحسين",
+        "تنعيم لحظة الرسم + سلطة محلية + استقراء، مع مفتاح مقارنة فوري"
+      ]
+    ],
+    "steps": [
+      [
+        "ثبّت Tampermonkey",
+        "كروم/إيدج: [متجر كروم](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). فايرفوكس: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). ثم «إضافة إلى المتصفح»."
+      ],
+      [
+        "فعّل وضع المطور (كروم/إيدج فقط)",
+        "افتح `chrome://extensions` وفعّل **وضع المطوّر** في الأعلى."
+      ],
+      [
+        "ثبّت السكربت",
+        "اضغط **تثبيت السكربت** بالأسفل ثم **تثبيت**."
+      ],
+      [
+        "افتح اللعبة",
+        "اذهب إلى <https://tanktrouble.com/game> وادخل مباراة — ستظهر اللوحة أعلى اليسار."
+      ],
+      [
+        "الاستخدام",
+        "اسحب شريط العنوان للتحريك. اضغط النقطة للطيّ إلى كرة (المتوسط / اللحظي / الاستقرار)، واضغط الكرة للفتح. `Ctrl+Shift+S` للتحسين، `Ctrl+Shift+L` لإخفاء الواجهة، `Ctrl+Shift+E` لتصدير التقرير."
+      ]
+    ],
+    "trouble": [
+      [
+        "لا يظهر شيء",
+        "تأكد أن العنوان يطابق `*://*.tanktrouble.com/*` وأن السكربت مفعّل، ثم `Ctrl+F5`."
+      ],
+      [
+        "اختفت اللوحة",
+        "اضغط `Ctrl+Shift+L`. يتم تذكّر الموضع وحالة الطيّ."
+      ],
+      [
+        "ما زال متقطعًا",
+        "هذا خطّك أنت. صدّر تقريرًا (`Ctrl+Shift+E`) وقارن المناطق."
+      ]
+    ]
+  },
+  "fr": {
+    "name": "Français",
+    "flag": "🇫🇷",
+    "title": "TankTrouble — optimisation réseau",
+    "tag": "Plus riche, plus temps réel et plus précis : l'état du réseau, et une vraie optimisation.",
+    "intro": [
+      "Un userscript Tampermonkey pour **tanktrouble.com**. Il montre ce que fait vraiment votre connexion et transforme les « blocages → téléportation » du blocage de tête de file TCP en un glissement fluide.",
+      "**Pas de serveur, aucune configuration réseau, pas un VPN.** Tout est côté client : le serveur voit exactement les mêmes octets.",
+      "L'optimisation ne change que *ce que vous voyez* : la position est lissée au moment du rendu, tandis que la logique, la physique et la validation serveur utilisent toujours les vraies valeurs. Votre tank est localement autoritaire : pas de retour en arrière après une reconnexion."
+    ],
+    "features": [
+      [
+        "Plus riche",
+        "ligne / moyenne / actuel / maximum / gigue / blocages / stabilité en direct"
+      ],
+      [
+        "Plus temps réel",
+        "sonde ping dédiée toutes les 2 s : le vrai RTT, pas les intervalles d'images"
+      ],
+      [
+        "Plus précis",
+        "les vrais blocages (tête de file TCP) sont séparés des pauses du lobby"
+      ],
+      [
+        "Optimisation",
+        "lissage au rendu + autorité locale + extrapolation, avec interrupteur A/B"
+      ]
+    ],
+    "steps": [
+      [
+        "Installer Tampermonkey",
+        "Chrome/Edge : [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). Firefox : [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). « Ajouter au navigateur » → « Ajouter l'extension »."
+      ],
+      [
+        "Activer le mode développeur (Chrome/Edge)",
+        "Ouvrez `chrome://extensions` (ou `edge://extensions`) et activez **Mode développeur** en haut à droite."
+      ],
+      [
+        "Installer le script",
+        "Cliquez sur **Installer le script** ci-dessous puis **Installer**."
+      ],
+      [
+        "Ouvrir le jeu",
+        "Allez sur <https://tanktrouble.com/game> et entrez en partie : le panneau apparaît en haut à gauche."
+      ],
+      [
+        "Utilisation",
+        "Glissez la barre de titre pour déplacer. Cliquez le point pour réduire en ballon (moyenne / ping actuel / stabilité), cliquez le ballon pour déplier. `Ctrl+Shift+S` optimisation, `Ctrl+Shift+L` masquer, `Ctrl+Shift+E` exporter un rapport."
+      ]
+    ],
+    "trouble": [
+      [
+        "Rien n'apparaît",
+        "Vérifiez que l'URL correspond à `*://*.tanktrouble.com/*` et que le script est activé, puis `Ctrl+F5`."
+      ],
+      [
+        "Le panneau a disparu",
+        "Appuyez sur `Ctrl+Shift+L`. La position et l'état réduit sont mémorisés."
+      ],
+      [
+        "Toujours saccadé",
+        "C'est votre ligne. Exportez un rapport (`Ctrl+Shift+E`) et comparez les régions."
+      ]
+    ]
+  },
+  "es": {
+    "name": "Español",
+    "flag": "🇪🇸",
+    "title": "TankTrouble — optimización de red",
+    "tag": "Más rico, más en tiempo real y más preciso: el estado de la red y una optimización real.",
+    "intro": [
+      "Un userscript de Tampermonkey para **tanktrouble.com**. Muestra lo que hace de verdad tu conexión y convierte los «congelamientos → teletransportes» del bloqueo de cabeza de cola de TCP en un deslizamiento suave.",
+      "**Sin servidor, sin configurar la red, no es una VPN.** Todo es del lado del cliente: el servidor ve exactamente los mismos bytes.",
+      "La optimización solo cambia *lo que ves*: la posición se suaviza en el momento del render, mientras que la lógica, la física y la validación del servidor usan siempre los valores reales. Tu tanque es de autoridad local: tras reconectar no te devuelven atrás."
+    ],
+    "features": [
+      [
+        "Más rico",
+        "línea / media / actual / máxima / jitter / bloqueos / estabilidad en vivo"
+      ],
+      [
+        "Más en tiempo real",
+        "sonda ping propia cada 2 s: RTT real, no intervalos de fotogramas"
+      ],
+      [
+        "Más preciso",
+        "los bloqueos reales (cabeza de cola TCP) se separan de las pausas del lobby"
+      ],
+      [
+        "Optimización",
+        "suavizado en el render + autoridad local + extrapolación, con interruptor A/B"
+      ]
+    ],
+    "steps": [
+      [
+        "Instala Tampermonkey",
+        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). «Añadir al navegador» → «Añadir extensión»."
+      ],
+      [
+        "Activa el modo desarrollador (Chrome/Edge)",
+        "Abre `chrome://extensions` (o `edge://extensions`) y activa **Modo de desarrollador** arriba a la derecha."
+      ],
+      [
+        "Instala el script",
+        "Pulsa **Instalar el script** abajo y luego **Instalar**."
+      ],
+      [
+        "Abre el juego",
+        "Ve a <https://tanktrouble.com/game> y entra en partida: el panel aparece arriba a la izquierda."
+      ],
+      [
+        "Uso",
+        "Arrastra la barra de título para moverlo. Clic en el punto para contraer en bola (media / ping actual / estabilidad), clic en la bola para expandir. `Ctrl+Shift+S` optimización, `Ctrl+Shift+L` ocultar, `Ctrl+Shift+E` exportar informe."
+      ]
+    ],
+    "trouble": [
+      [
+        "No aparece nada",
+        "Comprueba que la URL coincide con `*://*.tanktrouble.com/*` y que el script está activado, luego `Ctrl+F5`."
+      ],
+      [
+        "El panel desapareció",
+        "Pulsa `Ctrl+Shift+L`. La posición y el estado contraído se recuerdan."
+      ],
+      [
+        "Sigue a tirones",
+        "Es tu línea. Exporta un informe (`Ctrl+Shift+E`) y compara regiones."
+      ]
+    ]
+  },
+  "de": {
+    "name": "Deutsch",
+    "flag": "🇩🇪",
+    "title": "TankTrouble — Netzwerk-Optimierung",
+    "tag": "Reichere, aktuellere und genauere Netzwerkanzeige — plus echte Optimierung.",
+    "intro": [
+      "Ein Tampermonkey-Userscript für **tanktrouble.com**. Es zeigt, was deine Verbindung wirklich macht, und verwandelt „Hänger → Teleport“ durch TCP-Head-of-Line-Blocking in ein weiches Gleiten.",
+      "**Kein Server, keine Netzwerkkonfiguration, kein VPN.** Rein clientseitig: der Server sieht exakt dieselben Bytes.",
+      "Die Optimierung ändert nur *das, was du siehst*: die Position wird im Moment des Renderns geglättet, während Logik, Physik und Serverprüfung immer die echten Werte nutzen. Dein Panzer ist lokal autoritativ — nach einem Reconnect wirst du nicht zurückgezogen."
+    ],
+    "features": [
+      [
+        "Reicher",
+        "Leitung / Ø / aktuell / Maximum / Jitter / Hänger / Stabilität live"
+      ],
+      [
+        "Aktueller",
+        "eigene Ping-Sonde alle 2 s: echte RTT statt Frame-Abstände"
+      ],
+      [
+        "Genauer",
+        "echte Hänger (Head-of-Line) werden von Lobby-Pausen getrennt"
+      ],
+      [
+        "Optimierung",
+        "Rendering-Glättung + lokale Autorität + Dead Reckoning, mit A/B-Schalter"
+      ]
+    ],
+    "steps": [
+      [
+        "Tampermonkey installieren",
+        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). „Zum Browser hinzufügen“ → „Erweiterung hinzufügen“."
+      ],
+      [
+        "Entwicklermodus aktivieren (nur Chrome/Edge)",
+        "Öffne `chrome://extensions` (oder `edge://extensions`) und aktiviere **Entwicklermodus** oben rechts."
+      ],
+      [
+        "Skript installieren",
+        "Klicke unten auf **Skript installieren** und dann **Installieren**."
+      ],
+      [
+        "Spiel öffnen",
+        "Gehe auf <https://tanktrouble.com/game> und starte eine Runde — das Panel erscheint oben links."
+      ],
+      [
+        "Bedienung",
+        "Titelleiste ziehen zum Verschieben. Klick auf den Punkt klappt zur Kugel (Ø / aktuell / Stabilität), Klick auf die Kugel öffnet. `Ctrl+Shift+S` Optimierung, `Ctrl+Shift+L` HUD ausblenden, `Ctrl+Shift+E` Bericht exportieren."
+      ]
+    ],
+    "trouble": [
+      [
+        "Nichts erscheint",
+        "Prüfe, ob die URL zu `*://*.tanktrouble.com/*` passt und das Skript aktiv ist, dann `Ctrl+F5`."
+      ],
+      [
+        "Panel ist weg",
+        "`Ctrl+Shift+L`. Position und eingeklappter Zustand werden gemerkt."
+      ],
+      [
+        "Immer noch ruckelig",
+        "Das ist deine Leitung. Exportiere einen Bericht (`Ctrl+Shift+E`) und vergleiche Regionen."
+      ]
+    ]
+  },
+  "pt": {
+    "name": "Português",
+    "flag": "🇧🇷",
+    "title": "TankTrouble — otimização de rede",
+    "tag": "Exibição de rede mais rica, mais em tempo real e mais precisa — e otimização de verdade.",
+    "intro": [
+      "Um userscript de Tampermonkey para **tanktrouble.com**. Mostra o que a sua conexão realmente faz e transforma os “travamentos → teleportes” do bloqueio de cabeça de fila do TCP em um deslize suave.",
+      "**Sem servidor, sem configurar a rede, não é VPN.** Tudo no cliente: o servidor vê exatamente os mesmos bytes.",
+      "A otimização muda apenas *o que você vê*: a posição é suavizada no momento do render, enquanto a lógica, a física e a validação do servidor usam sempre os valores reais. Seu tanque é de autoridade local: após reconectar você não é puxado de volta."
+    ],
+    "features": [
+      [
+        "Mais rico",
+        "linha / média / atual / máxima / jitter / travamentos / estabilidade ao vivo"
+      ],
+      [
+        "Mais em tempo real",
+        "sonda de ping própria a cada 2 s: RTT real, não intervalos de quadros"
+      ],
+      [
+        "Mais preciso",
+        "travamentos reais (cabeça de fila TCP) separados das pausas do lobby"
+      ],
+      [
+        "Otimização",
+        "suavização no render + autoridade local + extrapolação, com chave A/B"
+      ]
+    ],
+    "steps": [
+      [
+        "Instale o Tampermonkey",
+        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). “Adicionar ao navegador” → “Adicionar extensão”."
+      ],
+      [
+        "Ative o modo desenvolvedor (Chrome/Edge)",
+        "Abra `chrome://extensions` (ou `edge://extensions`) e ative **Modo do desenvolvedor** no canto superior direito."
+      ],
+      [
+        "Instale o script",
+        "Clique em **Instalar o script** abaixo e depois **Instalar**."
+      ],
+      [
+        "Abra o jogo",
+        "Vá para <https://tanktrouble.com/game> e entre em uma partida: o painel aparece no canto superior esquerdo."
+      ],
+      [
+        "Como usar",
+        "Arraste a barra de título para mover. Clique no ponto para recolher em bola (média / ping atual / estabilidade); clique na bola para expandir. `Ctrl+Shift+S` otimização, `Ctrl+Shift+L` ocultar, `Ctrl+Shift+E` exportar relatório."
+      ]
+    ],
+    "trouble": [
+      [
+        "Nada aparece",
+        "Confirme que a URL corresponde a `*://*.tanktrouble.com/*` e que o script está ativo, depois `Ctrl+F5`."
+      ],
+      [
+        "O painel sumiu",
+        "Pressione `Ctrl+Shift+L`. A posição e o estado recolhido são lembrados."
+      ],
+      [
+        "Ainda travando",
+        "É a sua linha. Exporte um relatório (`Ctrl+Shift+E`) e compare regiões."
+      ]
+    ]
+  }
+}

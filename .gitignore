@@ -1,0 +1,16 @@
+# 构建产物 / 临时文件
+_ui_check.html
+_tmp_*/
+_tmp*
+_*.png
+_*.json
+_langs.json
+_probe.*
+_shot*
+*.log
+
+# 编辑器
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
