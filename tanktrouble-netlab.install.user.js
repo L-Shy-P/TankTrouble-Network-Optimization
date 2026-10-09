@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.4.3
+// @version      0.4.4
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,11 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.4.3';
+	const VERSION = '0.4.4';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.4.4', 'hover 改成"**边缘与外围更亮**"（用户："边缘以及外部发光太弱，比中心弱"）：内部渐变改成中心微弱、末端最强（.10 → .50），再加一圈 inset 白色描边（边缘发亮）+ 外层柔和光晕（`0 0 20px -3px currentColor`），整体亮度仍只"相对"加一点点',
+			'修"双球转变结束时会闪"+"连点 bug 连篇"：根因是交接用了 90ms **交叉淡接** —— 两者同时绘制 → 亮度叠加 = 闪，而且那个延迟定时器会和下一次动画抢状态。现在球的最后一帧已经插值成和圆点同色同尺寸，改成**原子交换**（同一帧隐藏球/显示圆点），既没闪也没有时序竞争；连点只走"强化 + token"这一条路径'],
 		['0.4.3', '修"点击和悬浮的混乱 + 几次点击/拖动/悬浮之后悬浮直接瞬变"（用户实测的卡死 bug）：根因是拖动时往**内联**写 `transition:none`，只有 pointerup 会还原 —— 指针捕获一丢/松手在元素外就**永久卡住**，之后所有 hover 都变瞬变。现在：① 拖动状态改用 class（`.ttn-drag`）；② **document 级 pointerup/pointercancel 兜底**（松手在元素外也能结束）；③ 4 秒看门狗 + 每次刷新巡检（不在拖动时清掉泄漏的 class/内联 transition/标志）；④ 彻底不再有任何内联 transition',
 			'点击不再是一种状态：删掉球和圆点的 `:active` 规则（点击既不该改观感，也不该改尺寸、抢层叠）',
 			'新增回归：不许存在 `:active` 规则；松手在元素外必须结束拖动；看门狗必须能收拾卡住的拖动状态；结束后 hover 依赖的 `filter` 过渡必须仍在；球/面板/圆点任何时刻都不许有内联 transition；"点击+拖动+悬浮"混合若干轮后状态必须干净'],
@@ -2098,7 +2100,8 @@
 		'.ttn-drag{transition:none !important}',
 		'#ttn-ball .hover-glow{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:50%;',
 		'pointer-events:none;opacity:0;transition:opacity .18s ease;',
-		'background:radial-gradient(circle,rgba(255,255,255,.5) 0%,rgba(255,255,255,.16) 46%,rgba(255,255,255,0) 78%)}',
+		/* 中心**不**最亮：微弱一点，主要在边缘拉起来（用户："边缘以及外部发光太弱，比中心弱"） */
+		'background:radial-gradient(circle,rgba(255,255,255,.10) 0%,rgba(255,255,255,.06) 52%,rgba(255,255,255,.34) 88%,rgba(255,255,255,.5) 100%)}',
 		'#ttn-ball .halo{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:50%;',
 		'pointer-events:none;opacity:0;',
 		'background:radial-gradient(circle,rgba(255,255,255,.55) 0%,rgba(255,255,255,.18) 45%,rgba(255,255,255,0) 74%)}',
@@ -2108,9 +2111,12 @@
 		 *  · 内部发光用一层 .hover-glow 子元素（CSS opacity 过渡，能和状态规则叠加，不会互相覆盖）；
 		 *  · 亮度只加一点点，且分状态给 —— 关的时候也要"比关亮一点"，但绝不该亮到开启态。
 		 *  · 不要白环、不要大改阴影：那都是"额外的可见物体"（用户明确不要）。 */
-		'#ttn-ball:hover .hover-glow{opacity:.42}',
-		'#ttn-ball.on:hover{filter:saturate(1) brightness(1.26)}',
-		'#ttn-ball:not(.on):hover{filter:saturate(.95) brightness(1.0)}',
+		'#ttn-ball:hover .hover-glow{opacity:.62}',
+		/* 边缘更亮（inset 描边）+ 外发光（柔和光晕，不是白环那种"额外物体"）+ 只加一点点整体亮度 */
+		'#ttn-ball.on:hover{filter:saturate(1) brightness(1.26);',
+		'box-shadow:0 6px 18px rgba(0,0,0,.42),0 0 20px -3px currentColor,inset 0 0 0 1px rgba(255,255,255,.34)}',
+		'#ttn-ball:not(.on):hover{filter:saturate(.95) brightness(1.0);',
+		'box-shadow:0 7px 20px rgba(0,0,0,.5),0 0 18px -4px currentColor,inset 0 0 0 1px rgba(255,255,255,.26)}',
 		/* 按下**不做**任何状态：点击不是一种观感（用户明确要求），
 		 * 而且它还会和 hover 抢层叠、和变形抢尺寸。拖动本身有指针跟随就够了。 */
 		/* 小圆点与大球同一套语义（同样用 .halo 子元素 + JS 动画） */
@@ -3324,7 +3330,7 @@
 	 *   · 用真实关键帧，可以"钉到 50%"直接验证属性到底有没有在插值；
 	 *   · 终点同时写进内联样式，动画一撤就是终点，绝不会跳。
 	 */
-	const hudAnim = { phase: 'idle', token: 0, timer: null, anims: [], fade: [] };
+	const hudAnim = { phase: 'idle', token: 0, timer: null, anims: [] };
 	const hudTint = { last: '' };            // 最近一次的分级色（refreshHud 写）
 	const BALL_SURFACE = 'rgba(18, 20, 26, 0.95)';   // 悬浮球的"深色盘面"（收起态的底色）
 
@@ -3354,6 +3360,7 @@
 	function cancelMorph() {
 		(hudAnim.anims || []).forEach(function (a) { try { a.cancel(); } catch (e) {} });
 		hudAnim.anims = [];
+		if (hudAnim.fadeTimer) { clearTimeout(hudAnim.fadeTimer); hudAnim.fadeTimer = null; }
 	}
 
 	function hudAnimate(collapse) {
@@ -3490,35 +3497,15 @@
 		}
 		cancelMorph();
 
-		/* 交接用 90ms 交叉淡接：球和圆点在同一位置同一尺寸，把两者任何细微差异
-		 * （描边、内部黑条、选中态…）都抹平 —— 否则就是"瞬间从黑球变成有色球"。 */
-		if (dotEl && hudBall) {
-			const n0 = collapsed ? 1 : 0, n1 = collapsed ? 0 : 1;
-			hudAnim.fade = [animAt(hudBall, [{ opacity: n0 }, { opacity: n1 }], 90, 'ease'),
-				animAt(dotEl, [{ opacity: n1 }, { opacity: n0 }], 90, 'ease')].filter(Boolean);
-			if (hudAnim.fade.length) {
-				if (dotEl) dotEl.style.opacity = '';
-				hudAnim.fadeTimer = setTimeout(function () {
-					hudAnim.fadeTimer = null;
-					(hudAnim.fade || []).forEach(function (a) { try { a.cancel(); } catch (e) {} });
-					hudAnim.fade = [];
-					applyHudVisibility(false);
-					clampHud();
-					saveHudState();
-					hudAnim.debug = { fadeDone: true, glide: hudGlide.active, x: hudState.x, y: hudState.y };
-					try {
-						let d = document.getElementById('ttn-dbg2');
-						if (!d) { d = document.createElement('pre'); d.id = 'ttn-dbg2'; d.style.display = 'none'; document.body.appendChild(d); }
-						d.textContent = JSON.stringify(hudAnim.debug);
-					} catch (e) {}
-				}, 100);
-				return;
-			}
-		}
+		/* 交接：**原子交换**（同一帧里球隐藏、圆点显示）。
+		 * 之前用 90ms 交叉淡接，结果是两者同时绘制 → 亮度叠加 = 用户看到的"结束时会闪"，
+		 * 而且那个延迟定时器会和"连点"的下一次动画抢状态（连点 bug 连篇）。
+		 * 球的最后一帧已经插值成和圆点同色同尺寸，直接换没有任何可见跳变。 */
 		if (dotEl) dotEl.style.opacity = '';
 		applyHudVisibility(false);      // 动画自己已经管过 opacity 了
 		clampHud();
 		saveHudState();
+		hudAnim.debug = { fadeDone: true, atomic: true, glide: hudGlide.active, x: hudState.x, y: hudState.y };
 	}
 
 	/* ---------------- 悬浮提示（内容被裁时显示完整文字） ----------------

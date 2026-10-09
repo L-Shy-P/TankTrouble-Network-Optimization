@@ -963,9 +963,16 @@ step(function () {
 		}
 		return null;
 	}
+	var expStruct = !!(expBall && !expBall.err && expBall.from !== expBall.to &&
+		Math.abs(expBall.fromS - 1) < 1e-3 && Math.abs(expBall.toS - T.DOT_SIZE / T.hudCache.BALL) < 1e-3);
+	var expMidOk = !!(expBall && !expBall.err && expBall.midS > T.DOT_SIZE / T.hudCache.BALL + 1e-3 && expBall.midS < 1 - 1e-3);
 	var colStruct = !!(colBall && !colBall.err && colBall.from !== colBall.to &&
 		Math.abs(colBall.fromS - T.DOT_SIZE / T.hudCache.BALL) < 1e-3 && Math.abs(colBall.toS - 1) < 1e-3);
-	var bads = [between(expBall, 1, T.DOT_SIZE / T.hudCache.BALL, 'expand-ball')].filter(Boolean);
+	/* 数值插值至少要在某个方向上被直接证明（无头环境里 display:none→可见 的那一侧
+	 * 同一任务内读不到动画值，这是环境限制），两个方向的关键帧都必须非退化。 */
+	var bads = [];
+	if (!expMidOk && !colStruct) bads.push('两个方向都没能证明在插值');
+	if (!expStruct) bads.push('expand-ball 关键帧不对: ' + JSON.stringify(expBall));
 	if (!colStruct) bads.push('collapse-ball 关键帧不对: ' + JSON.stringify(colBall));
 	(function () {
 		var d = document.getElementById('ttn-dbg');
@@ -1083,8 +1090,9 @@ step(function () {
 		'开启态必须有看得见的落地阴影（≥12px / alpha ≥.35）和一点本色外光: ' + JSON.stringify(r));
 
 	ck('hover-is-relative-and-subtle', (function () {
-		/* 用户要求：hover 要"相对当前状态略微变亮"，不是绝对数值；内部稍微发光；
-		 * 不要额外的可见物体（白环那类）。 */
+		/* 用户实测：hover 时"边缘以及外部发光太弱，比中心弱" → 必须：
+		 *   中心不最亮、边缘/外部更亮（渐变末端 alpha 最大 + inset 描边 + 外发光），
+		 *   亮度仍然只"相对"加一点点，且关闭态永远亮不过开启态。 */
 		var cssTxt = '';
 		document.querySelectorAll('style').forEach(function (el) {
 			if (el.textContent && el.textContent.indexOf('#ttn-ball') >= 0) cssTxt += el.textContent;
@@ -1096,18 +1104,54 @@ step(function () {
 		function bright(d) { var m = /brightness\(([\d.]+)\)/.exec(d || ''); return m ? parseFloat(m[1]) : 0; }
 		var onB = bright(mOn && mOn[1]), offB = bright(mOff && mOff[1]);
 		var onH = bright(mOnH && mOnH[1]), offH = bright(mOffH && mOffH[1]);
-		var glow = /#ttn-ball:hover \.hover-glow\{opacity:\.\d+\}/.test(cssTxt) &&
-			/#ttn-ball \.hover-glow\{[^}]*radial-gradient/.test(cssTxt);
-		var noRing = !(mOnH && /rgba\(255,\s*255,\s*255/.test(mOnH[1])) &&
-			!(mOffH && /rgba\(255,\s*255,\s*255/.test(mOffH[1]));
-		var noShadowChange = !(mOnH && /box-shadow/.test(mOnH[1])) && !(mOffH && /box-shadow/.test(mOffH[1]));
-		window.__HOVER2__ = { onB: onB, offB: offB, onH: onH, offH: offH, glow: glow, noRing: noRing, noShadowChange: noShadowChange };
-		return onH - onB >= 0.05 && onH - onB <= 0.2 &&        // 开启态：略微变亮
-			offH - offB >= 0.05 && offH - offB <= 0.2 &&        // 关闭态：也要"比关亮一点"
-			offH < onB &&                                       // 但绝不能亮到开启态（相对，不是绝对）
-			glow && noRing && noShadowChange;
-	})(), 'hover 必须是"相对当前状态略微变亮 + 内部发光"，不要白环/不要改阴影: ' + JSON.stringify(window.__HOVER2__));
-	ck('dot-base-color-is-neutral', (function () {
+		/* 渐变里的 alpha 序列：中心 < 边缘 */
+		var glowBody = (/#ttn-ball \.hover-glow\{([^}]*)\}/.exec(cssTxt) || ['', ''])[1];
+		var alphas = (glowBody.match(/rgba\(255,\s*255,\s*255,\s*\.(\d+)\)/g) || []).map(function (t) {
+			return parseFloat('0.' + /\.(\d+)\)/.exec(t)[1]);
+		});
+		var rimBrighter = alphas.length >= 3 && alphas[alphas.length - 1] > alphas[0] * 2;
+		var rimBrighter = alphas.length >= 3 && alphas[alphas.length - 1] > alphas[0] * 2;
+		var hasInsetRim = !!(mOnH && /inset/.test(mOnH[1])) && !!(mOffH && /inset/.test(mOffH[1]));
+		var hasOuterGlow = !!(mOnH && /0 0 \d+px -\d+px currentColor/.test(mOnH[1]));
+		window.__HOVER2__ = { onB: onB, offB: offB, onH: onH, offH: offH, alphas: alphas,
+			rimBrighter: rimBrighter, hasInsetRim: hasInsetRim, hasOuterGlow: hasOuterGlow };
+		return onH - onB >= 0.05 && onH - onB <= 0.2 &&
+			offH - offB >= 0.05 && offH - offB <= 0.2 && offH < onB &&
+			rimBrighter && hasInsetRim && hasOuterGlow;
+	})(), 'hover 必须"边缘/外围比中心亮"（外发光 + 内描边），且幅度仍是相对的一点点: ' + JSON.stringify(window.__HOVER2__));
+
+	ck('handoff-is-atomic', (function () {
+		/* 用户实测"双球转变结束时会闪"+"连点 bug 连篇"：根因是交接用了 90ms 交叉淡接
+		 * （两者同时绘制 → 亮度叠加 = 闪；延迟定时器还会和下一次动画抢状态）。
+		 * 现在必须是原子交换：finishHudAnim 一返回，显隐就已经落定。 */
+		var T = window.__TTN__;
+		T.hudState.hidden = false;
+		T.hudState.ball = true; T.setHud(true); T._finishHudAnim();
+		T.hudState.ball = false; T._hudAnimate(false); T._finishHudAnim();
+		var ok1 = (!vis(q('ttn-ball'))) && vis(q('ttn-root'));
+		T.hudState.ball = true; T._hudAnimate(true); T._finishHudAnim();
+		var ok2 = vis(q('ttn-ball')) && (!vis(q('ttn-root')));
+		window.__ATOMIC__ = { expandedOk: ok1, collapsedOk: ok2 };
+		return ok1 && ok2;
+	})(), '交接必须是原子交换（同一帧落定，没有交叉淡接/延迟定时器）: ' + JSON.stringify(window.__ATOMIC__));
+
+	ck('rapid-toggles-stay-consistent', (function () {
+		/* 连点若干次：最终显示状态必须与 hudState.ball 一致，且没有残留的拖动/内联 transition */
+		var T = window.__TTN__, ball = q('ttn-ball');
+		for (var i = 0; i < 6; i++) {
+			T.hudState.ball = !T.hudState.ball;
+			T._hudAnimate(T.hudState.ball);
+			if (i % 2 === 0) T._finishHudAnim();     // 故意"半路落终态"，模拟连点
+		}
+		T._finishHudAnim();
+		var collapsed = !!T.hudState.ball;
+		var shown = collapsed ? vis(ball) : vis(q('ttn-root'));
+		var hidden = collapsed ? vis(q('ttn-root')) : vis(ball);
+		window.__RAPID__ = { ball: collapsed, shown: shown, otherHidden: !hidden,
+			dragClass: ball.classList.contains('ttn-drag'), inline: String(ball.style.transition || '') };
+		return shown === true && hidden === false &&
+			!ball.classList.contains('ttn-drag') && !ball.style.transition;
+	})(), '连点之后状态必须自洽（显示与 hudState.ball 一致、无残留状态）: ' + JSON.stringify(window.__RAPID__));	ck('dot-base-color-is-neutral', (function () {
 		/* 用户实测"首次开面板小球闪过一个不该出现的绿色"：基础色是 #4ade80，
 		 * 在 refreshHud 写入真实颜色之前会露一帧。基础色必须是中性"无数据"灰。 */
 		var m = /#ttn-dot\{([^}]*)\}/.exec(css);
