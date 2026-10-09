@@ -820,6 +820,61 @@ step(function () {
 });
 
 step(function () {
+	/* 无缝变形（用户要求）：大球 → 面板圆点，不能是"球消失 + 圆点从 0 长大"两个独立动画。
+	 * 断言：① 展开时球保持可见并缩到圆点大小；② 圆点在交接前一直隐藏；
+	 *       ③ 动画途中一按下（准备拖动）就立刻落终态 —— 否则拖动改锚点会让球/圆点错位。 */
+	var T = window.__TTN__;
+	T.hudState.hidden = false;
+	T.hudState.ball = false; T.hudState.x = 320; T.hudState.y = 320; T.setHud(true);
+	T._finishHudAnim();
+	var ball = q('ttn-ball'), dot = q('ttn-dot');
+	T.hudState.ball = true; T.setHud(true); T._finishHudAnim();
+
+	T.hudState.ball = true;
+	T._hudAnimate(false);                       // 收起态 → 展开
+	window.__MORPH__ = {
+		ballOpacity: ball.style.opacity,
+		ballTransform: String(ball.style.transform),
+		dotOpacity: dot.style.opacity,
+		animating: T.isHudAnimating(),
+		morphClass: ball.classList.contains('morph')
+	};
+	ck('expand-keeps-ball-visible', ball.style.opacity === '1' && /scale\(/.test(ball.style.transform),
+		'展开时大球必须保持可见并缩到圆点大小（不是淡出）: ' + JSON.stringify(window.__MORPH__));
+	ck('dot-hidden-until-handoff', dot.style.opacity === '0',
+		'交接前圆点必须隐藏（不许它自己从 0 长大）: dot=' + dot.style.opacity);
+
+	/* 动画途中"按下"（拖动的开始）→ 必须立刻落终态 */
+	q('ttn-head').dispatchEvent(new PointerEvent('pointerdown',
+		{ bubbles: true, cancelable: true, clientX: 340, clientY: 340, pointerId: 77 }));
+	window.__MORPH2__ = {
+		animating: T.isHudAnimating(), dotOpacity: dot.style.opacity,
+		ballTransform: String(ball.style.transform), morphClass: ball.classList.contains('morph')
+	};
+	ck('drag-during-morph-finishes-it', window.__MORPH2__.animating === false && dot.style.opacity === '',
+		'变形途中一按下就落终态（否则拖动改锚点会错位），且圆点归位与球最后一帧重合: ' +
+		JSON.stringify(window.__MORPH2__));
+
+	/* 收起方向 */
+	T.hudState.ball = false; T.setHud(true); T._finishHudAnim();
+	T._hudAnimate(true);
+	var L3 = T._hudAnim.last || {};
+	window.__MORPH3__ = { ballOpacity: ball.style.opacity, dotOpacity: dot.style.opacity,
+		startScale: L3.startScale, endScale: L3.endScale, collapse: L3.collapse,
+		morphClass: ball.classList.contains('morph') };
+	ck('collapse-grows-ball-from-dot', ball.style.opacity === '1' && dot.style.opacity === '0' &&
+		L3.collapse === true && Math.abs(L3.startScale - (T.DOT_SIZE / T.hudCache.BALL)) < 0.001 &&
+		L3.endScale === 1 && ball.classList.contains('morph') === false,
+		'收起时球必须**从圆点大小起步**长回悬浮球（圆点立即让位，球起步是纯色圆盘）: ' +
+		JSON.stringify(window.__MORPH3__));
+	T.hudState.ball = true;
+	T._finishHudAnim();
+	ck('morph-ends-clean', ball.classList.contains('morph') === false && dot.style.opacity === '',
+		'收起落终态后球的文字必须回来（morph 摘掉）、圆点归位: ' + ball.className + ' dot=' + dot.style.opacity);
+	T.setSmoothing(true);
+});
+
+step(function () {
 	var A = window.__ANIM__ || {};
 	if (window.__ANIM_RESTORE__) window.__ANIM_RESTORE__();
 	ck('toggle-animations-really-run', (A.dot || 0) >= 3 && (A.ball || 0) >= 2 && (A.halo || 0) >= 3,

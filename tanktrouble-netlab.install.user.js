@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.3.13
+// @version      0.4.0
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,13 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.3.13';
+	const VERSION = '0.4.0';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.4.0', '展开/收起改成**无缝变形**（用户要求）：不再是"大球淡出 + 圆点从 0 长大"两个独立动画，而是**大球原地从 66px 缩到 24px**、面板在它周围长大，圆点整段过程中隐藏、最后一帧在同一位置同一尺寸上交接（球心本来就严格落在圆点圆心上，所以是像素级对齐）；收起时完全反向：圆点立刻让位，球从"圆点大小"长回悬浮球',
+			'变形期间球内的文字/数字会淡出（交接时球就是一块纯色圆盘，和圆点一致），收起时长回来',
+			'修掉一个隐秘 bug：**在展开/收起动画没结束前拖动面板**会改锚点，而变形是按锚点算的 → 球和圆点会错位。现在只要一按下就先把变形落终态（`finishHudAnim()`），再正常拖动；同时修掉"落终态时 hudAnimating 还没清 → 收尾回弹被跳过"的顺序问题（vm 测试当场抓到的真回归）',
+			'（用户提的"给面板也加惯性、质量匀速增大保持动能"这条没做：状态机交叉太多、很容易养出更隐蔽的 bug，改用"一碰即落终态"这个更安全的替代）'],
 		['0.3.13', '修"首次开面板小球闪过一个不该出现的绿色"：圆点的 CSS 基础色是 `#4ade80`，而真实颜色要等 refreshHud 写内联样式 —— 中间就会露一帧绿。现在基础色改成中性"无数据"灰，并在建好 HUD 的**同一帧**就把球/圆点刷成中性色（再由 refreshHud 写真实分级色），任何"闪一下别的颜色"都不可能发生',
 			'修"鼠标悬浮几乎看不出区别"：只提 `brightness()` 对**深色球体**几乎无效（近黑 ×1.42 还是近黑）→ hover 改成结构性变化：一圈 **3px 白色描边环** + 更强的本色光晕 + 更深的落地阴影，亮度也提到 1.42（开启态 1.18）；依旧不碰 transform',
 			'新增三条回归：圆点基础色必须是中性灰（不许出现绿色）；面板一出现球/圆点就必须已带内联颜色；hover 必须**同时**有"亮度 +0.1 以上"和"白色描边环"（只看亮度会退化成人眼无感）'],
@@ -2096,6 +2100,8 @@
 		'#ttn-dot .halo{pointer-events:none}',
 		'#ttn-ball .t,#ttn-ball .m,#ttn-ball .b{transition:color .4s ease;max-width:60px;',
 		'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}',
+		'#ttn-ball .t,#ttn-ball .m,#ttn-ball .b{transition:opacity .18s ease}',
+		'#ttn-ball.morph .t,#ttn-ball.morph .m,#ttn-ball.morph .b{opacity:0}',
 		'#ttn-ball .t{font-size:9px;line-height:1.05}',
 		'#ttn-ball .m{font-size:15px;font-weight:700;line-height:1.15;letter-spacing:-.3px}',
 		'#ttn-ball .roll{min-width:0;vertical-align:-.1em}',
@@ -2850,8 +2856,11 @@
 			// 按钮和左上角圆点都不参与拖拽：
 			// 一旦对标题栏 setPointerCapture，click 会被重定向到标题栏，
 			// 圆点上的收起监听就永远不会触发（这就是"根本无法收起"的原因）。
-			if (ev.target && ev.target.classList &&
+			if (ev.target && ev.target.classList.contains &&
 				(ev.target.classList.contains('ttn-btn') || ev.target.id === 'ttn-dot')) return;
+			/* 动画还没结束时碰它：先把变形落终态再做拖动。
+			 * 否则拖动会改锚点，而变形是按锚点算的 —— 球和圆点就会错位。 */
+			if (hudAnimating) finishHudAnim();
 			dragging = true; moved = false;
 			closeLangMenu();
 			hideTip();
@@ -3275,6 +3284,10 @@
 				(scale === 1 ? '' : ' scale(' + scale + ')');
 		};
 
+		/* 无缝变形（用户要求）：展开时**球保持可见**、原地从 66px 缩到圆点大小，
+		 * 面板在它周围长大；圆点在整个过程中**隐藏**，直到最后一帧和球同位置同尺寸交接。
+		 * 这样就不会出现"球消失 + 圆点从 0 长大"两个独立动画。收起时完全反向。 */
+		const dotMorph = hud.querySelector('#ttn-dot');
 		if (fromScratch) {
 			// —— 从静止起步：摆好起始态并强制重排，之后才有过渡可言
 			hud.style.display = 'block';
@@ -3285,10 +3298,13 @@
 			if (hudBall) {
 				hudBall.style.display = 'flex';
 				hudBall.style.transformOrigin = '50% 50%';
+				// 展开：从"完整大球"起步；收起：从"圆点大小（就是圆点所在的那一点）"起步
 				hudBall.style.transform = tBall(fromBall, collapse ? s0 : 1);
-				hudBall.style.opacity = collapse ? '0' : '1';
+				hudBall.style.opacity = '1';                 // 全程可见（不再是淡出）
+				hudBall.classList.toggle('morph', !!collapse);   // 收起时它以纯色圆盘起步
 				hudBall.style.transition = 'none';
 			}
+			if (dotMorph) dotMorph.style.opacity = '0';      // 圆点让位给球
 			void hud.offsetWidth;
 			// 面板此刻已参与布局（scale 不影响 offsetWidth）→ 量真实尺寸。
 			// 展开结束后"边界该把面板推回到哪"要用它算，所以顺手更新一下。
@@ -3312,31 +3328,53 @@
 		hud.style.transform = tPanel(ta, collapse ? 0.03 : 1);
 		hud.style.opacity = collapse ? '0' : '1';
 		if (hudBall) {
+			// 展开 → 缩到圆点大小；收起 → 长大回悬浮球。始终可见、始终压在面板之上。
 			hudBall.style.transform = tBall(toBall, collapse ? 1 : s0);
-			hudBall.style.opacity = collapse ? '1' : '0';
+			hudBall.style.opacity = '1';
+			hudBall.classList.toggle('morph', !collapse);
 		}
-		hudAnim.timer = setTimeout(function () {
-			if (token !== hudAnim.token) return;        // 已被后续点击取代
-			hudAnim.phase = 'idle';
-			hudAnim.timer = null;
-			hudAnimating = false;
-			// 落终态：锚点就是动画的目标（展开时可能已经被夹到可视区内）
-			hudState.x = ta.x;
-			hudState.y = ta.y;
-			if (hudBall) {
-				const bp2 = ballAtOf(ta.x, ta.y);
-				hudBall.style.transition = 'none';
-				hudBall.style.transform = 'translate(' + Math.round(bp2.x) + 'px,' + Math.round(bp2.y) + 'px)';
-				hudBall.style.opacity = '1';
-				void hudBall.offsetWidth;        // 先让"取消过渡 + 落终态"真正生效
-				hudBall.style.transition = '';   // 再恢复样式表里的过渡（否则 hover 就是硬切）
-			}
-			hud.style.transition = '';
-			hud.style.opacity = '';
-			applyHudVisibility(false);      // 动画自己已经管过 opacity 了
-			clampHud();
-			saveHudState();
-		}, 300);
+		if (dotMorph) dotMorph.style.opacity = '0';
+		/* 插桩：给测试/排查留一份"这次变形从哪到哪"。起步值在同一次调用里就会被
+		 * 目标值覆盖（CSS 过渡接上），所以只能这样留证。 */
+		hudAnim.last = {
+			collapse: !!collapse, fromScratch: fromScratch,
+			startScale: collapse ? s0 : 1, endScale: collapse ? 1 : s0,
+			dotSize: DOT_SIZE, ballSize: B, at: now()
+		};
+		hudAnim.timer = setTimeout(finishHudAnim, 300);
+	}
+
+	/**
+	 * 结束展开/收起动画（正常到时、或用户中途开始拖动时立刻调用）。
+	 * 之所以要能被"提前调用"：动画期间拖动面板会改锚点，而变形是按锚点算的 ——
+	 * 拖到一半就继续播下去必然错位，所以一碰就立刻落终态，把交接一次性做完。
+	 */
+	function finishHudAnim() {
+		if (hudAnim.timer) { clearTimeout(hudAnim.timer); hudAnim.timer = null; }
+		/* 先落"动画结束"这个状态：clampHud 在 hudAnimating 为真时会直接跳过，
+		 * 顺序写反的话收尾的越界回弹就没了（vm 测试当场抓到）。 */
+		hudAnim.phase = 'idle';
+		hudAnimating = false;
+		if (!hud) return;
+		const dotEl = hud.querySelector('#ttn-dot');
+		const collapsed = !!hudState.ball;
+		const ta = { x: hudState.x, y: hudState.y };
+		const bp2 = ballAtOf(ta.x, ta.y);
+		if (hudBall) {
+			hudBall.style.transition = 'none';
+			hudBall.style.transform = 'translate(' + Math.round(bp2.x) + 'px,' + Math.round(bp2.y) +
+				'px)' + (collapsed ? '' : ' scale(' + (DOT_SIZE / hudCache.BALL) + ')');
+			hudBall.style.opacity = '1';
+			hudBall.classList.toggle('morph', !collapsed);
+			void hudBall.offsetWidth;        // 先让"取消过渡 + 落终态"真正生效
+			hudBall.style.transition = '';   // 再恢复样式表里的过渡（否则 hover 就是硬切）
+		}
+		if (dotEl) dotEl.style.opacity = '';   // 圆点归位：和球最后一帧重合，交接无缝
+		hud.style.transition = '';
+		hud.style.opacity = '';
+		applyHudVisibility(false);      // 动画自己已经管过 opacity 了
+		clampHud();
+		saveHudState();
 	}
 
 	/* ---------------- 悬浮提示（内容被裁时显示完整文字） ----------------
@@ -3939,6 +3977,8 @@
 		_THROW: THROW,
 		motion: THROW,                   // 手感实时微调：__TTN__.motion.friction = 0.85
 		_hudAnimate: hudAnimate,          // 测试/调试：展开/收起动画
+		_finishHudAnim: finishHudAnim,    // 测试/调试：立刻结束变形动画
+		isHudAnimating: function () { return hudAnimating; },
 		_hudAnim: hudAnim
 	};
 
