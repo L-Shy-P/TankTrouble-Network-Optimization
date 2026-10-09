@@ -1,0 +1,3 @@
+# 统一用 LF（文档/脚本/测试）
+* text=auto eol=lf
+*.user.js text eol=lf
