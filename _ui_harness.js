@@ -1361,12 +1361,28 @@ step(function () {
 			})()
 	};
 	}
+	/* 底色必须是"圆点的实时颜色"，不是球身上冻结的旧内联色 */
+	var dotLiveBg = getComputedStyle(dot).backgroundColor;
+	var ballBg = getComputedStyle(ball).backgroundColor;
+	var diffs = [];
 	var vb = vis(ball), vd = vis(dot);
 	window.__PARITY__ = { ball: vb, dot: vd };
-	var diffs = [];
+	if (ballBg !== dotLiveBg) diffs.push('底色不是圆点实时色: ' + ballBg + ' vs ' + dotLiveBg);
+	/* 球的阴影必须是它自己当前的（hover 感知），圆点换过去也会是同一条配方 */
+	if (!ball.style.boxShadow) diffs.push('球落终态没冻结阴影');
+	window.__PARITY__ = { ball: vb, dot: vd };
 	if (vb.filter !== vd.filter) diffs.push('filter: ' + vb.filter + ' vs ' + vd.filter);
 	if (vb.bg !== vd.bg) diffs.push('bg: ' + vb.bg + ' vs ' + vd.bg);
-	if (vb.shadow !== vd.shadow) diffs.push('shadow: ' + vb.shadow + ' vs ' + vd.shadow);
+	function shapeOf(sh) {
+		return String(sh || '').replace(/rgba?\([^)]*\)/g, 'C');
+	}
+	if (shapeOf(vb.shadow) !== shapeOf(vd.shadow)) {
+		diffs.push('shadow 形状: ' + vb.shadow + ' vs ' + vd.shadow);
+	}
+	/* 颜色必须一致：两边都用同一个分级色（球的 currentColor 与圆点底色同源） */
+	if (getComputedStyle(ball).color !== vd.bg) {
+		diffs.push('球 currentColor 与圆点底色不同源: ' + getComputedStyle(ball).color + ' vs ' + vd.bg);
+	}
 	if (!vb.hasGlow || !vd.hasGlow) diffs.push('hover-glow 子元素: ball=' + vb.hasGlow + ' dot=' + vd.hasGlow);
 	if (!vb.glowRule || !vd.glowRule) diffs.push('hover-glow 规则: ball=' + vb.glowRule + ' dot=' + vd.glowRule);
 	/* hover 变体也必须共用（用户："过渡没考虑鼠标悬浮时和不悬浮时的区别"） */
@@ -1389,7 +1405,17 @@ step(function () {
 		})();
 		var dotBar = getComputedStyle(dot, '::after').opacity;
 		window.__BAR__ = { rootNoBar: q('ttn-root').classList.contains('ttn-no-bar'), dotBar: dotBar, barVisible: barVisible };
-		if (!window.__BAR__.rootNoBar) diffs.push('交接时圆点的横线没有收起来: ' + JSON.stringify(window.__BAR__));
+		/* 横线：现在要求在**过程中就出现**，交接那一帧球和圆点都该带着它 */
+		var ballBar = ball.querySelector('.ttn-bar');
+		var barRule = false;
+		(function () {
+			var css2 = '';
+			document.querySelectorAll('style').forEach(function (st) {
+				if (st.textContent && st.textContent.indexOf('#ttn-ball') >= 0) css2 += st.textContent;
+			});
+			barRule = css2.indexOf('#ttn-ball.morph .ttn-bar{opacity:1}') >= 0;
+		})();
+		if (!ballBar || !barRule) diffs.push('球上缺少过程中的横线: bar=' + !!ballBar + ' rule=' + barRule);
 	})();
 	ck('handoff-visual-parity', diffs.length === 0,
 		'交接那一帧球和圆点的视觉必须一致（否则末尾瞬变）: ' + (diffs.join(' ; ') || 'ok') +

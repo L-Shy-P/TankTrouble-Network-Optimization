@@ -4,7 +4,7 @@
 
 **Richer, more real-time and more accurate network display — plus real optimization.**
 
-[![version](https://img.shields.io/badge/version-0.4.6-blue)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
+[![version](https://img.shields.io/badge/version-0.4.7-blue)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![platform](https://img.shields.io/badge/Tampermonkey-userscript-orange)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
 
