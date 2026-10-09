@@ -861,11 +861,31 @@ step(function () {
 		'开启态必须有看得见的落地阴影（≥12px / alpha ≥.35）和一点本色外光: ' + JSON.stringify(r));
 
 	ck('hover-is-clearly-different', (function () {
+		/* 用户实测"hover 几乎看不出区别"：只提 brightness 对**深色球体**几乎无效
+		 * （近黑 ×1.42 还是近黑），所以必须有一圈**白色描边环**这种结构性变化。 */
 		var onB = brightnessOf(onDecl), hvB = brightnessOf(hoverDecl);
-		window.__HOVER__ = { onB: onB, hoverB: hvB, hoverHasShadow: hoverDecl.indexOf('box-shadow') >= 0,
-			noTransform: !/transform/.test(hoverDecl) };
-		return hvB - onB >= 0.1 && hoverDecl.indexOf('box-shadow') >= 0 && !/transform/.test(hoverDecl);
-	})(), 'hover 必须明显更亮（至少 +0.1）且阴影也变，且不能碰 transform: ' + JSON.stringify(window.__HOVER__));
+		var ring = /box-shadow:[^;}]*rgba\(255,\s*255,\s*255,\s*\.\d+\)/.test(hoverDecl);
+		window.__HOVER__ = { onB: onB, hoverB: hvB, whiteRing: ring,
+			hoverHasShadow: hoverDecl.indexOf('box-shadow') >= 0, noTransform: !/transform/.test(hoverDecl) };
+		return hvB - onB >= 0.1 && ring && hoverDecl.indexOf('box-shadow') >= 0 && !/transform/.test(hoverDecl);
+	})(), 'hover 必须明显不同（亮度 +0.1 以上 **且** 有一圈白色描边环），且不能碰 transform: ' + JSON.stringify(window.__HOVER__));
+
+	ck('dot-base-color-is-neutral', (function () {
+		/* 用户实测"首次开面板小球闪过一个不该出现的绿色"：基础色是 #4ade80，
+		 * 在 refreshHud 写入真实颜色之前会露一帧。基础色必须是中性"无数据"灰。 */
+		var m = /#ttn-dot\{([^}]*)\}/.exec(css);
+		var d = m ? m[1] : '';
+		var bg = (/background:([^;]+)/.exec(d) || [])[1] || '';
+		window.__DOTBASE__ = { bg: bg, neutral: /#8c939e|#8b93a1/i.test(bg) };
+		return /#8c939e|#8b93a1/i.test(bg) && !/#4ade80/i.test(d);
+	})(), '圆点基础色必须是中性灰（不能是绿色，否则首次显示会闪一下）: ' + JSON.stringify(window.__DOTBASE__));
+
+	ck('first-paint-color-inline', (function () {
+		/* 面板一出现，球/圆点就应该已经有内联颜色（同一帧刷成中性色，再由 refreshHud 写真实色） */
+		var dot = q('ttn-dot'), ball = q('ttn-ball');
+		window.__FIRST__ = { dotBg: String(dot.style.background || ''), ballBorder: String(ball.style.borderColor || '') };
+		return !!dot.style.background && !!ball.style.borderColor;
+	})(), '首次显示时球/圆点必须已带内联颜色（避免露出基础色）: ' + JSON.stringify(window.__FIRST__));
 
 	ck('halo-peak-is-visible', (function () {
 		var T = window.__TTN__, ball = q('ttn-ball');

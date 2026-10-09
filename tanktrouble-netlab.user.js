@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.3.12
+// @version      0.3.13
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,12 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.3.12';
+	const VERSION = '0.3.13';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.3.13', '修"首次开面板小球闪过一个不该出现的绿色"：圆点的 CSS 基础色是 `#4ade80`，而真实颜色要等 refreshHud 写内联样式 —— 中间就会露一帧绿。现在基础色改成中性"无数据"灰，并在建好 HUD 的**同一帧**就把球/圆点刷成中性色（再由 refreshHud 写真实分级色），任何"闪一下别的颜色"都不可能发生',
+			'修"鼠标悬浮几乎看不出区别"：只提 `brightness()` 对**深色球体**几乎无效（近黑 ×1.42 还是近黑）→ hover 改成结构性变化：一圈 **3px 白色描边环** + 更强的本色光晕 + 更深的落地阴影，亮度也提到 1.42（开启态 1.18）；依旧不碰 transform',
+			'新增三条回归：圆点基础色必须是中性灰（不许出现绿色）；面板一出现球/圆点就必须已带内联颜色；hover 必须**同时**有"亮度 +0.1 以上"和"白色描边环"（只看亮度会退化成人眼无感）'],
 		['0.3.12', '修"大球纯亮、没阴影、没光晕、hover 无感"（都是 0.3.7 那轮"阴影要变弱/不要染色"改过头的后果）：开启态阴影恢复到看得见的 `0 6px 18px rgba(0,0,0,.42)` + 一点本色外光（关闭态是 `0 7px 20px rgba(0,0,0,.5)`，保持"开比关轻"但不再等于没有）',
 			'光晕改成**白色内圈光**并调高到看得见（渐变峰值 .55、呼吸 0.34↔0.58）—— 是"被点亮"而不是一大片染色',
 			'hover 改成明显更亮（1.18 → 1.34）且阴影同时变大变深（之前只 1.18→1.20，肉眼无感）；依旧**不碰 transform**（位置由内联 transform 管，碰了会抖）',
@@ -1951,7 +1954,7 @@
 		 * 24px；left/top 取 7（相对标题栏 padding box 定位，面板另有 1px 边框）→
 		 * 7+1+12 = 20，圆心严格落在变换原点 (20,20) 上。 */
 		'#ttn-dot{position:absolute;left:7px;top:7px;width:24px;height:24px;box-sizing:border-box;',
-		'border-radius:50%;background:#4ade80;box-shadow:0 0 7px currentColor;cursor:pointer;',
+		'border-radius:50%;background:#8b93a1;box-shadow:0 0 7px currentColor;cursor:pointer;',
 		'transition:transform .14s ease,box-shadow .3s ease,background .4s ease,color .4s ease}',
 		'#ttn-dot:hover{transform:scale(1.16);box-shadow:0 0 13px currentColor}',
 		'#ttn-dot:active{transform:scale(.94)}',
@@ -2071,7 +2074,8 @@
 		'font:9px/1.1 "Segoe UI",system-ui,"Microsoft YaHei",sans-serif;font-variant-numeric:tabular-nums;',
 		/* filter 必须一起过渡：hover 改的就是 brightness()，漏了它那一下就是硬切 */
 		'transition:filter .3s ease,border-color .4s ease,box-shadow .4s ease,color .4s ease,opacity .18s ease,transform .28s cubic-bezier(.2,.8,.3,1)}',
-		'#ttn-ball:hover{filter:saturate(1) brightness(1.34);box-shadow:0 11px 30px rgba(0,0,0,.55),0 0 20px -1px currentColor}',
+		'#ttn-ball:hover{filter:saturate(1) brightness(1.42);',
+		'box-shadow:0 12px 32px rgba(0,0,0,.6),0 0 0 3px rgba(255,255,255,.2),0 0 24px -1px currentColor}',
 		'#ttn-ball:active{filter:saturate(1) brightness(1.05)}',
 		/* 开/关的语义：关=稍暗但保留颜色；开=提亮（和 hover 同一种"更亮"）+ 黑投影减弱。
 		 * 光晕用**真实子元素** .halo，动画全部由 JS（Web Animations API）驱动 ——
@@ -3573,7 +3577,19 @@
 					st.row.className = on ? 'on' : '';
 				}
 			}
-			hudCache.w = hud.offsetWidth || 288;
+			/* 首次显示时，先给球/圆点一个中性色（和 CSS 基础色一致）。
+		 * 否则在 refreshHud 写入真实颜色之前会露出基础色 —— 用户实测"闪一下不该出现的绿色"。 */
+		const dotEl0 = hud.querySelector('#ttn-dot');
+		if (dotEl0) {
+			dotEl0.style.background = cstr(ST_GRAY);
+			dotEl0.style.color = cstr(ST_GRAY);
+		}
+		if (hudBall) {
+			hudBall.style.borderColor = cstr(ST_GRAY);
+			hudBall.style.color = cstr(ST_GRAY);
+		}
+
+		hudCache.w = hud.offsetWidth || 288;
 			hudCache.h = hud.offsetHeight || 198;
 
 			const dot = hud.querySelector('#ttn-dot');
