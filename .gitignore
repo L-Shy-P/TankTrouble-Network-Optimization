@@ -14,3 +14,10 @@ _shot*
 .idea/
 .DS_Store
 Thumbs.db
+
+# 临时探针/截图
+_tprobe.html
+_bprobe*.html
+_cprobe*.html
+_shot*
+_probe*
