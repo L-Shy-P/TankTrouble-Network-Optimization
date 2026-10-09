@@ -1324,6 +1324,44 @@ step(function () {
 });
 
 step(function () {
+	/* "过渡末尾依旧瞬变" = 交接那一帧，球的最后一帧和圆点的第一帧长得不一样。
+	 * 这条直接量两边的关键视觉属性，必须一致（滤镜/底色/阴影），否则就等于"啪"地换了块东西。 */
+	var T = window.__TTN__, ball = q('ttn-ball'), dot = q('ttn-dot');
+	T.hudState.hidden = false;
+	T.hudState.ball = true; T.setHud(true); T._finishHudAnim();
+	T.hudState.ball = false; T._hudAnimate(false); T._finishHudAnim();
+	function vis(el) {
+		var cs = getComputedStyle(el);
+		return {
+			filter: cs.filter,
+			bg: cs.backgroundColor,
+			shadow: cs.boxShadow,
+			hasGlow: !!el.querySelector('.hover-glow'),
+			glowRule: (function () {
+				var css = '';
+				document.querySelectorAll('style').forEach(function (st) {
+					if (st.textContent && st.textContent.indexOf('#ttn-ball') >= 0) css += st.textContent;
+				});
+				var id = el.id === 'ttn-dot' ? '#ttn-dot' : '#ttn-ball';
+				return css.indexOf(id + ' .hover-glow{') >= 0 && css.indexOf(id + ':hover .hover-glow{') >= 0;
+			})()
+	};
+	}
+	var vb = vis(ball), vd = vis(dot);
+	window.__PARITY__ = { ball: vb, dot: vd };
+	var diffs = [];
+	if (vb.filter !== vd.filter) diffs.push('filter: ' + vb.filter + ' vs ' + vd.filter);
+	if (vb.bg !== vd.bg) diffs.push('bg: ' + vb.bg + ' vs ' + vd.bg);
+	if (vb.shadow !== vd.shadow) diffs.push('shadow: ' + vb.shadow + ' vs ' + vd.shadow);
+	if (!vb.hasGlow || !vd.hasGlow) diffs.push('hover-glow 子元素: ball=' + vb.hasGlow + ' dot=' + vd.hasGlow);
+	if (!vb.glowRule || !vd.glowRule) diffs.push('hover-glow 规则: ball=' + vb.glowRule + ' dot=' + vd.glowRule);
+	ck('handoff-visual-parity', diffs.length === 0,
+		'交接那一帧球和圆点的视觉必须一致（否则末尾瞬变）: ' + (diffs.join(' ; ') || 'ok') +
+		' || ' + JSON.stringify(window.__PARITY__).slice(0, 200));
+	T.hudState.ball = false; T.setHud(true); T._finishHudAnim(); T.setSmoothing(true);
+});
+
+step(function () {
 	var D = window.__DOT_ON__ || {};
 	ck('dot-glow-when-on', D.on === true, '优化开时面板左上角圆点也要"激活"（.on）: ' + JSON.stringify(D));
 	ck('dot-glow-off-when-disabled', D.off === false, '优化关时圆点必须恢复"只有颜色"', String(D.off));

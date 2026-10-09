@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.4.4
+// @version      0.4.5
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,11 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.4.4';
+	const VERSION = '0.4.5';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.4.5', '修"过渡末尾依旧瞬变"：交接那一帧球的最终观感和圆点不一致 —— 球带着"落地阴影 + hover 外发光/内描边"消失，而圆点没有 → 换的一瞬间掉一块光。现在：① **圆的点也加 .hover-glow** 并用同一套 hover 规则（悬浮状态跨交接不丢）；② 变形时把球的 **box-shadow 一起插值**到"圆点当前的样子"，落终态时把阴影也写成圆点的阴影（收起时再清掉内联，交还状态规则）',
+			'新增回归 `handoff-visual-parity`：交接前后直接对比球与圆点的 filter / 底色 / 阴影 / hover-glow 接线，必须一致 —— 这条能直接抓住任何"末尾闪一下"'],
 		['0.4.4', 'hover 改成"**边缘与外围更亮**"（用户："边缘以及外部发光太弱，比中心弱"）：内部渐变改成中心微弱、末端最强（.10 → .50），再加一圈 inset 白色描边（边缘发亮）+ 外层柔和光晕（`0 0 20px -3px currentColor`），整体亮度仍只"相对"加一点点',
 			'修"双球转变结束时会闪"+"连点 bug 连篇"：根因是交接用了 90ms **交叉淡接** —— 两者同时绘制 → 亮度叠加 = 闪，而且那个延迟定时器会和下一次动画抢状态。现在球的最后一帧已经插值成和圆点同色同尺寸，改成**原子交换**（同一帧隐藏球/显示圆点），既没闪也没有时序竞争；连点只走"强化 + token"这一条路径'],
 		['0.4.3', '修"点击和悬浮的混乱 + 几次点击/拖动/悬浮之后悬浮直接瞬变"（用户实测的卡死 bug）：根因是拖动时往**内联**写 `transition:none`，只有 pointerup 会还原 —— 指针捕获一丢/松手在元素外就**永久卡住**，之后所有 hover 都变瞬变。现在：① 拖动状态改用 class（`.ttn-drag`）；② **document 级 pointerup/pointercancel 兜底**（松手在元素外也能结束）；③ 4 秒看门狗 + 每次刷新巡检（不在拖动时清掉泄漏的 class/内联 transition/标志）；④ 彻底不再有任何内联 transition',
@@ -1973,8 +1975,7 @@
 		'#ttn-dot{position:absolute;left:7px;top:7px;width:24px;height:24px;box-sizing:border-box;',
 		'border-radius:50%;background:#8b93a1;box-shadow:0 0 7px currentColor;cursor:pointer;',
 		'transition:transform .14s ease,box-shadow .3s ease,background .4s ease,color .4s ease}',
-		/* hover 不许改尺寸：交接时圆点必须和球的最后一帧同尺寸，改 scale 就会"先到位再变大一点" */
-		'#ttn-dot:hover{box-shadow:0 0 15px currentColor,0 0 0 1px rgba(255,255,255,.22) inset}',
+		/* hover 不许改尺寸（交接要求同尺寸）；发光/描边在下面统一给（球和圆点同一套） */
 		
 		'#ttn-dot::after{content:"";position:absolute;left:50%;top:50%;width:10px;height:3px;',
 		'background:rgba(0,0,0,.62);border-radius:2px;transform:translate(-50%,-50%)}',
@@ -2120,6 +2121,11 @@
 		/* 按下**不做**任何状态：点击不是一种观感（用户明确要求），
 		 * 而且它还会和 hover 抢层叠、和变形抢尺寸。拖动本身有指针跟随就够了。 */
 		/* 小圆点与大球同一套语义（同样用 .halo 子元素 + JS 动画） */
+		'#ttn-dot .hover-glow{position:absolute;left:-1px;top:-1px;right:-1px;bottom:-1px;border-radius:50%;',
+		'pointer-events:none;opacity:0;transition:opacity .18s ease;',
+		'background:radial-gradient(circle,rgba(255,255,255,.10) 0%,rgba(255,255,255,.06) 52%,rgba(255,255,255,.34) 88%,rgba(255,255,255,.5) 100%)}',
+		'#ttn-dot:hover .hover-glow{opacity:.62}',
+		'#ttn-dot:hover{box-shadow:0 0 7px currentColor,0 0 18px -3px currentColor,inset 0 0 0 1px rgba(255,255,255,.3)}',
 		'#ttn-dot .halo{position:absolute;left:-1px;top:-1px;right:-1px;bottom:-1px;border-radius:50%;',
 		'pointer-events:none;opacity:0;',
 		'background:radial-gradient(circle,rgba(255,255,255,.6) 0%,rgba(255,255,255,.2) 48%,rgba(255,255,255,0) 72%)}',
@@ -2772,6 +2778,9 @@
 		const ballGlow = document.createElement('span');
 		ballGlow.className = 'hover-glow';
 		hudBall.appendChild(ballGlow);
+		const dotGlow = document.createElement('span');
+		dotGlow.className = 'hover-glow';
+		hud.querySelector('#ttn-dot').appendChild(dotGlow);
 		const dotHalo = document.createElement('span');
 		dotHalo.className = 'halo';
 		hud.querySelector('#ttn-dot').appendChild(dotHalo);
@@ -3437,9 +3446,18 @@
 			try { curBg = getComputedStyle(hudBall).backgroundColor || BALL_SURFACE; } catch (e) {}
 			const wantBg = collapse ? BALL_SURFACE : (hudTint.last || curBg);
 			const bgEnd = fromScratch ? wantBg : curBg;   // 反向时按当前色接着走
+			/* 阴影也要对齐圆点：交接那一帧球的阴影必须已经等于圆点的阴影，
+			 * 否则球带着落地阴影消失、圆点没有 → "过渡末尾闪一下"。 */
+			let curShadow = '', dotShadow = '';
+			try {
+				curShadow = getComputedStyle(hudBall).boxShadow || '';
+				if (dotMorph) dotShadow = getComputedStyle(dotMorph).boxShadow || '';
+			} catch (e) {}
+			const shadowEnd = collapse ? curShadow : (dotShadow || curShadow);
+			const shadowFrom = collapse ? (dotShadow || curShadow) : curShadow;
 			hudAnim.anims.push(animAt(hudBall, [
-				{ transform: curBallT, backgroundColor: fromScratch ? curBg : curBg },
-				{ transform: ballEnd, backgroundColor: bgEnd }
+				{ transform: curBallT, backgroundColor: fromScratch ? curBg : curBg, boxShadow: shadowFrom },
+				{ transform: ballEnd, backgroundColor: bgEnd, boxShadow: shadowEnd }
 			], DUR));
 			/* 球里的文字/数字也走 WAAPI（别指望 CSS 过渡，见函数头注释） */
 			const rows = hudBall.querySelectorAll('.t, .m, .b');
@@ -3489,6 +3507,13 @@
 				(collapsed ? '' : ' scale(' + s0 + ')');
 			hudBall.style.opacity = '1';
 			hudBall.style.backgroundColor = collapsed ? BALL_SURFACE : (hudTint.last || BALL_SURFACE);
+			if (collapsed) {
+				hudBall.style.boxShadow = '';            // 收起后交还给 .on/:not(.on) 规则
+			} else {
+				/* 展开后球是"圆点的替身"：阴影也必须和圆点一模一样，否则交接那一帧掉一块光 */
+				try { hudBall.style.boxShadow = dotEl ? (getComputedStyle(dotEl).boxShadow || '') : ''; }
+				catch (e) { hudBall.style.boxShadow = ''; }
+			}
 			hudBall.classList.toggle('morph', !collapsed);
 			const rows = hudBall.querySelectorAll('.t, .m, .b');
 			Array.prototype.forEach.call(rows, function (el) {
