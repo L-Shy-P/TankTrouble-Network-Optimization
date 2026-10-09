@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.4.0
+// @version      0.4.1
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,12 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.4.0';
+	const VERSION = '0.4.1';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.4.1', '修"各种瞬变"：展开/收起变形改成 **Web Animations API（JS）驱动** —— CSS 过渡在"元素刚从 display:none 变可见""动画覆盖过渡"这类情况下会不创建/不推进（实测：无头环境里过渡从头到尾一动不动），表现就是瞬变。现在球的缩放、面板的缩放/淡入、球里文字的淡出都走 WAAPI：从"当前实时值"起步（中途反向连续）、终点同时写进内联样式（动画一撤就是终点，绝不跳）',
+			'修"鼠标悬浮大球没有效果"：`#ttn-ball:hover` 与 `#ttn-ball.on` 特异度相同(1,1,0)，谁在后面谁赢 —— 而 hover 写在前面 → **被 .on/:not(.on) 完全覆盖，悬浮从来没生效过**。现在改成 `.on:hover` / `:not(.on):hover`（1,2,0）并放在状态规则之后双保险',
+			'新增两条硬回归：① 把变形动画**钉到 50%**，computed 的 scale 必须严格在起点与终点之间（"有动画"不等于"在插值"，这个项目踩过两次）；② 按 (特异度, 顺序) 真算一遍层叠，hover 规则必须赢'],
 		['0.4.0', '展开/收起改成**无缝变形**（用户要求）：不再是"大球淡出 + 圆点从 0 长大"两个独立动画，而是**大球原地从 66px 缩到 24px**、面板在它周围长大，圆点整段过程中隐藏、最后一帧在同一位置同一尺寸上交接（球心本来就严格落在圆点圆心上，所以是像素级对齐）；收起时完全反向：圆点立刻让位，球从"圆点大小"长回悬浮球',
 			'变形期间球内的文字/数字会淡出（交接时球就是一块纯色圆盘，和圆点一致），收起时长回来',
 			'修掉一个隐秘 bug：**在展开/收起动画没结束前拖动面板**会改锚点，而变形是按锚点算的 → 球和圆点会错位。现在只要一按下就先把变形落终态（`finishHudAnim()`），再正常拖动；同时修掉"落终态时 hudAnimating 还没清 → 收尾回弹被跳过"的顺序问题（vm 测试当场抓到的真回归）',
@@ -2078,8 +2081,6 @@
 		'font:9px/1.1 "Segoe UI",system-ui,"Microsoft YaHei",sans-serif;font-variant-numeric:tabular-nums;',
 		/* filter 必须一起过渡：hover 改的就是 brightness()，漏了它那一下就是硬切 */
 		'transition:filter .3s ease,border-color .4s ease,box-shadow .4s ease,color .4s ease,opacity .18s ease,transform .28s cubic-bezier(.2,.8,.3,1)}',
-		'#ttn-ball:hover{filter:saturate(1) brightness(1.42);',
-		'box-shadow:0 12px 32px rgba(0,0,0,.6),0 0 0 3px rgba(255,255,255,.2),0 0 24px -1px currentColor}',
 		'#ttn-ball:active{filter:saturate(1) brightness(1.05)}',
 		/* 开/关的语义：关=稍暗但保留颜色；开=提亮（和 hover 同一种"更亮"）+ 黑投影减弱。
 		 * 光晕用**真实子元素** .halo，动画全部由 JS（Web Animations API）驱动 ——
@@ -2089,6 +2090,13 @@
 		'background:radial-gradient(circle,rgba(255,255,255,.55) 0%,rgba(255,255,255,.18) 45%,rgba(255,255,255,0) 74%)}',
 		'#ttn-ball:not(.on){filter:saturate(.85) brightness(.9);box-shadow:0 7px 20px rgba(0,0,0,.5)}',
 		'#ttn-ball.on{filter:saturate(1) brightness(1.18);box-shadow:0 6px 18px rgba(0,0,0,.42),0 0 12px -2px currentColor}',
+		/* hover / active 必须写在状态规则**之后**并**提高特异度**：
+		 * `#ttn-ball:hover` 与 `#ttn-ball.on` 特异度相同(1,1,0)，谁在后面谁赢 ——
+		 * 之前 hover 在前面，于是被 `.on`/`:not(.on)` 完全覆盖，鼠标悬浮毫无反应。
+		 * 现在用 `.on:hover` / `:not(.on):hover`（1,2,0）双保险。 */
+		'#ttn-ball.on:hover,#ttn-ball:not(.on):hover{filter:saturate(1) brightness(1.42);',
+		'box-shadow:0 12px 32px rgba(0,0,0,.6),0 0 0 3px rgba(255,255,255,.22),0 0 24px -1px currentColor}',
+		'#ttn-ball.on:active,#ttn-ball:not(.on):active{filter:saturate(1) brightness(1.05)}',
 		/* 小圆点与大球同一套语义（同样用 .halo 子元素 + JS 动画） */
 		'#ttn-dot .halo{position:absolute;left:-1px;top:-1px;right:-1px;bottom:-1px;border-radius:50%;',
 		'pointer-events:none;opacity:0;',
@@ -3250,18 +3258,50 @@
 	}
 
 	/**
-	 * 收起/展开动画（可反向）。
+	 * 变形动画（展开/收起，可反向）。
 	 *
-	 * 要点：只有从"静止状态"开始时才摆起始态；如果动画途中被再次点击，
-	 * 就只改目标值 —— 让 CSS 从"当前实时值"插值过去，这样才不会重播/跳变。
-	 * 每次调用递增 token，过期定时器直接作废。
+	 * 为什么不用 CSS 过渡：过渡在"元素刚从 display:none 变可见""动画覆盖过渡"这些
+	 * 情况下会**不创建/不推进**，表现就是"瞬变"（这个项目已经在开关光晕上踩过一次，
+	 * 用户这次报的又是"各种瞬变"）。所以整段变形改成 **Web Animations API**：
+	 *   · 从"当前实时值"起步 → 中途反向也连续、不重播；
+	 *   · 用真实关键帧，可以"钉到 50%"直接验证属性到底有没有在插值；
+	 *   · 终点同时写进内联样式，动画一撤就是终点，绝不会跳。
 	 */
-	const hudAnim = { phase: 'idle', token: 0, timer: null };
+	const hudAnim = { phase: 'idle', token: 0, timer: null, anims: [] };
+
+	function animAt(el, frames, dur, easing) {
+		if (!el || typeof el.animate !== 'function') return null;
+		try {
+			return el.animate(frames, {
+				duration: dur, easing: easing || 'cubic-bezier(.2,.8,.3,1)', fill: 'both'
+			});
+		} catch (e) { return null; }
+	}
+
+	/** 读"当前实际变换"，转成 translate+scale 字符串（中途反向的起点） */
+	function currentTransform(el, fallback) {
+		try {
+			const m = getComputedStyle(el).transform;
+			if (!m || m === 'none') return fallback;
+			const p = /matrix\(([^)]+)\)/.exec(m);
+			if (p) {
+				const v = p[1].split(',').map(parseFloat);
+				return 'translate(' + v[4] + 'px,' + v[5] + 'px) scale(' + v[0] + ')';
+			}
+			return m;
+		} catch (e) { return fallback; }
+	}
+
+	function cancelMorph() {
+		(hudAnim.anims || []).forEach(function (a) { try { a.cancel(); } catch (e) {} });
+		hudAnim.anims = [];
+	}
 
 	function hudAnimate(collapse) {
 		if (!hud) return;
 		const token = ++hudAnim.token;
 		if (hudAnim.timer) { clearTimeout(hudAnim.timer); hudAnim.timer = null; }
+		cancelMorph();
 		cancelGlide();                           // 回弹让位给展开/收起动画（从当前位置接着走）
 		closeLangMenu();                         // 菜单挂在面板外，收起来时必须一起关
 		hideTip();
@@ -3275,79 +3315,82 @@
 		const c = dotCenterRel();
 		const from = { x: hudState.x, y: hudState.y };   // 永远从"当前真实位置"起步
 		const fromBall = ballAtOf(from.x, from.y);
-		const tPanel = function (p, scale) {
+		const tPose = function (p, scale) {
 			return 'translate(' + Math.round(p.x) + 'px,' + Math.round(p.y) + 'px)' +
 				(scale === 1 ? '' : ' scale(' + scale + ')');
 		};
-		const tBall = function (p, scale) {
-			return 'translate(' + Math.round(p.x) + 'px,' + Math.round(p.y) + 'px)' +
-				(scale === 1 ? '' : ' scale(' + scale + ')');
-		};
+		const DUR = 300;
 
 		/* 无缝变形（用户要求）：展开时**球保持可见**、原地从 66px 缩到圆点大小，
-		 * 面板在它周围长大；圆点在整个过程中**隐藏**，直到最后一帧和球同位置同尺寸交接。
-		 * 这样就不会出现"球消失 + 圆点从 0 长大"两个独立动画。收起时完全反向。 */
+		 * 面板在它周围长大；圆点整段**隐藏**，最后一帧在同一位置同一尺寸上交接。
+		 * 收起时完全反向（球从圆点大小长回去）。球心本来就压在圆点圆心上，所以只改 scale。 */
 		const dotMorph = hud.querySelector('#ttn-dot');
-		if (fromScratch) {
-			// —— 从静止起步：摆好起始态并强制重排，之后才有过渡可言
-			hud.style.display = 'block';
-			hud.style.transformOrigin = Math.round(c.x) + 'px ' + Math.round(c.y) + 'px';
-			hud.style.transform = tPanel(from, collapse ? 1 : 0.03);
-			hud.style.opacity = collapse ? '1' : '0';
-			hud.style.transition = 'none';
-			if (hudBall) {
-				hudBall.style.display = 'flex';
-				hudBall.style.transformOrigin = '50% 50%';
-				// 展开：从"完整大球"起步；收起：从"圆点大小（就是圆点所在的那一点）"起步
-				hudBall.style.transform = tBall(fromBall, collapse ? s0 : 1);
-				hudBall.style.opacity = '1';                 // 全程可见（不再是淡出）
-				hudBall.classList.toggle('morph', !!collapse);   // 收起时它以纯色圆盘起步
-				hudBall.style.transition = 'none';
-			}
-			if (dotMorph) dotMorph.style.opacity = '0';      // 圆点让位给球
-			void hud.offsetWidth;
-			// 面板此刻已参与布局（scale 不影响 offsetWidth）→ 量真实尺寸。
-			// 展开结束后"边界该把面板推回到哪"要用它算，所以顺手更新一下。
-			hudCache.w = hud.offsetWidth || hudCache.w;
-			hudCache.h = hud.offsetHeight || hudCache.h;
-		}
+		const ballStart = tPose(fromBall, collapse ? s0 : 1);
+		const ballEnd = tPose(fromBall, collapse ? 1 : s0);
+		const panelStart = tPose(from, collapse ? 1 : 0.03);
+		const panelEnd = tPose(from, collapse ? 0.03 : 1);
+		const panelOpStart = collapse ? '1' : '0';
+		const panelOpEnd = collapse ? '0' : '1';
 
-		/* 目标锚点 = 当前锚点，动画期间一个像素都不挪。
-		 *
-		 * 设计（用户明确要求）：**面板左上角始终和悬浮球位置一一对应**。
-		 * 展开就是"在原位长大"——右下角的球就在右下角长大（一部分会伸到屏幕外），
-		 * 等展开结束、边界再把面板推回屏幕内（这一步走 hudGlide 回弹，不是瞬移）。
-		 * 绝不要"自动挑一个不会出屏的展开方向"：那会让面板跑离球的位置
-		 * （球在左下角却往左上角展开），看着就不是从球里长出来的。 */
-		const ta = { x: from.x, y: from.y };
-		const toBall = fromBall;
-
-		// —— 目标态（反向时 CSS 会从当前值平滑接上，不会重播）
-		hud.style.transition = 'transform .28s cubic-bezier(.2,.8,.3,1), opacity .2s ease';
-		if (hudBall) hudBall.style.transition = 'transform .28s cubic-bezier(.2,.8,.3,1), opacity .18s ease';
-		hud.style.transform = tPanel(ta, collapse ? 0.03 : 1);
-		hud.style.opacity = collapse ? '0' : '1';
+		/* display 不能动画，先让它生效（否则量不到尺寸、动画也看不到） */
+		hud.style.display = 'block';
+		hud.style.transformOrigin = Math.round(c.x) + 'px ' + Math.round(c.y) + 'px';
 		if (hudBall) {
-			// 展开 → 缩到圆点大小；收起 → 长大回悬浮球。始终可见、始终压在面板之上。
-			hudBall.style.transform = tBall(toBall, collapse ? 1 : s0);
-			hudBall.style.opacity = '1';
-			hudBall.classList.toggle('morph', !collapse);
+			hudBall.style.display = 'flex';
+			hudBall.style.transformOrigin = '50% 50%';
+			hudBall.style.opacity = '1';                    // 全程可见（不再是淡出）
+			hudBall.classList.toggle('morph', !collapse);   // 展开时文字淡出、收起时淡回
 		}
-		if (dotMorph) dotMorph.style.opacity = '0';
-		/* 插桩：给测试/排查留一份"这次变形从哪到哪"。起步值在同一次调用里就会被
-		 * 目标值覆盖（CSS 过渡接上），所以只能这样留证。 */
+		if (dotMorph) dotMorph.style.opacity = '0';         // 圆点让位给球，交接那一帧才归位
+		hudCache.w = hud.offsetWidth || hudCache.w;
+		hudCache.h = hud.offsetHeight || hudCache.h;
+
+		/* 终点先写进内联样式：动画只负责过程，动画一撤（或没建成）都不会跳 */
+		hud.style.transform = panelEnd;
+		hud.style.opacity = panelOpEnd;
+		if (hudBall) hudBall.style.transform = ballEnd;
+
+		/* 起点：从静止起步就用理论起点；反向则从"当前实时值"接上 */
+		const curPanelT = fromScratch ? panelStart : currentTransform(hud, panelStart);
+		const curBallT = fromScratch ? ballStart : currentTransform(hudBall, ballStart);
+		let curPanelO = panelOpStart;
+		if (!fromScratch) {
+			try { curPanelO = getComputedStyle(hud).opacity || panelOpStart; } catch (e) {}
+		}
+
+		hudAnim.anims = [];
+		hudAnim.anims.push(animAt(hud, [
+			{ transform: curPanelT, opacity: curPanelO },
+			{ transform: panelEnd, opacity: panelOpEnd }
+		], DUR));
+		if (hudBall) {
+			hudAnim.anims.push(animAt(hudBall, [
+				{ transform: curBallT }, { transform: ballEnd }
+			], DUR));
+			/* 球里的文字/数字也走 WAAPI（别指望 CSS 过渡，见函数头注释） */
+			const rows = hudBall.querySelectorAll('.t, .m, .b');
+			const rowTo = collapse ? 1 : 0;
+			Array.prototype.forEach.call(rows, function (el) {
+				let from0 = 1;
+				try { from0 = parseFloat(getComputedStyle(el).opacity) || 0; } catch (e) {}
+				const a = animAt(el, [{ opacity: from0 }, { opacity: rowTo }], collapse ? DUR : 200);
+				if (a) hudAnim.anims.push(a);
+			});
+		}
+
+		/* 插桩：给测试/排查留一份"这次从哪到哪" */
 		hudAnim.last = {
 			collapse: !!collapse, fromScratch: fromScratch,
 			startScale: collapse ? s0 : 1, endScale: collapse ? 1 : s0,
-			dotSize: DOT_SIZE, ballSize: B, at: now()
+			dotSize: DOT_SIZE, ballSize: B, dur: DUR, at: now()
 		};
-		hudAnim.timer = setTimeout(finishHudAnim, 300);
+		hudAnim.timer = setTimeout(finishHudAnim, DUR);
 	}
 
 	/**
-	 * 结束展开/收起动画（正常到时、或用户中途开始拖动时立刻调用）。
-	 * 之所以要能被"提前调用"：动画期间拖动面板会改锚点，而变形是按锚点算的 ——
-	 * 拖到一半就继续播下去必然错位，所以一碰就立刻落终态，把交接一次性做完。
+	 * 结束展开/收起动画（正常到时，或用户中途开始拖动时立刻调用）。
+	 * 之所以要能被提前调用：动画期间拖动面板会改锚点，而变形是按锚点算的 ——
+	 * 拖到一半继续播下去必然错位，所以一碰就立刻落终态，把交接一次性做完。
 	 */
 	function finishHudAnim() {
 		if (hudAnim.timer) { clearTimeout(hudAnim.timer); hudAnim.timer = null; }
@@ -3356,22 +3399,30 @@
 		hudAnim.phase = 'idle';
 		hudAnimating = false;
 		if (!hud) return;
+
 		const dotEl = hud.querySelector('#ttn-dot');
 		const collapsed = !!hudState.ball;
 		const ta = { x: hudState.x, y: hudState.y };
-		const bp2 = ballAtOf(ta.x, ta.y);
+		const bp = ballAtOf(ta.x, ta.y);
+		const s0 = DOT_SIZE / hudCache.BALL;
+
+		/* 先把终态写进内联样式，再撤动画 —— 撤的那一帧不会跳 */
+		hud.style.transform = 'translate(' + Math.round(ta.x) + 'px,' + Math.round(ta.y) + 'px)' +
+			(collapsed ? ' scale(0.03)' : '');
+		hud.style.opacity = collapsed ? '0' : '1';
 		if (hudBall) {
-			hudBall.style.transition = 'none';
-			hudBall.style.transform = 'translate(' + Math.round(bp2.x) + 'px,' + Math.round(bp2.y) +
-				'px)' + (collapsed ? '' : ' scale(' + (DOT_SIZE / hudCache.BALL) + ')');
+			hudBall.style.transform = 'translate(' + Math.round(bp.x) + 'px,' + Math.round(bp.y) + 'px)' +
+				(collapsed ? '' : ' scale(' + s0 + ')');
 			hudBall.style.opacity = '1';
 			hudBall.classList.toggle('morph', !collapsed);
-			void hudBall.offsetWidth;        // 先让"取消过渡 + 落终态"真正生效
-			hudBall.style.transition = '';   // 再恢复样式表里的过渡（否则 hover 就是硬切）
+			const rows = hudBall.querySelectorAll('.t, .m, .b');
+			Array.prototype.forEach.call(rows, function (el) {
+				el.style.opacity = collapsed ? '1' : '0';
+			});
 		}
+		cancelMorph();
 		if (dotEl) dotEl.style.opacity = '';   // 圆点归位：和球最后一帧重合，交接无缝
-		hud.style.transition = '';
-		hud.style.opacity = '';
+
 		applyHudVisibility(false);      // 动画自己已经管过 opacity 了
 		clampHud();
 		saveHudState();

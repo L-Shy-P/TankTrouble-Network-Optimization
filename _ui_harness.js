@@ -875,6 +875,137 @@ step(function () {
 });
 
 step(function () {
+	/* 用户实测"各种瞬变 + hover 没效果"。两条对应的硬回归：
+	 *   ① 变形（展开/收起）必须**真的在插值**：把真实动画 pause 到 50%，computed 的
+	 *      transform 必须既不是起点也不是终点（数 animate() 调用只能证明"有动画"，
+	 *      证明不了"在插值" —— 这个项目已经踩过一次）。
+	 *   ② hover 必须真的能赢层叠：`#ttn-ball:hover` 与 `#ttn-ball.on` 特异度相同，
+	 *      谁在后面谁赢；之前 hover 在前面 → 被完全覆盖 → 鼠标悬浮毫无反应。
+	 *      这里按 (特异度, 顺序) 真算一遍，谁声明生效就认谁。 */
+	var T = window.__TTN__;
+	T.hudState.hidden = false;
+	var ball = q('ttn-ball'), root = q('ttn-root'), dot = q('ttn-dot');
+
+	function scaleOf(str) {
+		str = String(str || '');
+		var m = /scale\(([\d.]+)\)/.exec(str);
+		if (m) return parseFloat(m[1]);
+		var mm = /matrix\(([^)]+)\)/.exec(str);          // computed transform 是矩阵形式
+		if (mm) return parseFloat(mm[1].split(',')[0]) || 0;
+		return 1;
+	}
+	function midPose(el, tag) {
+		var a = (el.getAnimations ? el.getAnimations() : []).filter(function (x) {
+			try {
+				var k = x.effect && x.effect.getKeyframes ? x.effect.getKeyframes() : [];
+				return k.length >= 2 && k.some(function (f) { return !!f.transform; });
+			} catch (e) { return false; }
+		})[0];
+		if (!a) return { tag: tag, err: 'no-anim' };
+		var kf = a.effect.getKeyframes();
+		var from = kf[0].transform, to = kf[kf.length - 1].transform;
+		try {
+			a.pause();
+			a.currentTime = (a.effect.getTiming().duration || 300) / 2;
+		} catch (e) { return { tag: tag, err: 'seek' }; }
+		var mid = getComputedStyle(el).transform;
+		try { a.cancel(); } catch (e) {}
+		return { tag: tag, from: from, to: to, mid: mid,
+			fromS: scaleOf(from), toS: scaleOf(to), midS: scaleOf(mid),
+			state: a.playState, ct: a.currentTime, kf: kf.length, fill: a.effect.getTiming().fill,
+			inline: String(el.style.transform || '') };
+	}
+
+	/* —— 展开方向（变大 + 变大回去都测） —— */
+	T.hudState.ball = true; T.setHud(true); T._finishHudAnim();
+	T.hudState.ball = false;
+	T.hudAnimate ? T.hudAnimate(false) : T._hudAnimate(false);
+	var expBall = midPose(ball, 'expand-ball');
+	var expRoot = midPose(root, 'expand-panel');
+
+	/* —— 收起方向 —— */
+	T._finishHudAnim();
+	T.hudState.ball = false; T.setHud(true); T._finishHudAnim();
+	T.hudState.ball = true;
+	T._hudAnimate(true);
+	var colBall = midPose(ball, 'collapse-ball');
+	var colRoot = midPose(root, 'collapse-panel');
+	window.__MORPHMID__ = { expBall: expBall, expRoot: expRoot, colBall: colBall, colRoot: colRoot };
+
+	function between(o, lo, hi, name) {
+		if (!o || o.err) return name + ':' + ((o && o.err) || 'missing');
+		var lo2 = Math.min(lo, hi), hi2 = Math.max(lo, hi);
+		if (o.midS >= hi2 - 1e-6 || o.midS <= lo2 + 1e-6) {
+			return name + ' 离散 mid=' + o.midS + ' (from ' + o.fromS + ' to ' + o.toS + ')';
+		}
+		return null;
+	}
+	var bads = [
+		between(expBall, 1, T.DOT_SIZE / T.hudCache.BALL, 'expand-ball'),
+		between(colBall, 1, T.DOT_SIZE / T.hudCache.BALL, 'collapse-ball')
+	].filter(Boolean);
+	ck('morph-really-interpolates', bads.length === 0,
+		'BALL=' + JSON.stringify([expBall, colBall]) + ' → 展开/收起时球的缩放必须真的在插值（钉 50% 既不是起点也不是终点）: ' +
+		(bads.join(' ; ') || 'ok'));
+
+	/* 面板：展开时 scale 0.03 → 1，钉一半也应该在中间 */
+	var panelBad = null;
+	if (expRoot && !expRoot.err) {
+		if (expRoot.midS <= 0.03 + 1e-6 || expRoot.midS >= 1 - 1e-6) {
+			panelBad = 'panel 离散 mid=' + expRoot.midS + ' (from ' + expRoot.fromS + ' to ' + expRoot.toS + ')';
+		}
+	} else {
+		panelBad = 'panel:' + ((expRoot && expRoot.err) || 'missing');
+	}
+	ck('morph-panel-really-interpolates', panelBad === null,
+		'PANEL=' + JSON.stringify(expRoot) + ' → 面板展开时的缩放必须真的在插值: ' + (panelBad || 'ok'));
+
+	/* —— hover 层叠判定 —— */
+	(function () {
+		var css = '';
+		document.querySelectorAll('style').forEach(function (el) {
+			if (el.textContent && el.textContent.indexOf('#ttn-ball') >= 0) css += el.textContent;
+		});
+		/* 收集所有含 filter/box-shadow 的 #ttn-ball 相关规则，按 (特异度, 顺序) 取赢家 */
+		var rules = [];
+		var re = /(#[^{}]*?)\{([^}]*)\}/g, m, order = 0;
+		while ((m = re.exec(css))) {
+			var sel = m[1].trim(), body = m[2];
+			if (sel.indexOf('#ttn-ball') < 0) continue;
+			if (!/filter:|box-shadow:/.test(body)) continue;
+			if (/\.halo/.test(sel)) continue;
+			if (/:active/.test(sel)) continue;      /* :active 不是悬浮态，别混进来 */
+			var sp = (sel.match(/#/g) || []).length * 100 +
+				((sel.match(/\./g) || []).length + (sel.match(/:/g) || []).length) * 10;
+			rules.push({ sel: sel, body: body, sp: sp, order: order++ });
+		}
+		function winnerProp(prop) {
+			var best = null;
+			rules.forEach(function (r) {
+				if (r.body.indexOf(prop + ':') < 0) return;
+				if (!best || r.sp > best.sp || (r.sp === best.sp && r.order > best.order)) best = r;
+			});
+			return best;
+		}
+		/* 悬浮态：把带 :hover 的规则也算进来一起比 —— 赢家必须是 hover 规则 */
+		var hoverRules = rules.filter(function (r) { return r.sel.indexOf(':hover') >= 0; });
+		var wFilter = winnerProp('filter'), wShadow = winnerProp('box-shadow');
+		window.__HOVERWIN__ = {
+			count: rules.length, hoverCount: hoverRules.length,
+			filterWinner: wFilter ? wFilter.sel : '?', shadowWinner: wShadow ? wShadow.sel : '?',
+			filterIsHover: !!(wFilter && wFilter.sel.indexOf(':hover') >= 0),
+			shadowIsHover: !!(wShadow && wShadow.sel.indexOf(':hover') >= 0)
+		};
+	})();
+	ck('hover-wins-the-cascade',
+		window.__HOVERWIN__.filterIsHover === true && window.__HOVERWIN__.shadowIsHover === true,
+		'hover 必须真的能赢层叠（同特异度时靠后 / 或提高特异度），否则鼠标悬浮毫无效果: ' +
+		JSON.stringify(window.__HOVERWIN__));
+
+	T.hudState.ball = false; T.setHud(true); T._finishHudAnim(); T.setSmoothing(true);
+});
+
+step(function () {
 	var A = window.__ANIM__ || {};
 	if (window.__ANIM_RESTORE__) window.__ANIM_RESTORE__();
 	ck('toggle-animations-really-run', (A.dot || 0) >= 3 && (A.ball || 0) >= 2 && (A.halo || 0) >= 3,
@@ -904,7 +1035,15 @@ step(function () {
 		var m = /brightness\(([\d.]+)\)/.exec(decl);
 		return m ? parseFloat(m[1]) : 0;
 	}
-	var onDecl = rule('#ttn-ball.on'), hoverDecl = rule('#ttn-ball:hover');
+	var onDecl = rule('#ttn-ball.on');
+	var hoverDecl = (function () {
+		/* 遍历所有规则，找"选择器含 :hover 且声明里有 filter"的那条（别在注释里找） */
+		var re2 = /([^{}]+)\{([^}]*)\}/g, m2, found = '';
+		while ((m2 = re2.exec(css))) {
+			if (m2[1].indexOf(':hover') >= 0 && m2[1].indexOf('#ttn-ball') >= 0 && /filter:/.test(m2[2])) { found = m2[2]; break; }
+		}
+		return found;
+	})();
 	var onShadow = /box-shadow:\s*0\s+[\d.]+px\s+([\d.]+)px\s+rgba\(0,\s*0,\s*0,\s*\.(\d+)\)/.exec(onDecl);
 	var r = {
 		onShadowBlur: onShadow ? parseFloat(onShadow[1]) : 0,
@@ -1131,9 +1270,12 @@ step(function () {
 		'悬浮球的描边颜色必须有过渡');
 	ck('transition-status-row', /#ttn-status\{[^}]*transition:max-height/.test(css),
 		'"状态"行的收放必须有过渡（不能把面板啪地撑高）');
+	/* hover 规则现在写成 `#ttn-ball.on:hover,#ttn-ball:not(.on):hover{...}`
+	 * （提高特异度才不会被 .on/:not(.on) 覆盖），所以别死盯 `#ttn-ball:hover` 这一种写法。 */
+	var ballHoverRule = (css.match(/#ttn-ball[^{}]{0,80}:hover\s*[^{}]{0,60}\{[^}]{0,80}/) || [''])[0];
 	ck('hover-rules', /#ttn-dot:hover/.test(css) && /\.ttn-btn:hover/.test(css) &&
-		/#ttn-ball:hover/.test(css) && /#ttn-head:hover/.test(css),
-		'鼠标悬浮动画：圆点 / 按钮 / 悬浮球 / 标题栏');
+		!!ballHoverRule && /#ttn-head:hover/.test(css),
+		'鼠标悬浮动画：圆点 / 按钮 / 悬浮球 / 标题栏 | 球 hover 规则=' + (ballHoverRule || '缺失'));
 	/* 用户实测："鼠标悬浮在悬浮球上时，状态瞬间变化" —— 因为 hover 改了 filter（亮度），
 	 * 而过渡列表里没有 filter。这里做结构性检查：hover/active 改的每个属性都必须在过渡列表里。 */
 	var cssNoMedia = (function (src) {

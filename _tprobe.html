@@ -1,0 +1,15 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>t0</title></head><body>
+<div id="x" style="width:50px;height:50px;background:#4ade80;opacity:0;transition:opacity .4s linear"></div>
+<div id="y" style="width:50px;height:50px;background:#f87171;transform:scale(1);transition:transform .4s linear"></div>
+<script>
+var log = [];
+setTimeout(function () {
+  var x = document.getElementById('x'), y = document.getElementById('y');
+  x.style.opacity = '1';
+  y.style.transform = 'scale(0.25)';
+  log.push('t0 opacity=' + getComputedStyle(x).opacity + ' scale=' + getComputedStyle(y).transform);
+  setTimeout(function () { log.push('t200 opacity=' + getComputedStyle(x).opacity + ' scale=' + getComputedStyle(y).transform); }, 200);
+  setTimeout(function () { log.push('t500 opacity=' + getComputedStyle(x).opacity + ' scale=' + getComputedStyle(y).transform); document.title = log.join(' ;; '); }, 500);
+}, 300);
+</script>
+</body></html>
