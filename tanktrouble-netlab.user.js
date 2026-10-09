@@ -1,9 +1,17 @@
 // ==UserScript==
-// @name         TankTrouble NetLab — 卡顿诊断 / 瞬移定位
-// @namespace    tt.netlab
-// @version      0.3.8
-// @description  诊断 TankTrouble 网页版的"瞬移"根因：① 抓局内 WebSocket 协议(_typeId)；② 测量帧间隔卡顿与"补发洪流"(TCP 队头阻塞特征)；③ 定位本地坦克坐标被服务端修正的调用栈。纯观测，不改动任何游戏数据。
-// @author       you
+// @name         TankTrouble Network Optimization
+// @name:zh-CN   TankTrouble 网络优化
+// @name:ja      TankTrouble ネットワーク最適化
+// @namespace    tt.network.optimization
+// @version      0.3.9
+// @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
+// @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
+// @author       L-Shy-P
+// @license      MIT
+// @homepageURL  https://github.com/L-Shy-P/TankTrouble-Network-Optimization
+// @supportURL   https://github.com/L-Shy-P/TankTrouble-Network-Optimization/issues
+// @updateURL    https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js
+// @downloadURL  https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js
 // @match        *://tanktrouble.com/*
 // @match        *://*.tanktrouble.com/*
 // @run-at       document-start
@@ -12,21 +20,17 @@
 
 /*
  * 用法
- *   1. 安装后打开 https://tanktrouble.com/game ，正常进一局对抗，玩 2~3 分钟。
- *   2. 左上角 HUD 会实时显示抖动情况。Ctrl+Shift+L 隐藏/显示。
- *   3. 玩完按 Ctrl+Shift+E 导出报告（同时复制到剪贴板）。
- *   4. 按 Ctrl+Shift+P 或跑 __TTN__.probeRegions(30) 可以多轮探测并给 7 个区域排队，
- *      换梯子节点/协议后重跑一次对比 —— 用来替代"连好/没连好"的玄学。
- *   5. 控制台可用 window.__TTN__：report() / export() / conns / tankWatch / probeRegions()
- *   6. 平滑默认开着：Ctrl+Shift+S 可即时开关；__TTN__.smoothing 可细调
- *      （例如只想平滑对手：__TTN__.smoothing.localPosition = false）
- *
- * 三个阶段各自要回答的问题
- *   [WS]   局内是不是文本 JSON + _typeId？有哪些 typeId、各自频率/大小/字段？
- *   [GAP]  卡顿是不是"长时间静默 + 之后一坨帧挤在一起到达"？——这是 TCP 队头阻塞的确凿特征，
- *          如果成立，说明"按键事件丢失"不是主因（TCP 不会丢单个事件，只会整体延后）。
- *   [TANK] 本地坦克的 x/y 每秒被谁写多少次、单次写入的最大跳变多少、跳变时调用栈是什么？
- *          拿到这个栈，第 2 阶段就能精确地只平滑"服务端修正"那一条路径。
+ *   1. 装好后打开 https://tanktrouble.com/game 正常进一局，左上角会出现面板：
+ *      线路 / 实时延迟 / 平均延迟 / 最大延迟 / 小抖动 / 稳定度 / 优化状态。
+ *   2. 点左上角圆点 → 收起成悬浮球（显示 平均 / 实时延迟 / 稳定度）；点球 → 展开。
+ *      拖标题栏或球本身可移动（带惯性）。
+ *   3. Ctrl+Shift+S 或面板里的 ⚡ 开关网络优化，可实时 A/B 对比；
+ *      Ctrl+Shift+L 隐藏/显示 HUD；Ctrl+Shift+E 导出诊断报告（同时进剪贴板）。
+ *   4. 面板里可选 10 国语言；位置 / 语言 / 开关 / 收起状态都会缓存。
+ *   5. 控制台可用 window.__TTN__：report() / export() / conns / probeRegions(30) /
+ *      langs / setLang('ja') / motion / setSmoothing(false) 等。
+ *   6. 优化默认只动"画面"：游戏逻辑、物理、服务端校验全程用真值；自己的坦克以本地为准。
+ *      想细调：__TTN__.smoothing.renderSmooth / localAuthority / deadReckon ...
  */
 
 (function () {
@@ -34,9 +38,11 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.3.8';
+	const VERSION = '0.3.9';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.3.9', '元数据头部对齐正式版：@name / @description（中英）/ @author / @license MIT / @homepageURL / @supportURL，并补上 **@updateURL / @downloadURL** → 装了这个版本之后，油猴会自动跟着仓库 main 分支更新',
+			'用法注释块更新成"显示 + 优化"的现状（收起成球、⚡ 开关、10 国语言、缓存项）'],
 		['0.3.8', '修掉"开关时小悬浮球状态瞬变"：呼吸关键帧动了 opacity，而**动画会覆盖过渡** → 开关那一下成了瞬间切换（实测连 transitionrun 事件都不来）。开关动画现在完全由 **Web Animations API（JS）** 驱动：明确地从"旧观感"播到"新观感"，光晕也改成真实子元素 .halo，淡入淡出与呼吸循环都交给 JS，周期/强度仍随延迟变化',
 			'新增回归：用 **Element.animate() 的调用次数**证明"开关真的播了动画"（无头环境里 CSS 过渡不推进、也收不到 transitionrun，不能当判据）',
 			'随附：仓库开源（README 只放多语言介绍，安装教程按语言分文件；`docs/TECHNICAL.zh.md` 记录全部实测结论与踩坑）'],
