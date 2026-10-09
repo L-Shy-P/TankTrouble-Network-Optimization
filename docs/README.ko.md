@@ -1,5 +1,8 @@
 # 🇰🇷 TankTrouble 네트워크 최적화
 
+**TankTrouble에서 **한국어**를 보내고 싶으신가요? 다국어 채팅 확장을 만들었습니다! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
+
+
 ![TankTrouble 네트워크 최적화](img/ko.png)
 
 
@@ -30,4 +33,3 @@
 
 <p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · <b>🇰🇷 한국어</b> · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md)</sub></p>
 
-> TankTrouble에서 **한국어**를 보내고 싶으신가요? 다국어 채팅 확장을 만들었습니다! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock

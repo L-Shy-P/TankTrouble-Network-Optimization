@@ -1,5 +1,8 @@
 # 🇯🇵 TankTrouble ネットワーク最適化
 
+**TankTrouble で **日本語** を送りたい？多言語チャット拡張を作りました！👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
+
+
 ![TankTrouble ネットワーク最適化](img/ja.png)
 
 
@@ -30,4 +33,3 @@
 
 <p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · <b>🇯🇵 日本語</b> · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md)</sub></p>
 
-> TankTrouble で **日本語** を送りたい？多言語チャット拡張を作りました！👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock

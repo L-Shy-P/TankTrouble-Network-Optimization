@@ -1,5 +1,8 @@
 # 🇷🇺 TankTrouble — оптимизация сети
 
+**Хотите писать **по-русски** в TankTrouble? Я сделал многоязычное расширение для чата! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
+
+
 ![TankTrouble — оптимизация сети](img/ru.png)
 
 
@@ -30,4 +33,3 @@
 
 <p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · <b>🇷🇺 Русский</b> · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md)</sub></p>
 
-> Хотите писать **по-русски** в TankTrouble? Я сделал многоязычное расширение для чата! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock

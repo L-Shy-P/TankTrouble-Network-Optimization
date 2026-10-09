@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.4.8
+// @version      0.4.9
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,11 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.4.8';
+	const VERSION = '0.4.9';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.4.9', '修"鼠标悬浮着过渡时发光状态会瞬变"：内部发光 (.hover-glow) 跨交接也冻结 —— 球是 hover 状态、而圆点在交接前不算 hovered，于是它会从 0 淡入。现在交接时把圆点的 .hover-glow 内联成球当前的实际值（内联不会被 :hover 规则盖过），220ms 后清掉交还 CSS；收起方向反之',
+			'文档：英文截图直接放到主页顶部（不再只在折叠块里），各语言截图裁掉全部空白（content-crop），页内推广句从"置底引用"改成**第一行正文**（正常字重、非灰色小字）'],
 		['0.4.8', '修"过渡结束后才出现光晕"（用户实测）：变形时阴影的**终点**以前取的是圆点的阴影，而圆点被球挡着不算 hovered → 取到"未悬浮"那份 → 变形过程中 hover 的外发光/内描边被插值抹掉、到终点才回来。现在终点取**球自己当前的**阴影（含 hover 状态），整个变形过程光晕不变（两边配方本来就共用）',
 			'仓库文档：10 国语言介绍各自配上"悬浮球 + 面板"的对应语言截图（主页用英文截图），非英文页面加一句多语言聊天扩展开源项目 TankTrouble-Chat-Unblock 的推广链接'],
 		['0.4.7', '三处交接细节（用户实测）：① **横线改成过程中出现** —— 球自己也带一根（尺寸按最终缩放反算，看起来与圆点一样大），随 `.morph` 在 180ms 内淡入，位移结束时它早就位，不再"落定后才冒出来"；② **阴影按"悬浮感知"冻结** —— 以前读的是圆点的阴影，而圆点被球挡着**不算 hovered**，于是取到"未悬浮"那份 → 交接后圆点被 hover → 光晕细微突变。现在冻结**球自己当前**的阴影；③ **呼吸相位对齐** —— 交接时把圆点光晕循环的 `currentTime` 设成球的，内外光晕明暗连续',
@@ -3565,6 +3567,39 @@
 		 * 而且那个延迟定时器会和"连点"的下一次动画抢状态（连点 bug 连篇）。
 		 * 球的最后一帧已经插值成和圆点同色同尺寸，直接换没有任何可见跳变。 */
 		if (dotEl) dotEl.style.opacity = '';
+		/* 内部发光（.hover-glow）跨交接冻结：球是 hover 状态、圆点交接前不算 hovered，
+		 * 于是圆点的 .hover-glow 会从 0 淡入 → 用户看到的"悬浮时发光瞬变"。
+		 * 把圆点的 .hover-glow 内联成球当前的实际值（内联不会被 :hover 规则盖过），
+		 * 200ms 后清掉，交还给 CSS（此时 :hover 已生效，视觉无变化）。 */
+		try {
+			const bGlow = hudBall && hudBall.querySelector('.hover-glow');
+			const dGlow = dotEl && dotEl.querySelector('.hover-glow');
+			if (bGlow && dGlow) {
+				const want = cssOf(bGlow, 'opacity');
+				if (want) {
+					dGlow.style.opacity = want;
+					if (hudAnim.glowTimer) clearTimeout(hudAnim.glowTimer);
+					hudAnim.glowTimer = setTimeout(function () {
+						hudAnim.glowTimer = null;
+						if (dGlow) dGlow.style.opacity = '';
+					}, 220);
+				}
+			}
+			/* 收起方向：球接过圆点的发光值 */
+			const bGlow2 = hudBall && hudBall.querySelector('.hover-glow');
+			const dGlow2 = dotEl && dotEl.querySelector('.hover-glow');
+			if (bGlow2 && dGlow2 && collapsed) {
+				const want2 = cssOf(dGlow2, 'opacity');
+				if (want2) {
+					bGlow2.style.opacity = want2;
+					if (hudAnim.glowTimer2) clearTimeout(hudAnim.glowTimer2);
+					hudAnim.glowTimer2 = setTimeout(function () {
+						hudAnim.glowTimer2 = null;
+						if (bGlow2) bGlow2.style.opacity = '';
+					}, 220);
+				}
+			}
+		} catch (e) {}
 		/* 呼吸相位对齐：两个循环周期相同，但启动时刻不同 → 交接那一帧内圈光晕明暗可能不同。
 		 * 直接把圆点的循环 currentTime 设成球的，换过去就是同一个相位。 */
 		try {

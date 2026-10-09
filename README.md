@@ -14,6 +14,8 @@
 
 ---
 
+<img src="docs/img/en.png" width="560" alt="TankTrouble Network Optimization — panel and floating ball">
+
 ## 🌐 Languages · 多语言
 
 | | Read | Install |
@@ -65,6 +67,8 @@ The optimization only changes *what you see*: the position is smoothed at render
 <details>
 <summary><b>🇨🇳 中文</b> — TankTrouble 网络优化</summary>
 
+**想要在 TankTrouble 里发送 **中文** 吗？我做了一款多语言聊天扩展！👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
+
 <img src="docs/img/zh.png" width="440" alt="TankTrouble 网络优化">
 
 给 **tanktrouble.com** 写的油猴脚本：把你这局的网络情况如实显示出来，并把 TCP 队头阻塞造成的「僵住 → 瞬移」抹平成滑行。
@@ -75,12 +79,13 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 👉 **[安装教程](docs/install/zh.md)** · [中文](docs/README.zh.md)
 
-> 想要在 TankTrouble 里发送 **中文** 吗？我做了一款多语言聊天扩展！👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
 
 </details>
 
 <details>
 <summary><b>🇯🇵 日本語</b> — TankTrouble ネットワーク最適化</summary>
+
+**TankTrouble で **日本語** を送りたい？多言語チャット拡張を作りました！👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
 
 <img src="docs/img/ja.png" width="440" alt="TankTrouble ネットワーク最適化">
 
@@ -92,12 +97,13 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 👉 **[インストール手順](docs/install/ja.md)** · [日本語](docs/README.ja.md)
 
-> TankTrouble で **日本語** を送りたい？多言語チャット拡張を作りました！👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
 
 </details>
 
 <details>
 <summary><b>🇰🇷 한국어</b> — TankTrouble 네트워크 최적화</summary>
+
+**TankTrouble에서 **한국어**를 보내고 싶으신가요? 다국어 채팅 확장을 만들었습니다! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
 
 <img src="docs/img/ko.png" width="440" alt="TankTrouble 네트워크 최적화">
 
@@ -109,12 +115,13 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 👉 **[설치 안내](docs/install/ko.md)** · [한국어](docs/README.ko.md)
 
-> TankTrouble에서 **한국어**를 보내고 싶으신가요? 다국어 채팅 확장을 만들었습니다! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
 
 </details>
 
 <details>
 <summary><b>🇷🇺 Русский</b> — TankTrouble — оптимизация сети</summary>
+
+**Хотите писать **по-русски** в TankTrouble? Я сделал многоязычное расширение для чата! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
 
 <img src="docs/img/ru.png" width="440" alt="TankTrouble — оптимизация сети">
 
@@ -126,12 +133,13 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 👉 **[Руководство по установке](docs/install/ru.md)** · [Русский](docs/README.ru.md)
 
-> Хотите писать **по-русски** в TankTrouble? Я сделал многоязычное расширение для чата! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
 
 </details>
 
 <details>
 <summary><b>🇸🇦 العربية</b> — TankTrouble — تحسين الشبكة</summary>
+
+**هل تريد إرسال **العربية** في TankTrouble؟ لقد صنعت إضافة دردشة متعددة اللغات! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
 
 <img src="docs/img/ar.png" width="440" alt="TankTrouble — تحسين الشبكة">
 
@@ -143,12 +151,13 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 👉 **[دليل التثبيت](docs/install/ar.md)** · [العربية](docs/README.ar.md)
 
-> هل تريد إرسال **العربية** في TankTrouble؟ لقد صنعت إضافة دردشة متعددة اللغات! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
 
 </details>
 
 <details>
 <summary><b>🇫🇷 Français</b> — TankTrouble — optimisation réseau</summary>
+
+**Envie d'écrire **en français** dans TankTrouble ? J'ai fait une extension de chat multilingue ! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
 
 <img src="docs/img/fr.png" width="440" alt="TankTrouble — optimisation réseau">
 
@@ -160,12 +169,13 @@ L'optimisation ne change que *ce que vous voyez* : la position est lissée au mo
 
 👉 **[Tutoriel d'installation](docs/install/fr.md)** · [Français](docs/README.fr.md)
 
-> Envie d'écrire **en français** dans TankTrouble ? J'ai fait une extension de chat multilingue ! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
 
 </details>
 
 <details>
 <summary><b>🇪🇸 Español</b> — TankTrouble — optimización de red</summary>
+
+**¿Quieres escribir **en español** en TankTrouble? ¡Hice una extensión de chat multilingüe! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
 
 <img src="docs/img/es.png" width="440" alt="TankTrouble — optimización de red">
 
@@ -177,12 +187,13 @@ La optimización solo cambia *lo que ves*: la posición se suaviza en el momento
 
 👉 **[Tutorial de instalación](docs/install/es.md)** · [Español](docs/README.es.md)
 
-> ¿Quieres escribir **en español** en TankTrouble? ¡Hice una extensión de chat multilingüe! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
 
 </details>
 
 <details>
 <summary><b>🇩🇪 Deutsch</b> — TankTrouble — Netzwerk-Optimierung</summary>
+
+**Willst du **auf Deutsch** in TankTrouble schreiben? Ich habe eine mehrsprachige Chat-Erweiterung gebaut! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
 
 <img src="docs/img/de.png" width="440" alt="TankTrouble — Netzwerk-Optimierung">
 
@@ -194,12 +205,13 @@ Die Optimierung ändert nur *das, was du siehst*: die Position wird im Moment de
 
 👉 **[Installationsanleitung](docs/install/de.md)** · [Deutsch](docs/README.de.md)
 
-> Willst du **auf Deutsch** in TankTrouble schreiben? Ich habe eine mehrsprachige Chat-Erweiterung gebaut! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
 
 </details>
 
 <details>
 <summary><b>🇧🇷 Português</b> — TankTrouble — otimização de rede</summary>
+
+**Quer escrever **em português** no TankTrouble? Eu fiz uma extensão de chat multilíngue! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
 
 <img src="docs/img/pt.png" width="440" alt="TankTrouble — otimização de rede">
 
@@ -211,7 +223,6 @@ A otimização muda apenas *o que você vê*: a posição é suavizada no moment
 
 👉 **[Tutorial de instalação](docs/install/pt.md)** · [Português](docs/README.pt.md)
 
-> Quer escrever **em português** no TankTrouble? Eu fiz uma extensão de chat multilíngue! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
 
 </details>
 

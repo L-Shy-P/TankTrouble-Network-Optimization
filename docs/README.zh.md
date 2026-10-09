@@ -1,5 +1,8 @@
 # 🇨🇳 TankTrouble 网络优化
 
+**想要在 TankTrouble 里发送 **中文** 吗？我做了一款多语言聊天扩展！👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
+
+
 ![TankTrouble 网络优化](img/zh.png)
 
 
@@ -30,4 +33,3 @@
 
 <p align="right"><sub>[🇬🇧 English](en.md) · <b>🇨🇳 中文</b> · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md)</sub></p>
 
-> 想要在 TankTrouble 里发送 **中文** 吗？我做了一款多语言聊天扩展！👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock

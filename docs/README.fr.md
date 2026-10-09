@@ -1,5 +1,8 @@
 # 🇫🇷 TankTrouble — optimisation réseau
 
+**Envie d'écrire **en français** dans TankTrouble ? J'ai fait une extension de chat multilingue ! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
+
+
 ![TankTrouble — optimisation réseau](img/fr.png)
 
 
@@ -30,4 +33,3 @@ L'optimisation ne change que *ce que vous voyez* : la position est lissée au mo
 
 <p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · <b>🇫🇷 Français</b> · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md)</sub></p>
 
-> Envie d'écrire **en français** dans TankTrouble ? J'ai fait une extension de chat multilingue ! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
