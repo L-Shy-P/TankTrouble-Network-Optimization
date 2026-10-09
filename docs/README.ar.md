@@ -1,5 +1,8 @@
 # 🇸🇦 TankTrouble — تحسين الشبكة
 
+![TankTrouble — تحسين الشبكة](img/ar.png)
+
+
 > عرض أغنى وأكثر لحظية ودقة لحالة الشبكة، مع تحسين حقيقي.
 
 سكربت Tampermonkey لموقع **tanktrouble.com**. يعرض حالة اتصالك الحقيقية ويحوّل لحظات «التجمّد ← الانتقال المفاجئ» الناتجة عن احتجاز رأس الطابور في TCP إلى انزلاق سلس.
@@ -26,3 +29,5 @@
 * [Repository](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) · [دليل التثبيت](install/ar.md) · [Technical notes (中文)](TECHNICAL.zh.md)
 
 <p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · <b>🇸🇦 العربية</b> · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md)</sub></p>
+
+> هل تريد إرسال **العربية** في TankTrouble؟ لقد صنعت إضافة دردشة متعددة اللغات! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock

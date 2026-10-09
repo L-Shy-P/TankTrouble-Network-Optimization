@@ -1,5 +1,8 @@
 # 🇷🇺 TankTrouble — оптимизация сети
 
+![TankTrouble — оптимизация сети](img/ru.png)
+
+
 > Богаче, актуальнее и точнее: состояние сети плюс настоящая оптимизация.
 
 Пользовательский скрипт Tampermonkey для **tanktrouble.com**. Показывает реальное состояние соединения и превращает «зависание → телепорт» (блокировку головы очереди TCP) в плавное скольжение.
@@ -26,3 +29,5 @@
 * [Repository](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) · [Руководство по установке](install/ru.md) · [Technical notes (中文)](TECHNICAL.zh.md)
 
 <p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · <b>🇷🇺 Русский</b> · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md)</sub></p>
+
+> Хотите писать **по-русски** в TankTrouble? Я сделал многоязычное расширение для чата! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock

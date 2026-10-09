@@ -4,7 +4,7 @@
 
 **Richer, more real-time and more accurate network display — plus real optimization.**
 
-[![version](https://img.shields.io/badge/version-0.4.7-blue)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
+[![version](https://img.shields.io/badge/version-0.4.8-blue)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![platform](https://img.shields.io/badge/Tampermonkey-userscript-orange)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
 
@@ -50,6 +50,8 @@ the game server sees exactly the same bytes as before.
 <details>
 <summary><b>🇬🇧 English</b> — TankTrouble Network Optimization</summary>
 
+<img src="docs/img/en.png" width="440" alt="TankTrouble Network Optimization">
+
 A Tampermonkey userscript for **tanktrouble.com**: it shows what your connection is really doing, and turns the TCP head-of-line-blocking "freeze → teleport" into a smooth glide.
 
 **No server, no network configuration, not a VPN.** Pure client-side — the server sees exactly the same bytes as before.
@@ -63,6 +65,8 @@ The optimization only changes *what you see*: the position is smoothed at render
 <details>
 <summary><b>🇨🇳 中文</b> — TankTrouble 网络优化</summary>
 
+<img src="docs/img/zh.png" width="440" alt="TankTrouble 网络优化">
+
 给 **tanktrouble.com** 写的油猴脚本：把你这局的网络情况如实显示出来，并把 TCP 队头阻塞造成的「僵住 → 瞬移」抹平成滑行。
 
 **不用服务器、不用改任何网络配置、不是加速器**：纯客户端，服务端看到的数据一个字节都没变。
@@ -71,10 +75,14 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 👉 **[安装教程](docs/install/zh.md)** · [中文](docs/README.zh.md)
 
+> 想要在 TankTrouble 里发送 **中文** 吗？我做了一款多语言聊天扩展！👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
+
 </details>
 
 <details>
 <summary><b>🇯🇵 日本語</b> — TankTrouble ネットワーク最適化</summary>
+
+<img src="docs/img/ja.png" width="440" alt="TankTrouble ネットワーク最適化">
 
 **tanktrouble.com** 用の Tampermonkey ユーザースクリプト。回線の実情を表示し、TCP の隊頭ブロッキングによる「固まる → ワープ」を滑らかな移動に変えます。
 
@@ -84,10 +92,14 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 👉 **[インストール手順](docs/install/ja.md)** · [日本語](docs/README.ja.md)
 
+> TankTrouble で **日本語** を送りたい？多言語チャット拡張を作りました！👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
+
 </details>
 
 <details>
 <summary><b>🇰🇷 한국어</b> — TankTrouble 네트워크 최적화</summary>
+
+<img src="docs/img/ko.png" width="440" alt="TankTrouble 네트워크 최적화">
 
 **tanktrouble.com**용 Tampermonkey 사용자 스크립트입니다. 회선 상태를 있는 그대로 보여주고, TCP 헤드오브라인 블로킹으로 생기는 "멈춤 → 순간이동"을 부드러운 이동으로 바꿉니다.
 
@@ -97,10 +109,14 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 👉 **[설치 안내](docs/install/ko.md)** · [한국어](docs/README.ko.md)
 
+> TankTrouble에서 **한국어**를 보내고 싶으신가요? 다국어 채팅 확장을 만들었습니다! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
+
 </details>
 
 <details>
 <summary><b>🇷🇺 Русский</b> — TankTrouble — оптимизация сети</summary>
+
+<img src="docs/img/ru.png" width="440" alt="TankTrouble — оптимизация сети">
 
 Пользовательский скрипт Tampermonkey для **tanktrouble.com**. Показывает реальное состояние соединения и превращает «зависание → телепорт» (блокировку головы очереди TCP) в плавное скольжение.
 
@@ -110,10 +126,14 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 👉 **[Руководство по установке](docs/install/ru.md)** · [Русский](docs/README.ru.md)
 
+> Хотите писать **по-русски** в TankTrouble? Я сделал многоязычное расширение для чата! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
+
 </details>
 
 <details>
 <summary><b>🇸🇦 العربية</b> — TankTrouble — تحسين الشبكة</summary>
+
+<img src="docs/img/ar.png" width="440" alt="TankTrouble — تحسين الشبكة">
 
 سكربت Tampermonkey لموقع **tanktrouble.com**. يعرض حالة اتصالك الحقيقية ويحوّل لحظات «التجمّد ← الانتقال المفاجئ» الناتجة عن احتجاز رأس الطابور في TCP إلى انزلاق سلس.
 
@@ -123,10 +143,14 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 👉 **[دليل التثبيت](docs/install/ar.md)** · [العربية](docs/README.ar.md)
 
+> هل تريد إرسال **العربية** في TankTrouble؟ لقد صنعت إضافة دردشة متعددة اللغات! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
+
 </details>
 
 <details>
 <summary><b>🇫🇷 Français</b> — TankTrouble — optimisation réseau</summary>
+
+<img src="docs/img/fr.png" width="440" alt="TankTrouble — optimisation réseau">
 
 Un userscript Tampermonkey pour **tanktrouble.com**. Il montre ce que fait vraiment votre connexion et transforme les « blocages → téléportation » du blocage de tête de file TCP en un glissement fluide.
 
@@ -136,10 +160,14 @@ L'optimisation ne change que *ce que vous voyez* : la position est lissée au mo
 
 👉 **[Tutoriel d'installation](docs/install/fr.md)** · [Français](docs/README.fr.md)
 
+> Envie d'écrire **en français** dans TankTrouble ? J'ai fait une extension de chat multilingue ! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
+
 </details>
 
 <details>
 <summary><b>🇪🇸 Español</b> — TankTrouble — optimización de red</summary>
+
+<img src="docs/img/es.png" width="440" alt="TankTrouble — optimización de red">
 
 Un userscript de Tampermonkey para **tanktrouble.com**. Muestra lo que hace de verdad tu conexión y convierte los «congelamientos → teletransportes» del bloqueo de cabeza de cola de TCP en un deslizamiento suave.
 
@@ -149,10 +177,14 @@ La optimización solo cambia *lo que ves*: la posición se suaviza en el momento
 
 👉 **[Tutorial de instalación](docs/install/es.md)** · [Español](docs/README.es.md)
 
+> ¿Quieres escribir **en español** en TankTrouble? ¡Hice una extensión de chat multilingüe! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
+
 </details>
 
 <details>
 <summary><b>🇩🇪 Deutsch</b> — TankTrouble — Netzwerk-Optimierung</summary>
+
+<img src="docs/img/de.png" width="440" alt="TankTrouble — Netzwerk-Optimierung">
 
 Ein Tampermonkey-Userscript für **tanktrouble.com**. Es zeigt, was deine Verbindung wirklich macht, und verwandelt „Hänger → Teleport“ durch TCP-Head-of-Line-Blocking in ein weiches Gleiten.
 
@@ -162,10 +194,14 @@ Die Optimierung ändert nur *das, was du siehst*: die Position wird im Moment de
 
 👉 **[Installationsanleitung](docs/install/de.md)** · [Deutsch](docs/README.de.md)
 
+> Willst du **auf Deutsch** in TankTrouble schreiben? Ich habe eine mehrsprachige Chat-Erweiterung gebaut! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
+
 </details>
 
 <details>
 <summary><b>🇧🇷 Português</b> — TankTrouble — otimização de rede</summary>
+
+<img src="docs/img/pt.png" width="440" alt="TankTrouble — otimização de rede">
 
 Um userscript de Tampermonkey para **tanktrouble.com**. Mostra o que a sua conexão realmente faz e transforma os “travamentos → teleportes” do bloqueio de cabeça de fila do TCP em um deslize suave.
 
@@ -174,6 +210,8 @@ Um userscript de Tampermonkey para **tanktrouble.com**. Mostra o que a sua conex
 A otimização muda apenas *o que você vê*: a posição é suavizada no momento do render, enquanto a lógica, a física e a validação do servidor usam sempre os valores reais. Seu tanque é de autoridade local: após reconectar você não é puxado de volta.
 
 👉 **[Tutorial de instalação](docs/install/pt.md)** · [Português](docs/README.pt.md)
+
+> Quer escrever **em português** no TankTrouble? Eu fiz uma extensão de chat multilíngue! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
 
 </details>
 

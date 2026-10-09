@@ -1,5 +1,8 @@
 # 🇬🇧 TankTrouble Network Optimization
 
+![TankTrouble Network Optimization](img/en.png)
+
+
 > Richer, more real-time and more accurate network display — plus real optimization.
 
 A Tampermonkey userscript for **tanktrouble.com**: it shows what your connection is really doing, and turns the TCP head-of-line-blocking "freeze → teleport" into a smooth glide.

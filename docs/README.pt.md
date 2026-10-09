@@ -1,5 +1,8 @@
 # 🇧🇷 TankTrouble — otimização de rede
 
+![TankTrouble — otimização de rede](img/pt.png)
+
+
 > Exibição de rede mais rica, mais em tempo real e mais precisa — e otimização de verdade.
 
 Um userscript de Tampermonkey para **tanktrouble.com**. Mostra o que a sua conexão realmente faz e transforma os “travamentos → teleportes” do bloqueio de cabeça de fila do TCP em um deslize suave.
@@ -26,3 +29,5 @@ A otimização muda apenas *o que você vê*: a posição é suavizada no moment
 * [Repository](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) · [Tutorial de instalação](install/pt.md) · [Technical notes (中文)](TECHNICAL.zh.md)
 
 <p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · <b>🇧🇷 Português</b></sub></p>
+
+> Quer escrever **em português** no TankTrouble? Eu fiz uma extensão de chat multilíngue! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock

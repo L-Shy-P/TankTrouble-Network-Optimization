@@ -1,5 +1,8 @@
 # 🇰🇷 TankTrouble 네트워크 최적화
 
+![TankTrouble 네트워크 최적화](img/ko.png)
+
+
 > 더 풍부하고, 더 실시간이며, 더 정확한 네트워크 표시와 실제 최적화.
 
 **tanktrouble.com**용 Tampermonkey 사용자 스크립트입니다. 회선 상태를 있는 그대로 보여주고, TCP 헤드오브라인 블로킹으로 생기는 "멈춤 → 순간이동"을 부드러운 이동으로 바꿉니다.
@@ -26,3 +29,5 @@
 * [Repository](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) · [설치 안내](install/ko.md) · [Technical notes (中文)](TECHNICAL.zh.md)
 
 <p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · <b>🇰🇷 한국어</b> · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md)</sub></p>
+
+> TankTrouble에서 **한국어**를 보내고 싶으신가요? 다국어 채팅 확장을 만들었습니다! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock
