@@ -675,6 +675,84 @@ step(function () {
 });
 
 step(function () {
+	/* 用户实测："貌似还是瞬变" —— 三个坑各来一条回归：
+	 *   ① 系统开了"减少动态效果"也必须**照样有动画**（只是更短更小），不能跳过；
+	 *   ② 呼吸循环必须延迟到淡入之后（否则它同动 opacity，把淡入顶掉 → 光晕瞬间跳出）；
+	 *   ③ 关闭方向的淡出必须从"当前不透明度"开始。 */
+	var T = window.__TTN__;
+	T.hudState.hidden = false; T.hudState.ball = false; T.setHud(true);
+	window.__RM__ = {};
+	var origAnimate = Element.prototype.animate;
+	/* 统计 animate 调用 + 记录 halo 循环的 delay */
+	Element.prototype.animate = function (frames, opts) {
+		var isHalo = this.classList && this.classList.contains('halo');
+		if (isHalo) {
+			var it = opts && opts.iterations;
+			if (it === Infinity) window.__RM__.loopDelay = (opts.delay || 0);
+			else window.__RM__.fades = (window.__RM__.fades || 0) + 1;
+		}
+		var a = origAnimate.apply(this, arguments);
+		if (isHalo && opts && opts.iterations === Infinity) {
+			try { window.__RM__.loopDelayReal = a.effect.getTiming().delay; } catch (e) {}
+			window.__RM__.loopStart = 'kept';
+		}
+		return a;
+	};
+	var origMM = window.matchMedia;
+	/* 先把"减少动态效果"打开，再开关一次 */
+	try {
+		window.matchMedia = function (q) {
+			if (String(q).indexOf('prefers-reduced-motion') >= 0) {
+				return { matches: true, media: q, addListener: function () {}, removeListener: function () {} };
+			}
+			return origMM.apply(window, arguments);
+		};
+	} catch (e) {}
+	T.setSmoothing(false); T.setSmoothing(true);
+	window.__RM__.afterSoftToggle = true;
+	Element.prototype.animate = function (frames, opts) {
+		var isHalo = this.classList && this.classList.contains('halo');
+		if (isHalo && opts && opts.iterations === Infinity) window.__RM__.loopDelay2 = (opts.delay || 0);
+		if (isHalo && opts && !(opts.iterations === Infinity)) {
+			window.__RM__.fadeFrom2 = frames && frames[0] ? frames[0].opacity : null;
+		}
+		return origAnimate.apply(this, arguments);
+	};
+	/* 关掉"减少动态效果"再开关一次，检查循环延迟 */
+	try {
+		window.matchMedia = function (q) {
+			if (String(q).indexOf('prefers-reduced-motion') >= 0) {
+				return { matches: false, media: q, addListener: function () {}, removeListener: function () {} };
+			}
+			return origMM.apply(window, arguments);
+		};
+	} catch (e) {}
+	T.setSmoothing(false); T.setSmoothing(true);
+	Element.prototype.animate = origAnimate;
+	try { window.matchMedia = origMM; } catch (e) {}
+});
+
+step(function () {
+	var R = window.__RM__ || {};
+	var T = window.__TTN__;
+	ck('animate-even-with-reduced-motion', R.afterSoftToggle === true && R.fades > 0,
+		'系统打开"减少动态效果"时也必须照常有开关动画（只是更短更小）: ' + JSON.stringify(R));
+	ck('halo-loop-waits-for-fade', (R.loopDelay2 || 0) > 0,
+		'呼吸循环必须等淡入跑完再接手（否则同动 opacity 会把淡入顶掉 → 光晕瞬间跳出）: ' + JSON.stringify(R));
+	ck('halo-fade-starts-from-current', R.fadeFrom2 !== null && R.fadeFrom2 !== undefined,
+		'淡入/淡出必须从"当前不透明度"开始（关的时候才有淡出）: from=' + String(R.fadeFrom2));
+	var dot = q('ttn-dot');
+	T.setSmoothing(true);
+	ck('dot-brightness-matches-constant', (function () {
+		var css = '';
+		document.querySelectorAll('style').forEach(function (el) {
+			if (el.textContent && el.textContent.indexOf('#ttn-ball') >= 0) css += el.textContent;
+		});
+		return /#ttn-dot\.on\{filter:brightness\(1\.18\)\}/.test(css);
+	})(), 'CSS 里圆点开启亮度要和动画终点一致（1.18），否则动画结束时会跳一下');
+});
+
+step(function () {
 	var A = window.__ANIM__ || {};
 	if (window.__ANIM_RESTORE__) window.__ANIM_RESTORE__();
 	ck('toggle-animations-really-run', (A.dot || 0) >= 3 && (A.ball || 0) >= 2 && (A.halo || 0) >= 3,

@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.3.9
+// @version      0.3.10
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,12 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.3.9';
+	const VERSION = '0.3.10';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.3.10', '继续修"开关瞬变"，这次找到并修掉三个真原因：① 遇到 prefers-reduced-motion 就**整个跳过动画**（Windows 关掉"显示动画"很常见）→ 现在只把动画变短变小，**绝不跳过**；② 呼吸循环和淡入都动 opacity，后建的循环立刻顶掉淡入 → 光晕"跳"出来（循环加 delay，等淡入跑完再接手）；③ 关闭时先 cancel 了循环再读不透明度 → 读到 0，没有淡出（改成先读再取消）',
+			'圆点开启亮度与动画终点对齐（CSS 1.15 → 1.18），动画结束不再跳一下',
+			'导出报告新增 prefersReducedMotion 与上一次开关动画的详情（以后再报"没动画"可以直接查）'],
 		['0.3.9', '元数据头部对齐正式版：@name / @description（中英）/ @author / @license MIT / @homepageURL / @supportURL，并补上 **@updateURL / @downloadURL** → 装了这个版本之后，油猴会自动跟着仓库 main 分支更新',
 			'用法注释块更新成"显示 + 优化"的现状（收起成球、⚡ 开关、10 国语言、缓存项）'],
 		['0.3.8', '修掉"开关时小悬浮球状态瞬变"：呼吸关键帧动了 opacity，而**动画会覆盖过渡** → 开关那一下成了瞬间切换（实测连 transitionrun 事件都不来）。开关动画现在完全由 **Web Animations API（JS）** 驱动：明确地从"旧观感"播到"新观感"，光晕也改成真实子元素 .halo，淡入淡出与呼吸循环都交给 JS，周期/强度仍随延迟变化',
@@ -2075,7 +2078,7 @@
 		/* 开关两个方向都要有过渡 → transition 写在基样式上，而不是只写在 :not(.on) 里 */
 		'#ttn-dot{transition:transform .14s ease,box-shadow .3s ease,background .4s ease,color .4s ease,filter .45s ease}',
 		'#ttn-dot:not(.on){filter:saturate(.85) brightness(.9)}',
-		'#ttn-dot.on{filter:brightness(1.15)}',
+		'#ttn-dot.on{filter:brightness(1.18)}',
 		'#ttn-dot .halo{pointer-events:none}',
 		'#ttn-ball .t,#ttn-ball .m,#ttn-ball .b{transition:color .4s ease;max-width:60px;',
 		'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}',
@@ -2965,50 +2968,58 @@
 	function applyGlow(el, on, durMs, glowPx) {
 		if (!el) return;
 		const halo = el.querySelector('.halo');
-		const canAnimate = typeof el.animate === 'function' && !reducedMotion();
+		const canAnimate = typeof el.animate === 'function';
+		/* 用户实测"开关还是瞬变"，三个坑都在这里：
+		 *   ① 之前遇到 prefers-reduced-motion 就**整个跳过**动画 → 系统关了动效的机器上必然瞬变
+		 *      （Windows"显示动画"关掉很常见）→ 现在改成"动画更短、幅度更小"，**绝不跳过**；
+		 *   ② 呼吸循环和淡入同时创建，两者都动 opacity → 后建的循环立刻顶掉淡入 → 光晕直接跳出来
+		 *      → 循环加 delay，等淡入跑完再接手；
+		 *   ③ 关闭时先 cancel 了循环再读当前不透明度 → 读到 0 → 没有淡出
+		 *      → 先读值，再取消。 */
+		const soft = reducedMotion();
 		const changed = el.__glowOn !== on;
+		const dur = soft ? 200 : 420;
 
-		/* 亮度：两个端点是**已知常量**（不读 computed style —— 实测那个值在切换后
-		 * 已经是新值，读出来的 from/to 会相等，动画就永远不播了）。 */
 		el.classList.toggle('on', on);
-		el.__glowLast = { changed: changed, on: on, can: canAnimate };
 		if (changed && canAnimate) {
 			const from = on ? GLOW_FILTER_OFF : GLOW_FILTER_ON;
 			const to = on ? GLOW_FILTER_ON : GLOW_FILTER_OFF;
 			try {
 				if (el.__glowAnim) el.__glowAnim.cancel();
 				el.__glowAnim = el.animate([{ filter: from }, { filter: to }],
-					{ duration: 420, easing: 'ease' });
+					{ duration: dur, easing: 'ease' });
 			} catch (e) {}
 		}
 		el.__glowOn = on;
+		el.__glowLast = { changed: changed, on: on, soft: soft, dur: dur };
 
 		if (!halo) return;
-		if (!canAnimate) {                       // 系统要求"减少动态效果" → 直接落终态
-			halo.style.opacity = on ? '0.22' : '0';
-			return;
-		}
+		if (!canAnimate) { halo.style.opacity = on ? '0.22' : '0'; return; }
+
+		const fromOp = parseFloat(getComputedStyle(halo).opacity) || 0;   // ③ 先读
 		if (changed) {
 			try {
 				if (el.__haloFade) el.__haloFade.cancel();
 				if (el.__haloLoop) { el.__haloLoop.cancel(); el.__haloLoop = null; }
-				const from = parseFloat(getComputedStyle(halo).opacity) || 0;
-				const to = on ? 0.22 : 0;
-				el.__haloFade = halo.animate([{ opacity: from }, { opacity: to }],
-					{ duration: 420, easing: 'ease', fill: 'forwards' });
+				el.__loopDur = null;                                       // 下次开时重建（带淡入延迟）
+				el.__haloFade = halo.animate([{ opacity: fromOp }, { opacity: on ? 0.22 : 0 }],
+					{ duration: dur, easing: 'ease', fill: 'forwards' });
 			} catch (e) {}
 		}
 		if (!on) { if (el.__haloLoop) { el.__haloLoop.cancel(); el.__haloLoop = null; } return; }
-		// 呼吸：幅度很小（opacity .16~.3、缩放 ≤1.06），周期随延迟
+		/* 呼吸：幅度很小；② 刚淡入时要 delay，别把淡入顶掉 */
 		if (!el.__haloLoop || el.__loopDur !== durMs || el.__loopGlow !== glowPx) {
 			el.__loopDur = durMs; el.__loopGlow = glowPx;
 			if (el.__haloLoop) el.__haloLoop.cancel();
-			const big = 1 + Math.min(0.06, glowPx / 500);
+			const big = soft ? 1 : 1 + Math.min(0.06, glowPx / 500);
 			try {
 				el.__haloLoop = halo.animate([
-					{ opacity: 0.16, transform: 'scale(1)' },
+					{ opacity: 0.20, transform: 'scale(1)' },
 					{ opacity: 0.30, transform: 'scale(' + big.toFixed(3) + ')' }
-				], { duration: durMs, direction: 'alternate', iterations: Infinity, easing: 'ease-in-out' });
+				], {
+					duration: durMs, direction: 'alternate', iterations: Infinity, easing: 'ease-in-out',
+					delay: changed ? dur : 0
+				});
 			} catch (e) {}
 		}
 	}
@@ -3564,6 +3575,11 @@
 			time: new Date().toISOString(),
 			href: location.href,
 			ua: navigator.userAgent,
+			prefersReducedMotion: reducedMotion(),
+			glowLast: {
+				ball: (hudBall && hudBall.__glowLast) || null,
+				dot: (hud && hud.querySelector('#ttn-dot') && hud.querySelector('#ttn-dot').__glowLast) || null
+			},
 			connections: conns.map(c => ({
 				url: c.url,
 				kind: c.kind,
