@@ -1187,6 +1187,99 @@ step(function () {
 });
 
 step(function () {
+	/* 用户实测："点击和鼠标悬浮存在严重混乱"、"点击+拖动+悬浮几次后卡出 bug，悬浮直接瞬变"。
+	 * 两个真因都在这里锁死：
+	 *   ① 点击曾经是一种"状态"（:active 改 filter / 改尺寸）—— 点击不该有观感，删掉；
+	 *   ② 拖动时**内联**写 `transition:none`，只有 pointerup 会还原 —— 指针捕获一丢就永久卡住，
+	 *      之后 hover 全部瞬变。现在改成 class + 超时兜底 + 每次刷新巡检。 */
+	var T = window.__TTN__, ball = q('ttn-ball'), root = q('ttn-root'), dot = q('ttn-dot');
+	var css = '';
+	document.querySelectorAll('style').forEach(function (el) {
+		if (el.textContent && el.textContent.indexOf('#ttn-ball') >= 0) css += el.textContent;
+	});
+
+	/* ① 不许有"点击状态" */
+	var activeRules = (css.match(/#ttn-(ball|dot)[^{}]{0,40}:active[^{}]*\{/g) || []);
+	ck('no-active-state', activeRules.length === 0,
+		'点击不该是一种观感状态（球/圆点都不许有 :active 规则）: ' + JSON.stringify(activeRules));
+
+	/* ② 拖动状态必须能自愈：模拟"按下就再也没收到 pointerup" */
+	T.hudState.hidden = false;
+	T.hudState.ball = true; T.setHud(true); T._finishHudAnim();
+	function transOf(el) {
+		try { return getComputedStyle(el).transitionProperty || ''; } catch (e) { return ''; }
+	}
+	window.__DRAG__ = {};
+	/* 正常按下（开始拖动）→ 过渡应被关掉（class） */
+	ball.dispatchEvent(new PointerEvent('pointerdown',
+		{ bubbles: true, cancelable: true, clientX: 300, clientY: 300, pointerId: 41 }));
+	window.__DRAG__.duringDrag = {
+		hasClass: ball.classList.contains('ttn-drag'),
+		trans: transOf(ball),
+		inline: String(ball.style.transition || '')
+	};
+	/* ① 现实场景：松手发生在元素之外（元素上收不到 pointerup）→ document 级兜底必须结束拖动 */
+	document.dispatchEvent(new PointerEvent('pointerup',
+		{ bubbles: true, cancelable: true, clientX: 320, clientY: 320, pointerId: 41 }));
+	window.__DRAG__.afterOutsideRelease = {
+		hasClass: ball.classList.contains('ttn-drag'),
+		trans: transOf(ball), inline: String(ball.style.transition || ''), flag: !!ball.__ttnDragging
+	};
+	ck('drag-ends-when-released-outside', window.__DRAG__.afterOutsideRelease.hasClass === false &&
+		window.__DRAG__.afterOutsideRelease.flag === false,
+		'松手在元素外也必须结束拖动（否则拖动状态永久卡住 → hover 变瞬变）: ' +
+		JSON.stringify(window.__DRAG__.afterOutsideRelease));
+	ck('hover-transition-available-after-drag', /filter/.test(window.__DRAG__.afterOutsideRelease.trans || ''),
+		'结束后 hover 依赖的 filter 过渡必须还在: ' + JSON.stringify(window.__DRAG__.afterOutsideRelease));
+
+	/* ② 极端场景：真的什么都没收到 → 看门狗（超时兜底）必须能收拾干净 */
+	ball.dispatchEvent(new PointerEvent('pointerdown',
+		{ bubbles: true, cancelable: true, clientX: 300, clientY: 300, pointerId: 42 }));
+	T._cleanupDrag();
+	window.__DRAG__.afterWatchdog = {
+		hasClass: ball.classList.contains('ttn-drag'),
+		trans: transOf(ball), flag: !!ball.__ttnDragging
+	};
+	ck('drag-state-self-heals', window.__DRAG__.afterWatchdog.hasClass === false &&
+		window.__DRAG__.afterWatchdog.flag === false && /filter/.test(window.__DRAG__.afterWatchdog.trans || ''),
+		'看门狗必须能把卡住的拖动状态收拾干净（否则 hover 永久瞬变）: ' +
+		JSON.stringify(window.__DRAG__.afterWatchdog));
+
+	/* ③ 彻底不许有内联 transition（内联是上次卡死的载体） */
+	var leaked = [ball, root, dot].filter(function (el) { return el && el.style && el.style.transition; })
+		.map(function (el) { return el.id + '=' + el.style.transition; });
+	ck('no-inline-transition-anywhere', leaked.length === 0,
+		'球/面板/圆点都不许再有内联 transition（拖动关过渡改用 class）: ' + JSON.stringify(leaked));
+
+	/* ④ 点一下再拖一下再悬浮几次，状态不能变脏 */
+	T.hudState.ball = true; T.setHud(true); T._finishHudAnim();
+	for (var i = 0; i < 3; i++) {
+		ball.dispatchEvent(new PointerEvent('pointerdown',
+			{ bubbles: true, cancelable: true, clientX: 300 + i, clientY: 300, pointerId: 50 + i }));
+		ball.dispatchEvent(new PointerEvent('pointermove',
+			{ bubbles: true, cancelable: true, clientX: 306 + i, clientY: 304, pointerId: 50 + i }));
+		ball.dispatchEvent(new PointerEvent('pointerup',
+			{ bubbles: true, cancelable: true, clientX: 306 + i, clientY: 304, pointerId: 50 + i }));
+	}
+	ball.dispatchEvent(new PointerEvent('pointerover', { bubbles: true, pointerId: 60 }));
+	ball.dispatchEvent(new PointerEvent('pointerout', { bubbles: true, pointerId: 60 }));
+	window.__DRAG__.afterMixed = {
+		hasClass: ball.classList.contains('ttn-drag'),
+		inline: String(ball.style.transition || ''),
+		trans: transOf(ball),
+		animating: T.isHudAnimating()
+	};
+	ck('mixed-click-drag-hover-stays-clean',
+		window.__DRAG__.afterMixed.hasClass === false && window.__DRAG__.afterMixed.inline === '' &&
+		/filter/.test(window.__DRAG__.afterMixed.trans || ''),
+		'点击 / 拖动 / 悬浮混合操作若干轮之后，状态必须还是干净的: ' + JSON.stringify(window.__DRAG__.afterMixed));
+
+	/* 收尾：回到面板态 */
+	T._finishHudAnim();
+	T.hudState.ball = false; T.setHud(true);
+});
+
+step(function () {
 	var D = window.__DOT_ON__ || {};
 	ck('dot-glow-when-on', D.on === true, '优化开时面板左上角圆点也要"激活"（.on）: ' + JSON.stringify(D));
 	ck('dot-glow-off-when-disabled', D.off === false, '优化关时圆点必须恢复"只有颜色"', String(D.off));

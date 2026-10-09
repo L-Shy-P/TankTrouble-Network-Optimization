@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.4.2
+// @version      0.4.3
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,12 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.4.2';
+	const VERSION = '0.4.3';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.4.3', '修"点击和悬浮的混乱 + 几次点击/拖动/悬浮之后悬浮直接瞬变"（用户实测的卡死 bug）：根因是拖动时往**内联**写 `transition:none`，只有 pointerup 会还原 —— 指针捕获一丢/松手在元素外就**永久卡住**，之后所有 hover 都变瞬变。现在：① 拖动状态改用 class（`.ttn-drag`）；② **document 级 pointerup/pointercancel 兜底**（松手在元素外也能结束）；③ 4 秒看门狗 + 每次刷新巡检（不在拖动时清掉泄漏的 class/内联 transition/标志）；④ 彻底不再有任何内联 transition',
+			'点击不再是一种状态：删掉球和圆点的 `:active` 规则（点击既不该改观感，也不该改尺寸、抢层叠）',
+			'新增回归：不许存在 `:active` 规则；松手在元素外必须结束拖动；看门狗必须能收拾卡住的拖动状态；结束后 hover 依赖的 `filter` 过渡必须仍在；球/面板/圆点任何时刻都不许有内联 transition；"点击+拖动+悬浮"混合若干轮后状态必须干净'],
 		['0.4.2', 'hover 重做（用户："太夸张、不要白环、要相对变亮"）：删掉白环与大改阴影，改成 **相对当前状态略微变亮**（开启 1.18→1.26、关闭 0.94→1.00，关闭态永远亮不过开启态）+ 一层 `.hover-glow` **内部发光**（CSS opacity 过渡，与状态规则叠加互不覆盖）；按下则相对变暗一点',
 			'关闭态不再"很灰"：`saturate(.85) brightness(.9)` → `saturate(.95) brightness(.94)`（只压一点点）',
 			'修"大变小终点：空心黑球瞬间变有色球"：变形时把球的**底色一起插值**到圆点那种实心色（深色盘面 → 分级色），交接再用 90ms **交叉淡接**，两者任何细微差异（描边、内部黑条）都被抹平',
@@ -1970,7 +1973,7 @@
 		'transition:transform .14s ease,box-shadow .3s ease,background .4s ease,color .4s ease}',
 		/* hover 不许改尺寸：交接时圆点必须和球的最后一帧同尺寸，改 scale 就会"先到位再变大一点" */
 		'#ttn-dot:hover{box-shadow:0 0 15px currentColor,0 0 0 1px rgba(255,255,255,.22) inset}',
-		'#ttn-dot:active{transform:scale(.94)}',
+		
 		'#ttn-dot::after{content:"";position:absolute;left:50%;top:50%;width:10px;height:3px;',
 		'background:rgba(0,0,0,.62);border-radius:2px;transform:translate(-50%,-50%)}',
 		'#ttn-title{font-weight:600;font-size:12px;flex:1 1 auto;min-width:0;white-space:nowrap;direction:ltr;unicode-bidi:isolate;',
@@ -2091,6 +2094,8 @@
 		/* 开/关的语义：关=稍暗但保留颜色；开=提亮（和 hover 同一种"更亮"）+ 黑投影减弱。
 		 * 光晕用**真实子元素** .halo，动画全部由 JS（Web Animations API）驱动 ——
 		 * 不再依赖 CSS 过渡/关键帧那套"动画覆盖过渡"的坑（用户实测过"开关瞬变"）。 */
+		/* 拖动中：跟手优先，关掉过渡（用 class，不用内联样式 —— 内联会漏、卡住就永远瞬变） */
+		'.ttn-drag{transition:none !important}',
 		'#ttn-ball .hover-glow{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:50%;',
 		'pointer-events:none;opacity:0;transition:opacity .18s ease;',
 		'background:radial-gradient(circle,rgba(255,255,255,.5) 0%,rgba(255,255,255,.16) 46%,rgba(255,255,255,0) 78%)}',
@@ -2106,9 +2111,8 @@
 		'#ttn-ball:hover .hover-glow{opacity:.42}',
 		'#ttn-ball.on:hover{filter:saturate(1) brightness(1.26)}',
 		'#ttn-ball:not(.on):hover{filter:saturate(.95) brightness(1.0)}',
-		/* 按下：比当前状态略暗一点（同样是相对值） */
-		'#ttn-ball.on:active{filter:saturate(1) brightness(1.08)}',
-		'#ttn-ball:not(.on):active{filter:saturate(.95) brightness(.88)}',
+		/* 按下**不做**任何状态：点击不是一种观感（用户明确要求），
+		 * 而且它还会和 hover 抢层叠、和变形抢尺寸。拖动本身有指针跟随就够了。 */
 		/* 小圆点与大球同一套语义（同样用 .halo 子元素 + JS 动画） */
 		'#ttn-dot .halo{position:absolute;left:-1px;top:-1px;right:-1px;bottom:-1px;border-radius:50%;',
 		'pointer-events:none;opacity:0;',
@@ -2865,6 +2869,31 @@
 	 * 只有"按下即松开"才算点击 —— 之前拖动会展开就是因为又挂了 click 监听，
 	 * 拖完浏览器补发一次 click，被当成点击了。
 	 */
+	/* 拖动状态的自愈清理：指针事件可能丢（capture 被抢走、页面失焦…），
+	 * 以前内联 transition='none' 卡住 → 之后所有 hover 都变成瞬变（用户实测的"卡出 bug"）。
+	 * 现在只用 class 表示"正在拖"，并且有超时兜底 + 每次刷新时的巡检。 */
+	let activeDrag = null, dragWatchdog = null;
+	function cleanupDrag() {
+		if (activeDrag && activeDrag.el) {
+			activeDrag.el.classList.remove('ttn-drag');
+			if (activeDrag.el.style) activeDrag.el.style.transition = '';
+			activeDrag.el.__ttnDragging = false;
+		}
+		activeDrag = null;
+		if (dragWatchdog) { clearTimeout(dragWatchdog); dragWatchdog = null; }
+	}
+	/** 巡检：不在拖动时，任何人身上都不该留着 ttn-drag；也不该有内联 transition（全部走 class/WAAPI） */
+	function sanitizeDragState() {
+		if (activeDrag && activeDrag.el && activeDrag.el.__ttnDragging) return;
+		cleanupDrag();
+		[ hud, hudBall ].forEach(function (el) {
+			if (!el) return;
+			if (el.classList) el.classList.remove('ttn-drag');
+			if (el.style && el.style.transition) el.style.transition = '';
+			el.__ttnDragging = false;
+		});
+	}
+
 	function installHudDrag(el, isPanel) {
 		let dragging = false, moved = false, sx = 0, sy = 0, ox = 0, oy = 0;
 		const track = [];          // 最近几次"球的位置 + 时刻"：用来算松手速度
@@ -2894,8 +2923,10 @@
 			ox = hudState.x; oy = hudState.y;
 			track.length = 0;
 			pushTrack();                   // 记的是"球的位置"，不是指针位置
-			el.__ttnPrev = el.style.transition;
-			el.style.transition = 'none';
+			el.classList.add('ttn-drag');       // 用 class 关掉过渡（内联 transition 会漏，卡住就永远瞬变）
+			activeDrag = { el: el, isPanel: !!isPanel };
+			clearTimeout(dragWatchdog);          // 兜底：无论指针事件丢没丢，都必须能收拾干净
+			dragWatchdog = setTimeout(cleanupDrag, 4000);
 			try { el.setPointerCapture(ev.pointerId); } catch (e) {}
 		});
 
@@ -2917,7 +2948,10 @@
 			if (!dragging) return;
 			dragging = false;
 			el.__ttnDragging = false;
-			el.style.transition = el.__ttnPrev || '';
+			el.classList.remove('ttn-drag');
+			if (activeDrag && activeDrag.el === el) activeDrag = null;
+			clearTimeout(dragWatchdog);
+			dragWatchdog = null;
 			if (moved) {
 				// 松手带惯性：只有悬浮球甩，面板保持"放哪儿是哪儿"（面板要精确摆位读数）
 				if (!isPanel && (!ev || ev.type !== 'pointercancel')) {
@@ -2952,6 +2986,14 @@
 		};
 		el.addEventListener('pointerup', end);
 		el.addEventListener('pointercancel', end);
+		el.addEventListener('lostpointercapture', end);        // capture 被抢走也要收拾干净
+		/* 关键：松手发生在元素之外时，元素上收不到 pointerup → 拖动状态会永久卡住，
+		 * 之后 hover 全部瞬变（用户实测的"卡出 bug"）。所以在 document 上兜底收一次。 */
+		document.addEventListener('pointerup', function (ev) {
+			if (dragging) { try { el.releasePointerCapture(ev.pointerId); } catch (e) {} end(ev); }
+		}, true);
+		document.addEventListener('pointercancel', function (ev) { if (dragging) end(ev); }, true);
+		window.addEventListener('blur', function () { if (el.__ttnDragging) end(null); }, true);
 		// 兜底：万一根 pointerup 丢了，也不要把拖动当成点击
 		el.addEventListener('click', function (ev) {
 			if (el.__ttnJustDragged || moved) { ev.stopPropagation(); ev.preventDefault(); }
@@ -3647,6 +3689,7 @@
 
 	function refreshHud() {
 		if (!CFG.hud) return;
+		sanitizeDragState();
 		ensureHud();
 		if (!hud || hudState.hidden) return;
 
@@ -4081,6 +4124,7 @@
 		motion: THROW,                   // 手感实时微调：__TTN__.motion.friction = 0.85
 		_hudAnimate: hudAnimate,          // 测试/调试：展开/收起动画
 		_finishHudAnim: finishHudAnim,    // 测试/调试：立刻结束变形动画
+		_cleanupDrag: cleanupDrag,        // 测试/调试：强制收拾拖动状态（看门狗就是调它）
 		isHudAnimating: function () { return hudAnimating; },
 		_hudAnim: hudAnim
 	};
