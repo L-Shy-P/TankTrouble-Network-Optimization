@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.4.5
+// @version      0.4.6
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,11 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.4.5';
+	const VERSION = '0.4.6';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.4.6', '交接"断层"三处补齐（用户指出的）：① **影子**：球和圆点改用**同一套阴影配方**（关/开各一份，几何量一致），变形时球的 box-shadow 插值到圆点当前阴影、落终态写内联、收起再清掉；② **悬浮/不悬浮的差别**：hover 规则改成**两者共用**（`.on:hover,#ttn-dot.on:hover` 与 `:not(.on):hover` 版本），所以交接前后悬浮状态一致，不会"先掉光再亮回来"；③ **圆点上那道横线**（收起图标）：交接那一帧两边都不能有它 —— 展开时交接完再淡入（120ms），收起时动画一开始就淡出',
+			'`handoff-visual-parity` 回归相应扩展：除 filter/底色/阴影/hover-glow 外，还检查"hover 配方是否共用"和"交接时横线是否已收起"'],
 		['0.4.5', '修"过渡末尾依旧瞬变"：交接那一帧球的最终观感和圆点不一致 —— 球带着"落地阴影 + hover 外发光/内描边"消失，而圆点没有 → 换的一瞬间掉一块光。现在：① **圆的点也加 .hover-glow** 并用同一套 hover 规则（悬浮状态跨交接不丢）；② 变形时把球的 **box-shadow 一起插值**到"圆点当前的样子"，落终态时把阴影也写成圆点的阴影（收起时再清掉内联，交还状态规则）',
 			'新增回归 `handoff-visual-parity`：交接前后直接对比球与圆点的 filter / 底色 / 阴影 / hover-glow 接线，必须一致 —— 这条能直接抓住任何"末尾闪一下"'],
 		['0.4.4', 'hover 改成"**边缘与外围更亮**"（用户："边缘以及外部发光太弱，比中心弱"）：内部渐变改成中心微弱、末端最强（.10 → .50），再加一圈 inset 白色描边（边缘发亮）+ 外层柔和光晕（`0 0 20px -3px currentColor`），整体亮度仍只"相对"加一点点',
@@ -1973,12 +1975,16 @@
 		 * 24px；left/top 取 7（相对标题栏 padding box 定位，面板另有 1px 边框）→
 		 * 7+1+12 = 20，圆心严格落在变换原点 (20,20) 上。 */
 		'#ttn-dot{position:absolute;left:7px;top:7px;width:24px;height:24px;box-sizing:border-box;',
-		'border-radius:50%;background:#8b93a1;box-shadow:0 0 7px currentColor;cursor:pointer;',
+		'border-radius:50%;background:#8b93a1;box-shadow:0 7px 20px rgba(0,0,0,.5),0 0 7px 0 currentColor;cursor:pointer;',
 		'transition:transform .14s ease,box-shadow .3s ease,background .4s ease,color .4s ease}',
 		/* hover 不许改尺寸（交接要求同尺寸）；发光/描边在下面统一给（球和圆点同一套） */
 		
+		/* 收起提示的那道横线：交接那一帧不能"凭空出现"（用户实测的断层），
+		 * 所以它由 JS 在交接后才淡入，收起时先淡出（.ttn-no-bar 挂在 root 上）。 */
 		'#ttn-dot::after{content:"";position:absolute;left:50%;top:50%;width:10px;height:3px;',
-		'background:rgba(0,0,0,.62);border-radius:2px;transform:translate(-50%,-50%)}',
+		'background:rgba(0,0,0,.62);border-radius:2px;transform:translate(-50%,-50%);',
+		'opacity:1;transition:opacity .16s ease}',
+		'#ttn-root.ttn-no-bar #ttn-dot::after{opacity:0}',
 		'#ttn-title{font-weight:600;font-size:12px;flex:1 1 auto;min-width:0;white-space:nowrap;direction:ltr;unicode-bidi:isolate;',
 		'transition:opacity .2s ease;',
 		'overflow:hidden;text-overflow:ellipsis}',
@@ -2107,16 +2113,16 @@
 		'pointer-events:none;opacity:0;',
 		'background:radial-gradient(circle,rgba(255,255,255,.55) 0%,rgba(255,255,255,.18) 45%,rgba(255,255,255,0) 74%)}',
 		'#ttn-ball:not(.on){filter:saturate(.95) brightness(.94);box-shadow:0 7px 20px rgba(0,0,0,.5)}',
-		'#ttn-ball.on{filter:saturate(1) brightness(1.18);box-shadow:0 6px 18px rgba(0,0,0,.42),0 0 12px -2px currentColor}',
+		'#ttn-ball.on{filter:saturate(1) brightness(1.18);box-shadow:0 6px 18px rgba(0,0,0,.42),0 0 7px 0 currentColor}',
 		/* hover = **相对**当前状态略微变亮（不是绝对数值），并且主要是内部发光：
 		 *  · 内部发光用一层 .hover-glow 子元素（CSS opacity 过渡，能和状态规则叠加，不会互相覆盖）；
 		 *  · 亮度只加一点点，且分状态给 —— 关的时候也要"比关亮一点"，但绝不该亮到开启态。
 		 *  · 不要白环、不要大改阴影：那都是"额外的可见物体"（用户明确不要）。 */
 		'#ttn-ball:hover .hover-glow{opacity:.62}',
 		/* 边缘更亮（inset 描边）+ 外发光（柔和光晕，不是白环那种"额外物体"）+ 只加一点点整体亮度 */
-		'#ttn-ball.on:hover{filter:saturate(1) brightness(1.26);',
+		'#ttn-ball.on:hover,#ttn-dot.on:hover{filter:saturate(1) brightness(1.26);',
 		'box-shadow:0 6px 18px rgba(0,0,0,.42),0 0 20px -3px currentColor,inset 0 0 0 1px rgba(255,255,255,.34)}',
-		'#ttn-ball:not(.on):hover{filter:saturate(.95) brightness(1.0);',
+		'#ttn-ball:not(.on):hover,#ttn-dot:not(.on):hover{filter:saturate(.95) brightness(1.0);',
 		'box-shadow:0 7px 20px rgba(0,0,0,.5),0 0 18px -4px currentColor,inset 0 0 0 1px rgba(255,255,255,.26)}',
 		/* 按下**不做**任何状态：点击不是一种观感（用户明确要求），
 		 * 而且它还会和 hover 抢层叠、和变形抢尺寸。拖动本身有指针跟随就够了。 */
@@ -2125,14 +2131,14 @@
 		'pointer-events:none;opacity:0;transition:opacity .18s ease;',
 		'background:radial-gradient(circle,rgba(255,255,255,.10) 0%,rgba(255,255,255,.06) 52%,rgba(255,255,255,.34) 88%,rgba(255,255,255,.5) 100%)}',
 		'#ttn-dot:hover .hover-glow{opacity:.62}',
-		'#ttn-dot:hover{box-shadow:0 0 7px currentColor,0 0 18px -3px currentColor,inset 0 0 0 1px rgba(255,255,255,.3)}',
+
 		'#ttn-dot .halo{position:absolute;left:-1px;top:-1px;right:-1px;bottom:-1px;border-radius:50%;',
 		'pointer-events:none;opacity:0;',
 		'background:radial-gradient(circle,rgba(255,255,255,.6) 0%,rgba(255,255,255,.2) 48%,rgba(255,255,255,0) 72%)}',
 		/* 开关两个方向都要有过渡 → transition 写在基样式上，而不是只写在 :not(.on) 里 */
 		'#ttn-dot{transition:transform .14s ease,box-shadow .3s ease,background .4s ease,color .4s ease,filter .45s ease}',
-		'#ttn-dot:not(.on){filter:saturate(.95) brightness(.94)}',
-		'#ttn-dot.on{filter:saturate(1) brightness(1.18)}',
+		'#ttn-dot:not(.on){filter:saturate(.95) brightness(.94);box-shadow:0 7px 20px rgba(0,0,0,.5),0 0 7px 0 currentColor}',
+		'#ttn-dot.on{filter:saturate(1) brightness(1.18);box-shadow:0 6px 18px rgba(0,0,0,.42),0 0 7px 0 currentColor}',
 		'#ttn-dot .halo{pointer-events:none}',
 		'#ttn-ball .t,#ttn-ball .m,#ttn-ball .b{transition:color .4s ease;max-width:60px;',
 		'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}',
@@ -3417,6 +3423,8 @@
 			hudBall.classList.toggle('morph', !collapse);   // 展开时文字淡出、收起时淡回
 		}
 		if (dotMorph) dotMorph.style.opacity = '0';         // 圆点让位给球，交接那一帧才归位
+		if (collapse) hud.classList.add('ttn-no-bar');      // 收起：横线先淡出，别等交接才消失
+		else hud.classList.add('ttn-no-bar');               // 展开：交接那一帧横线必须是隐藏的
 		hudCache.w = hud.offsetWidth || hudCache.w;
 		hudCache.h = hud.offsetHeight || hudCache.h;
 
@@ -3530,6 +3538,10 @@
 		applyHudVisibility(false);      // 动画自己已经管过 opacity 了
 		clampHud();
 		saveHudState();
+		if (!collapsed) {
+			/* 展开落定后再把横线淡回来（交接那一帧两边都没有横线 → 无断层） */
+			setTimeout(function () { if (hud) hud.classList.remove('ttn-no-bar'); }, 120);
+		}
 		hudAnim.debug = { fadeDone: true, atomic: true, glide: hudGlide.active, x: hudState.x, y: hudState.y };
 	}
 

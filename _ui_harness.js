@@ -770,7 +770,7 @@ step(function () {
 		document.querySelectorAll('style').forEach(function (el) {
 			if (el.textContent && el.textContent.indexOf('#ttn-ball') >= 0) css += el.textContent;
 		});
-		return /#ttn-dot\.on\{filter:saturate\(1\) brightness\(1\.18\)\}/.test(css);
+		return /#ttn-dot\.on\{[^}]*filter:saturate\(1\) brightness\(1\.18\)/.test(css);
 	})(), 'CSS 里圆点开启亮度要和动画终点一致（1.18），否则动画结束时会跳一下');
 });
 
@@ -1097,22 +1097,30 @@ step(function () {
 		document.querySelectorAll('style').forEach(function (el) {
 			if (el.textContent && el.textContent.indexOf('#ttn-ball') >= 0) cssTxt += el.textContent;
 		});
-		var mOn = /#ttn-ball\.on\{([^}]*)\}/.exec(cssTxt);
-		var mOff = /#ttn-ball:not\(\.on\)\{([^}]*)\}/.exec(cssTxt);
-		var mOnH = /#ttn-ball\.on:hover\{([^}]*)\}/.exec(cssTxt);
-		var mOffH = /#ttn-ball:not\(\.on\):hover\{([^}]*)\}/.exec(cssTxt);
+		/* 直接按"已知选择器"取值（规则写法固定：共用 hover 选择器），比通用扫描可靠 */
+		function bodyAfter(sel) {
+			var i = cssTxt.indexOf(sel + '{');
+			if (i < 0) return '';
+			var j = cssTxt.indexOf('}', i);
+			return j < 0 ? '' : cssTxt.slice(i + sel.length + 1, j);
+		}
 		function bright(d) { var m = /brightness\(([\d.]+)\)/.exec(d || ''); return m ? parseFloat(m[1]) : 0; }
-		var onB = bright(mOn && mOn[1]), offB = bright(mOff && mOff[1]);
-		var onH = bright(mOnH && mOnH[1]), offH = bright(mOffH && mOffH[1]);
-		/* 渐变里的 alpha 序列：中心 < 边缘 */
+		var onB = bright(bodyAfter('#ttn-ball.on'));
+		var offB = bright(bodyAfter('#ttn-ball:not(.on)'));
+		var onH = bright(bodyAfter('#ttn-ball.on:hover,#ttn-dot.on:hover'));
+		var offH = bright(bodyAfter('#ttn-ball:not(.on):hover,#ttn-dot:not(.on):hover'));
+		var onHBody = bodyAfter('#ttn-ball.on:hover,#ttn-dot.on:hover');
+		var offHBody = bodyAfter('#ttn-ball:not(.on):hover,#ttn-dot:not(.on):hover');
+		var hasInsetRim = /inset/.test(onHBody) && /inset/.test(offHBody);
+		var hasOuterGlow = /0 0 \d+px -\d+px currentColor/.test(onHBody) &&
+			/0 0 \d+px -\d+px currentColor/.test(offHBody);
 		var glowBody = (/#ttn-ball \.hover-glow\{([^}]*)\}/.exec(cssTxt) || ['', ''])[1];
 		var alphas = (glowBody.match(/rgba\(255,\s*255,\s*255,\s*\.(\d+)\)/g) || []).map(function (t) {
 			return parseFloat('0.' + /\.(\d+)\)/.exec(t)[1]);
 		});
 		var rimBrighter = alphas.length >= 3 && alphas[alphas.length - 1] > alphas[0] * 2;
-		var rimBrighter = alphas.length >= 3 && alphas[alphas.length - 1] > alphas[0] * 2;
-		var hasInsetRim = !!(mOnH && /inset/.test(mOnH[1])) && !!(mOffH && /inset/.test(mOffH[1]));
-		var hasOuterGlow = !!(mOnH && /0 0 \d+px -\d+px currentColor/.test(mOnH[1]));
+		var hasOuterGlow = /0 0 \d+px -\d+px currentColor/.test(onHBody || '') &&
+			/0 0 \d+px -\d+px currentColor/.test(offHBody || '');
 		window.__HOVER2__ = { onB: onB, offB: offB, onH: onH, offH: offH, alphas: alphas,
 			rimBrighter: rimBrighter, hasInsetRim: hasInsetRim, hasOuterGlow: hasOuterGlow };
 		return onH - onB >= 0.05 && onH - onB <= 0.2 &&
@@ -1203,10 +1211,16 @@ step(function () {
 	document.querySelectorAll('style').forEach(function (el) {
 		if (el.textContent && el.textContent.indexOf('#ttn-ball') >= 0) css += el.textContent;
 	});
-	var m = /#ttn-dot:hover\{([^}]*)\}/.exec(css);
-	var body = m ? m[1] : '';
-	window.__DOTHOVER__ = { found: !!m, hasTransform: /transform/.test(body), body: body.slice(0, 80) };
-	ck('dot-hover-keeps-size', !!m && !/transform/.test(body),
+	var bodies = [];
+	(function () {
+		var re = /([^{}]+)\{([^}]*)\}/g, m;
+		while ((m = re.exec(css))) {
+			if (m[1].indexOf('#ttn-dot') >= 0 && m[1].indexOf(':hover') >= 0) bodies.push(m[2]);
+		}
+	})();
+	var body = bodies.join(' ; ');
+	var hasTransform = /transform/.test(body);
+	ck('dot-hover-keeps-size', bodies.length > 0 && !hasTransform,
 		'圆点 hover 不许改尺寸（交接必须同尺寸，否则会"先到位再变大一点"）: ' + JSON.stringify(window.__DOTHOVER__));
 
 	/* 变形的终点：球的背景色必须插值到"圆点那种实心色"，否则又是"空心黑球→有色球" */
@@ -1355,6 +1369,28 @@ step(function () {
 	if (vb.shadow !== vd.shadow) diffs.push('shadow: ' + vb.shadow + ' vs ' + vd.shadow);
 	if (!vb.hasGlow || !vd.hasGlow) diffs.push('hover-glow 子元素: ball=' + vb.hasGlow + ' dot=' + vd.hasGlow);
 	if (!vb.glowRule || !vd.glowRule) diffs.push('hover-glow 规则: ball=' + vb.glowRule + ' dot=' + vd.glowRule);
+	/* hover 变体也必须共用（用户："过渡没考虑鼠标悬浮时和不悬浮时的区别"） */
+	(function () {
+		var css = '';
+		document.querySelectorAll('style').forEach(function (st) {
+			if (st.textContent && st.textContent.indexOf('#ttn-ball') >= 0) css += st.textContent;
+		});
+		var sharedOn = /#ttn-ball\.on:hover,#ttn-dot\.on:hover\{/.test(css);
+		var sharedOff = /#ttn-ball:not\(\.on\):hover,#ttn-dot:not\(\.on\):hover\{/.test(css);
+		window.__HOVERSHARE__ = { sharedOn: sharedOn, sharedOff: sharedOff };
+		if (!sharedOn || !sharedOff) diffs.push('hover 配方没有共用: ' + JSON.stringify(window.__HOVERSHARE__));
+	})();
+	/* 横线：交接那一刻两边都必须不可见（球上没有横线，圆点此时也必须收起来） */
+	(function () {
+		var barOn = window.__TTN__;
+		var barVisible = (function () {
+			var r = q('ttn-root');
+			return !r.classList.contains('ttn-no-bar');
+		})();
+		var dotBar = getComputedStyle(dot, '::after').opacity;
+		window.__BAR__ = { rootNoBar: q('ttn-root').classList.contains('ttn-no-bar'), dotBar: dotBar, barVisible: barVisible };
+		if (!window.__BAR__.rootNoBar) diffs.push('交接时圆点的横线没有收起来: ' + JSON.stringify(window.__BAR__));
+	})();
 	ck('handoff-visual-parity', diffs.length === 0,
 		'交接那一帧球和圆点的视觉必须一致（否则末尾瞬变）: ' + (diffs.join(' ; ') || 'ok') +
 		' || ' + JSON.stringify(window.__PARITY__).slice(0, 200));
