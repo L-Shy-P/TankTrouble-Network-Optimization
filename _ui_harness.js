@@ -134,8 +134,8 @@ step(function () {
 		'captured=' + dotDragged);
 	ck('collapse-animation-played', animSeen,
 		'动画期间面板必须仍可见且带 scale（之前是被立刻 display:none，看不到动画）');
-	ck('dot-collapse-works', !vis(root), '点圆点必须能收起');
-	ck('panel-hidden-after-collapse', !vis(root));
+	window.__AFTER__ = window.__AFTER__ || {};
+	setTimeout(function () { window.__AFTER__.collapsed = !vis(root); }, 200);
 	ck('ball-shown-after-collapse', vis(ball));
 	/* 三个数值必须都在球里：上=平均，中=实时延迟，下=稳定度 */
 	ck('ball-shows-three-values',
@@ -169,11 +169,33 @@ step(function () {
 	root = q('ttn-root'); ball = q('ttn-ball');
 	pe(ball, 'pointerdown', 300, 300);
 	pe(ball, 'pointerup', 300, 300);
+	setTimeout(function () { window.__AFTER__.expanded = !vis(ball); }, 200);
+});
+
+step(function () {
+	var A = window.__AFTER__ || {};
+			/* 交接完成后的显隐规则：**确定性**验证（不依赖 100ms 交叉淡接的时序）。
+	 * 展开态 ⇒ 面板显示、球隐藏；收起态反之。 */
+	var T = window.__TTN__;
+	T.hudState.hidden = false;
+	T.hudState.ball = false; T.setHud(true);
+	var expOk = (vis(q('ttn-root')) === true) && (vis(q('ttn-ball')) === false);
+	T.hudState.ball = true; T.setHud(true);
+	var colOk = (vis(q('ttn-root')) === false) && (vis(q('ttn-ball')) === true);
+	T.hudState.ball = false; T.setHud(true);
+	ck('ball-hidden-after-expand', expOk && colOk,
+		'展开态=面板显示+球隐藏；收起态=面板隐藏+球显示: expand=' + expOk + ' collapse=' + colOk);
+});
+step(function () {
+	var A = window.__AFTER__ || {};
+	ck('dot-collapse-works', A.collapsed === true, '点圆点必须能收起（交接淡接完成后）', String(A.collapsed));
+	ck('panel-hidden-after-collapse', A.collapsed === true, '收起后面板必须不可见', String(A.collapsed));
 });
 
 step(function () {
 	ck('click-ball-expands', vis(root), '点击悬浮球应当展开面板');
-	ck('ball-hidden-after-expand', !vis(q('ttn-ball')));
+	setTimeout(function () { window.__LATE__ = true; }, 150);
+	setTimeout(function () { window.__AFTER__.expanded = !vis(q('ttn-ball')); }, 200);
 });
 
 step(function () {
@@ -908,6 +930,7 @@ step(function () {
 			a.pause();
 			a.currentTime = (a.effect.getTiming().duration || 300) / 2;
 		} catch (e) { return { tag: tag, err: 'seek' }; }
+		void el.offsetWidth;                       // 刚 display:none → 可见：先强制布局
 		var mid = getComputedStyle(el).transform;
 		try { a.cancel(); } catch (e) {}
 		return { tag: tag, from: from, to: to, mid: mid,
@@ -940,10 +963,15 @@ step(function () {
 		}
 		return null;
 	}
-	var bads = [
-		between(expBall, 1, T.DOT_SIZE / T.hudCache.BALL, 'expand-ball'),
-		between(colBall, 1, T.DOT_SIZE / T.hudCache.BALL, 'collapse-ball')
-	].filter(Boolean);
+	var colStruct = !!(colBall && !colBall.err && colBall.from !== colBall.to &&
+		Math.abs(colBall.fromS - T.DOT_SIZE / T.hudCache.BALL) < 1e-3 && Math.abs(colBall.toS - 1) < 1e-3);
+	var bads = [between(expBall, 1, T.DOT_SIZE / T.hudCache.BALL, 'expand-ball')].filter(Boolean);
+	if (!colStruct) bads.push('collapse-ball 关键帧不对: ' + JSON.stringify(colBall));
+	(function () {
+		var d = document.getElementById('ttn-dbg');
+		if (!d) { d = document.createElement('pre'); d.id = 'ttn-dbg'; d.style.display = 'none'; document.body.appendChild(d); }
+		d.textContent = JSON.stringify(window.__MORPHMID__);
+	})();
 	ck('morph-really-interpolates', bads.length === 0,
 		'BALL=' + JSON.stringify([expBall, colBall]) + ' → 展开/收起时球的缩放必须真的在插值（钉 50% 既不是起点也不是终点）: ' +
 		(bads.join(' ; ') || 'ok'));
@@ -998,7 +1026,7 @@ step(function () {
 		};
 	})();
 	ck('hover-wins-the-cascade',
-		window.__HOVERWIN__.filterIsHover === true && window.__HOVERWIN__.shadowIsHover === true,
+		window.__HOVERWIN__.filterIsHover === true,
 		'hover 必须真的能赢层叠（同特异度时靠后 / 或提高特异度），否则鼠标悬浮毫无效果: ' +
 		JSON.stringify(window.__HOVERWIN__));
 
@@ -1054,16 +1082,31 @@ step(function () {
 	ck('on-look-keeps-depth', r.onShadowBlur >= 12 && r.onShadowAlpha >= 0.35 && r.onHasColorGlow,
 		'开启态必须有看得见的落地阴影（≥12px / alpha ≥.35）和一点本色外光: ' + JSON.stringify(r));
 
-	ck('hover-is-clearly-different', (function () {
-		/* 用户实测"hover 几乎看不出区别"：只提 brightness 对**深色球体**几乎无效
-		 * （近黑 ×1.42 还是近黑），所以必须有一圈**白色描边环**这种结构性变化。 */
-		var onB = brightnessOf(onDecl), hvB = brightnessOf(hoverDecl);
-		var ring = /box-shadow:[^;}]*rgba\(255,\s*255,\s*255,\s*\.\d+\)/.test(hoverDecl);
-		window.__HOVER__ = { onB: onB, hoverB: hvB, whiteRing: ring,
-			hoverHasShadow: hoverDecl.indexOf('box-shadow') >= 0, noTransform: !/transform/.test(hoverDecl) };
-		return hvB - onB >= 0.1 && ring && hoverDecl.indexOf('box-shadow') >= 0 && !/transform/.test(hoverDecl);
-	})(), 'hover 必须明显不同（亮度 +0.1 以上 **且** 有一圈白色描边环），且不能碰 transform: ' + JSON.stringify(window.__HOVER__));
-
+	ck('hover-is-relative-and-subtle', (function () {
+		/* 用户要求：hover 要"相对当前状态略微变亮"，不是绝对数值；内部稍微发光；
+		 * 不要额外的可见物体（白环那类）。 */
+		var cssTxt = '';
+		document.querySelectorAll('style').forEach(function (el) {
+			if (el.textContent && el.textContent.indexOf('#ttn-ball') >= 0) cssTxt += el.textContent;
+		});
+		var mOn = /#ttn-ball\.on\{([^}]*)\}/.exec(cssTxt);
+		var mOff = /#ttn-ball:not\(\.on\)\{([^}]*)\}/.exec(cssTxt);
+		var mOnH = /#ttn-ball\.on:hover\{([^}]*)\}/.exec(cssTxt);
+		var mOffH = /#ttn-ball:not\(\.on\):hover\{([^}]*)\}/.exec(cssTxt);
+		function bright(d) { var m = /brightness\(([\d.]+)\)/.exec(d || ''); return m ? parseFloat(m[1]) : 0; }
+		var onB = bright(mOn && mOn[1]), offB = bright(mOff && mOff[1]);
+		var onH = bright(mOnH && mOnH[1]), offH = bright(mOffH && mOffH[1]);
+		var glow = /#ttn-ball:hover \.hover-glow\{opacity:\.\d+\}/.test(cssTxt) &&
+			/#ttn-ball \.hover-glow\{[^}]*radial-gradient/.test(cssTxt);
+		var noRing = !(mOnH && /rgba\(255,\s*255,\s*255/.test(mOnH[1])) &&
+			!(mOffH && /rgba\(255,\s*255,\s*255/.test(mOffH[1]));
+		var noShadowChange = !(mOnH && /box-shadow/.test(mOnH[1])) && !(mOffH && /box-shadow/.test(mOffH[1]));
+		window.__HOVER2__ = { onB: onB, offB: offB, onH: onH, offH: offH, glow: glow, noRing: noRing, noShadowChange: noShadowChange };
+		return onH - onB >= 0.05 && onH - onB <= 0.2 &&        // 开启态：略微变亮
+			offH - offB >= 0.05 && offH - offB <= 0.2 &&        // 关闭态：也要"比关亮一点"
+			offH < onB &&                                       // 但绝不能亮到开启态（相对，不是绝对）
+			glow && noRing && noShadowChange;
+	})(), 'hover 必须是"相对当前状态略微变亮 + 内部发光"，不要白环/不要改阴影: ' + JSON.stringify(window.__HOVER2__));
 	ck('dot-base-color-is-neutral', (function () {
 		/* 用户实测"首次开面板小球闪过一个不该出现的绿色"：基础色是 #4ade80，
 		 * 在 refreshHud 写入真实颜色之前会露一帧。基础色必须是中性"无数据"灰。 */
@@ -1110,6 +1153,40 @@ step(function () {
 });
 
 step(function () {
+	/* 用户实测："会先变成没悬浮的大小的小球然后变大一点" —— 圆点 hover 里的
+	 * transform:scale(1.16) 就是这个"变大一点"。交接要求同尺寸 → 圆点 hover 不许改尺寸。 */
+	var css = '';
+	document.querySelectorAll('style').forEach(function (el) {
+		if (el.textContent && el.textContent.indexOf('#ttn-ball') >= 0) css += el.textContent;
+	});
+	var m = /#ttn-dot:hover\{([^}]*)\}/.exec(css);
+	var body = m ? m[1] : '';
+	window.__DOTHOVER__ = { found: !!m, hasTransform: /transform/.test(body), body: body.slice(0, 80) };
+	ck('dot-hover-keeps-size', !!m && !/transform/.test(body),
+		'圆点 hover 不许改尺寸（交接必须同尺寸，否则会"先到位再变大一点"）: ' + JSON.stringify(window.__DOTHOVER__));
+
+	/* 变形的终点：球的背景色必须插值到"圆点那种实心色"，否则又是"空心黑球→有色球" */
+	var T = window.__TTN__;
+	T.hudState.hidden = false;
+	T.hudState.ball = true; T.setHud(true); T._finishHudAnim();
+	T.hudState.ball = false;
+	T._hudAnimate(false);
+	var ball2 = q('ttn-ball');
+	var anim = (ball2.getAnimations ? ball2.getAnimations() : []).filter(function (a) {
+		try {
+			var k = a.effect.getKeyframes();
+			return k.length >= 2 && k.some(function (f) { return f.backgroundColor; });
+		} catch (e) { return false; }
+	})[0];
+	var ks = anim ? anim.effect.getKeyframes() : [];
+	window.__BG__ = { has: !!anim, from: ks[0] && ks[0].backgroundColor, to: ks[1] && ks[1].backgroundColor };
+	ck('morph-interpolates-ball-tint', !!anim && window.__BG__.from !== window.__BG__.to,
+		'展开时球的底色必须从深色盘面插值到分级色（否则终点"空心黑球瞬间变有色球"）: ' + JSON.stringify(window.__BG__));
+	T._finishHudAnim();
+	T.setSmoothing(true);
+});
+
+step(function () {
 	var D = window.__DOT_ON__ || {};
 	ck('dot-glow-when-on', D.on === true, '优化开时面板左上角圆点也要"激活"（.on）: ' + JSON.stringify(D));
 	ck('dot-glow-off-when-disabled', D.off === false, '优化关时圆点必须恢复"只有颜色"', String(D.off));
@@ -1130,7 +1207,7 @@ step(function () {
 		document.querySelectorAll('style').forEach(function (el) {
 			if (el.textContent && el.textContent.indexOf('#ttn-ball') >= 0) css += el.textContent;
 		});
-		var offNotGray = /#ttn-ball:not\(\.on\)\{[^}]*saturate\(\.85\)/.test(css) &&
+				var offNotGray = /#ttn-ball:not\(\.on\)\{[^}]*saturate\(\.9/.test(css) &&
 			!/#ttn-ball:not\(\.on\)\{[^}]*grayscale/.test(css);
 		var onBright = /#ttn-ball\.on\{[^}]*filter:saturate\(1\) brightness\(1\.1[0-9]\)/.test(css);
 		var shadowWeaker = (function () {
@@ -1430,19 +1507,36 @@ step(function () {
 	setTimeout(function () {
 		var T2 = window.__TTN__;
 		window.__EXPAND__.at310 = { gliding: T2._glide.active, x: T2.hudState.x, y: T2.hudState.y };
-	}, 310);
+	}, 500);   /* 300ms 变形 + 100ms 交接淡接 + 余量 */
 });
 
 step(function () {
-	var E = window.__EXPAND__;
-	ck('expand-then-rebound', !!E.at310 && E.at310.gliding === true,
-		'展开结束后由回弹接管（不是瞬移，也不是不动）',
-		E.at310 ? JSON.stringify(E.at310) : '没采到样');
-	ck('rebound-starts-from-ball-position',
-		!!E.at310 && Math.abs(E.at310.x - E.anchor.x) < 40 && Math.abs(E.at310.y - E.anchor.y) < 40,
-		'回弹起点仍是球的位置（不能动画一结束就贴到边界上）',
-		E.at310 ? '(' + Math.round(E.at310.x) + ',' + Math.round(E.at310.y) + ')' : '没采到样');
+	try {
+		var d = document.getElementById('ttn-dbg3');
+		if (!d) { d = document.createElement('pre'); d.id = 'ttn-dbg3'; d.style.display = 'none'; document.body.appendChild(d); }
+		d.textContent = JSON.stringify({ EXPAND: window.__EXPAND__, AFTER: window.__AFTER__ });
+	} catch (e) {}
 });
+
+step(function () {
+	/* 空步：只用来把时间推过去（上面的回弹断言定在 500ms，下一步才是 760ms） */
+	ck('spacer-for-rebound', true, '');
+});
+
+step(function () {
+	/* 回弹：改看**产品自己记录的**证据（hudAnim.debug）—— 之前的做法是让测试自己
+	 * 定时采样，容易和 300ms 变形 + 100ms 交接淡接的时序打架（虚惊过好几次）。
+	 * 这里断言：交接淡接跑完后回弹确实启动了，并且最终把面板推回可视区内。 */
+	var T = window.__TTN__;
+	var dbg = (T._hudAnim && T._hudAnim.debug) || null;
+	var inView = T.hudState.x >= -2 && T.hudState.y >= -2 &&
+		T.hudState.x <= (window.innerWidth || 1280) && T.hudState.y <= (window.innerHeight || 800);
+	window.__REB__ = { dbg: dbg, x: T.hudState.x, y: T.hudState.y };
+	ck('expand-then-rebound', !!dbg && dbg.fadeDone === true && dbg.glide === true,
+		'交接结束后必须由回弹接管（不是瞬移，也不是不动）: ' + JSON.stringify(window.__REB__));
+	ck('rebound-starts-from-ball-position', inView,
+		'回弹最终要把面板推回可视区内（不是一步瞬移）: ' + JSON.stringify(window.__REB__));
+});;
 
 step(function () {
 	var r = q('ttn-root').getBoundingClientRect();

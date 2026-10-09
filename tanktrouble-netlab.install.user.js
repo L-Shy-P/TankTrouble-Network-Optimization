@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.4.1
+// @version      0.4.2
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,14 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.4.1';
+	const VERSION = '0.4.2';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.4.2', 'hover 重做（用户："太夸张、不要白环、要相对变亮"）：删掉白环与大改阴影，改成 **相对当前状态略微变亮**（开启 1.18→1.26、关闭 0.94→1.00，关闭态永远亮不过开启态）+ 一层 `.hover-glow` **内部发光**（CSS opacity 过渡，与状态规则叠加互不覆盖）；按下则相对变暗一点',
+			'关闭态不再"很灰"：`saturate(.85) brightness(.9)` → `saturate(.95) brightness(.94)`（只压一点点）',
+			'修"大变小终点：空心黑球瞬间变有色球"：变形时把球的**底色一起插值**到圆点那种实心色（深色盘面 → 分级色），交接再用 90ms **交叉淡接**，两者任何细微差异（描边、内部黑条）都被抹平',
+			'修"小变大后先变成没悬浮的小球再变大一点"：圆点 hover 里的 `transform:scale(1.16)` 就是那"变大一点" —— 交接要求同尺寸，圆点 hover 改为**不改尺寸**（只加强光晕）',
+			'新增回归：hover 必须是"相对变亮且幅度 0.05~0.2、无白环、无阴影改动、有内部发光"；圆点 hover 不许碰 transform；变形必须插值球的底色；交接显隐规则用确定性写法验证（不再依赖 100ms 淡接的时序）'],
 		['0.4.1', '修"各种瞬变"：展开/收起变形改成 **Web Animations API（JS）驱动** —— CSS 过渡在"元素刚从 display:none 变可见""动画覆盖过渡"这类情况下会不创建/不推进（实测：无头环境里过渡从头到尾一动不动），表现就是瞬变。现在球的缩放、面板的缩放/淡入、球里文字的淡出都走 WAAPI：从"当前实时值"起步（中途反向连续）、终点同时写进内联样式（动画一撤就是终点，绝不跳）',
 			'修"鼠标悬浮大球没有效果"：`#ttn-ball:hover` 与 `#ttn-ball.on` 特异度相同(1,1,0)，谁在后面谁赢 —— 而 hover 写在前面 → **被 .on/:not(.on) 完全覆盖，悬浮从来没生效过**。现在改成 `.on:hover` / `:not(.on):hover`（1,2,0）并放在状态规则之后双保险',
 			'新增两条硬回归：① 把变形动画**钉到 50%**，computed 的 scale 必须严格在起点与终点之间（"有动画"不等于"在插值"，这个项目踩过两次）；② 按 (特异度, 顺序) 真算一遍层叠，hover 规则必须赢'],
@@ -1963,7 +1968,8 @@
 		'#ttn-dot{position:absolute;left:7px;top:7px;width:24px;height:24px;box-sizing:border-box;',
 		'border-radius:50%;background:#8b93a1;box-shadow:0 0 7px currentColor;cursor:pointer;',
 		'transition:transform .14s ease,box-shadow .3s ease,background .4s ease,color .4s ease}',
-		'#ttn-dot:hover{transform:scale(1.16);box-shadow:0 0 13px currentColor}',
+		/* hover 不许改尺寸：交接时圆点必须和球的最后一帧同尺寸，改 scale 就会"先到位再变大一点" */
+		'#ttn-dot:hover{box-shadow:0 0 15px currentColor,0 0 0 1px rgba(255,255,255,.22) inset}',
 		'#ttn-dot:active{transform:scale(.94)}',
 		'#ttn-dot::after{content:"";position:absolute;left:50%;top:50%;width:10px;height:3px;',
 		'background:rgba(0,0,0,.62);border-radius:2px;transform:translate(-50%,-50%)}',
@@ -2081,29 +2087,35 @@
 		'font:9px/1.1 "Segoe UI",system-ui,"Microsoft YaHei",sans-serif;font-variant-numeric:tabular-nums;',
 		/* filter 必须一起过渡：hover 改的就是 brightness()，漏了它那一下就是硬切 */
 		'transition:filter .3s ease,border-color .4s ease,box-shadow .4s ease,color .4s ease,opacity .18s ease,transform .28s cubic-bezier(.2,.8,.3,1)}',
-		'#ttn-ball:active{filter:saturate(1) brightness(1.05)}',
+
 		/* 开/关的语义：关=稍暗但保留颜色；开=提亮（和 hover 同一种"更亮"）+ 黑投影减弱。
 		 * 光晕用**真实子元素** .halo，动画全部由 JS（Web Animations API）驱动 ——
 		 * 不再依赖 CSS 过渡/关键帧那套"动画覆盖过渡"的坑（用户实测过"开关瞬变"）。 */
+		'#ttn-ball .hover-glow{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:50%;',
+		'pointer-events:none;opacity:0;transition:opacity .18s ease;',
+		'background:radial-gradient(circle,rgba(255,255,255,.5) 0%,rgba(255,255,255,.16) 46%,rgba(255,255,255,0) 78%)}',
 		'#ttn-ball .halo{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:50%;',
 		'pointer-events:none;opacity:0;',
 		'background:radial-gradient(circle,rgba(255,255,255,.55) 0%,rgba(255,255,255,.18) 45%,rgba(255,255,255,0) 74%)}',
-		'#ttn-ball:not(.on){filter:saturate(.85) brightness(.9);box-shadow:0 7px 20px rgba(0,0,0,.5)}',
+		'#ttn-ball:not(.on){filter:saturate(.95) brightness(.94);box-shadow:0 7px 20px rgba(0,0,0,.5)}',
 		'#ttn-ball.on{filter:saturate(1) brightness(1.18);box-shadow:0 6px 18px rgba(0,0,0,.42),0 0 12px -2px currentColor}',
-		/* hover / active 必须写在状态规则**之后**并**提高特异度**：
-		 * `#ttn-ball:hover` 与 `#ttn-ball.on` 特异度相同(1,1,0)，谁在后面谁赢 ——
-		 * 之前 hover 在前面，于是被 `.on`/`:not(.on)` 完全覆盖，鼠标悬浮毫无反应。
-		 * 现在用 `.on:hover` / `:not(.on):hover`（1,2,0）双保险。 */
-		'#ttn-ball.on:hover,#ttn-ball:not(.on):hover{filter:saturate(1) brightness(1.42);',
-		'box-shadow:0 12px 32px rgba(0,0,0,.6),0 0 0 3px rgba(255,255,255,.22),0 0 24px -1px currentColor}',
-		'#ttn-ball.on:active,#ttn-ball:not(.on):active{filter:saturate(1) brightness(1.05)}',
+		/* hover = **相对**当前状态略微变亮（不是绝对数值），并且主要是内部发光：
+		 *  · 内部发光用一层 .hover-glow 子元素（CSS opacity 过渡，能和状态规则叠加，不会互相覆盖）；
+		 *  · 亮度只加一点点，且分状态给 —— 关的时候也要"比关亮一点"，但绝不该亮到开启态。
+		 *  · 不要白环、不要大改阴影：那都是"额外的可见物体"（用户明确不要）。 */
+		'#ttn-ball:hover .hover-glow{opacity:.42}',
+		'#ttn-ball.on:hover{filter:saturate(1) brightness(1.26)}',
+		'#ttn-ball:not(.on):hover{filter:saturate(.95) brightness(1.0)}',
+		/* 按下：比当前状态略暗一点（同样是相对值） */
+		'#ttn-ball.on:active{filter:saturate(1) brightness(1.08)}',
+		'#ttn-ball:not(.on):active{filter:saturate(.95) brightness(.88)}',
 		/* 小圆点与大球同一套语义（同样用 .halo 子元素 + JS 动画） */
 		'#ttn-dot .halo{position:absolute;left:-1px;top:-1px;right:-1px;bottom:-1px;border-radius:50%;',
 		'pointer-events:none;opacity:0;',
 		'background:radial-gradient(circle,rgba(255,255,255,.6) 0%,rgba(255,255,255,.2) 48%,rgba(255,255,255,0) 72%)}',
 		/* 开关两个方向都要有过渡 → transition 写在基样式上，而不是只写在 :not(.on) 里 */
 		'#ttn-dot{transition:transform .14s ease,box-shadow .3s ease,background .4s ease,color .4s ease,filter .45s ease}',
-		'#ttn-dot:not(.on){filter:saturate(.85) brightness(.9)}',
+		'#ttn-dot:not(.on){filter:saturate(.95) brightness(.94)}',
 		'#ttn-dot.on{filter:saturate(1) brightness(1.18)}',
 		'#ttn-dot .halo{pointer-events:none}',
 		'#ttn-ball .t,#ttn-ball .m,#ttn-ball .b{transition:color .4s ease;max-width:60px;',
@@ -2747,6 +2759,9 @@
 		const ballHalo = document.createElement('span');
 		ballHalo.className = 'halo';
 		hudBall.appendChild(ballHalo);
+		const ballGlow = document.createElement('span');
+		ballGlow.className = 'hover-glow';
+		hudBall.appendChild(ballGlow);
 		const dotHalo = document.createElement('span');
 		dotHalo.className = 'halo';
 		hud.querySelector('#ttn-dot').appendChild(dotHalo);
@@ -2994,7 +3009,7 @@
 	 *   · 呼吸周期/强度随延迟变化（每次变化重建循环动画，量化过档位）。
 	 */
 	const GLOW_FILTER_ON = 'saturate(1) brightness(1.18)';
-	const GLOW_FILTER_OFF = 'saturate(.85) brightness(.9)';
+	const GLOW_FILTER_OFF = 'saturate(.95) brightness(.94)';
 
 	function applyGlow(el, on, durMs, glowPx) {
 		if (!el) return;
@@ -3267,7 +3282,9 @@
 	 *   · 用真实关键帧，可以"钉到 50%"直接验证属性到底有没有在插值；
 	 *   · 终点同时写进内联样式，动画一撤就是终点，绝不会跳。
 	 */
-	const hudAnim = { phase: 'idle', token: 0, timer: null, anims: [] };
+	const hudAnim = { phase: 'idle', token: 0, timer: null, anims: [], fade: [] };
+	const hudTint = { last: '' };            // 最近一次的分级色（refreshHud 写）
+	const BALL_SURFACE = 'rgba(18, 20, 26, 0.95)';   // 悬浮球的"深色盘面"（收起态的底色）
 
 	function animAt(el, frames, dur, easing) {
 		if (!el || typeof el.animate !== 'function') return null;
@@ -3364,8 +3381,16 @@
 			{ transform: panelEnd, opacity: panelOpEnd }
 		], DUR));
 		if (hudBall) {
+			/* 终点那一帧球必须"看起来就是圆点"：光缩尺寸不够（深色盘面 + 有色描边 →
+			 * 圆点是实心色块），所以背景色也要一起插值过去，否则交接时"空心黑球瞬间
+			 * 变成有色球"（用户实测的 bug）。收起方向反过来：变回深色盘面。 */
+			let curBg = BALL_SURFACE;
+			try { curBg = getComputedStyle(hudBall).backgroundColor || BALL_SURFACE; } catch (e) {}
+			const wantBg = collapse ? BALL_SURFACE : (hudTint.last || curBg);
+			const bgEnd = fromScratch ? wantBg : curBg;   // 反向时按当前色接着走
 			hudAnim.anims.push(animAt(hudBall, [
-				{ transform: curBallT }, { transform: ballEnd }
+				{ transform: curBallT, backgroundColor: fromScratch ? curBg : curBg },
+				{ transform: ballEnd, backgroundColor: bgEnd }
 			], DUR));
 			/* 球里的文字/数字也走 WAAPI（别指望 CSS 过渡，见函数头注释） */
 			const rows = hudBall.querySelectorAll('.t, .m, .b');
@@ -3406,7 +3431,7 @@
 		const bp = ballAtOf(ta.x, ta.y);
 		const s0 = DOT_SIZE / hudCache.BALL;
 
-		/* 先把终态写进内联样式，再撤动画 —— 撤的那一帧不会跳 */
+		/* 先把终态写进内联样式，再撤主变形动画 —— 撤的那一帧不会跳 */
 		hud.style.transform = 'translate(' + Math.round(ta.x) + 'px,' + Math.round(ta.y) + 'px)' +
 			(collapsed ? ' scale(0.03)' : '');
 		hud.style.opacity = collapsed ? '0' : '1';
@@ -3414,6 +3439,7 @@
 			hudBall.style.transform = 'translate(' + Math.round(bp.x) + 'px,' + Math.round(bp.y) + 'px)' +
 				(collapsed ? '' : ' scale(' + s0 + ')');
 			hudBall.style.opacity = '1';
+			hudBall.style.backgroundColor = collapsed ? BALL_SURFACE : (hudTint.last || BALL_SURFACE);
 			hudBall.classList.toggle('morph', !collapsed);
 			const rows = hudBall.querySelectorAll('.t, .m, .b');
 			Array.prototype.forEach.call(rows, function (el) {
@@ -3421,8 +3447,33 @@
 			});
 		}
 		cancelMorph();
-		if (dotEl) dotEl.style.opacity = '';   // 圆点归位：和球最后一帧重合，交接无缝
 
+		/* 交接用 90ms 交叉淡接：球和圆点在同一位置同一尺寸，把两者任何细微差异
+		 * （描边、内部黑条、选中态…）都抹平 —— 否则就是"瞬间从黑球变成有色球"。 */
+		if (dotEl && hudBall) {
+			const n0 = collapsed ? 1 : 0, n1 = collapsed ? 0 : 1;
+			hudAnim.fade = [animAt(hudBall, [{ opacity: n0 }, { opacity: n1 }], 90, 'ease'),
+				animAt(dotEl, [{ opacity: n1 }, { opacity: n0 }], 90, 'ease')].filter(Boolean);
+			if (hudAnim.fade.length) {
+				if (dotEl) dotEl.style.opacity = '';
+				hudAnim.fadeTimer = setTimeout(function () {
+					hudAnim.fadeTimer = null;
+					(hudAnim.fade || []).forEach(function (a) { try { a.cancel(); } catch (e) {} });
+					hudAnim.fade = [];
+					applyHudVisibility(false);
+					clampHud();
+					saveHudState();
+					hudAnim.debug = { fadeDone: true, glide: hudGlide.active, x: hudState.x, y: hudState.y };
+					try {
+						let d = document.getElementById('ttn-dbg2');
+						if (!d) { d = document.createElement('pre'); d.id = 'ttn-dbg2'; d.style.display = 'none'; document.body.appendChild(d); }
+						d.textContent = JSON.stringify(hudAnim.debug);
+					} catch (e) {}
+				}, 100);
+				return;
+			}
+		}
+		if (dotEl) dotEl.style.opacity = '';
 		applyHudVisibility(false);      // 动画自己已经管过 opacity 了
 		clampHud();
 		saveHudState();
@@ -3681,6 +3732,7 @@
 		hudCache.w = hud.offsetWidth || 288;
 			hudCache.h = hud.offsetHeight || 198;
 
+			hudTint.last = colStr;      // 变形要把球染成同一个色，交接才不会跳
 			const dot = hud.querySelector('#ttn-dot');
 			if (dot) {
 				if (dot.style.background !== colStr) dot.style.background = colStr;
