@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.3.10
+// @version      0.3.11
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,12 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.3.10';
+	const VERSION = '0.3.11';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.3.11', '找到"依旧瞬变"的**真正根因**（浏览器实测，不是推测）：开关动画的两个 filter 端点函数列表**形状不一致**（`saturate(.85) brightness(.9)` → `brightness(1.18)`），而按规范这种情况按**离散**插值处理 —— 动画确实在播（所以"数 animate() 调用"的测试是绿的），但属性值是到点就跳。实测：把动画钉在 50% 时读 computed 值是 `brightness(1.18)`（终点）而不是中间值',
+			'修法：所有 filter 统一成 `saturate(...) brightness(...)` 这一种形状（开/关/hover/active 五处），并把 `.halo` 一并纳入形状检查',
+			'新增两条硬回归：① 把**真实动画** pause 到 50%，computed 值必须既不是起点也不是终点（这才叫"在插值"）；② CSS 里所有 filter 必须只有一种函数形状（否则离散插值）。反例：把 ON 改回 `brightness(1.18)` → 第一条立刻红'],
 		['0.3.10', '继续修"开关瞬变"，这次找到并修掉三个真原因：① 遇到 prefers-reduced-motion 就**整个跳过动画**（Windows 关掉"显示动画"很常见）→ 现在只把动画变短变小，**绝不跳过**；② 呼吸循环和淡入都动 opacity，后建的循环立刻顶掉淡入 → 光晕"跳"出来（循环加 delay，等淡入跑完再接手）；③ 关闭时先 cancel 了循环再读不透明度 → 读到 0，没有淡出（改成先读再取消）',
 			'圆点开启亮度与动画终点对齐（CSS 1.15 → 1.18），动画结束不再跳一下',
 			'导出报告新增 prefersReducedMotion 与上一次开关动画的详情（以后再报"没动画"可以直接查）'],
@@ -2063,22 +2066,22 @@
 		'font:9px/1.1 "Segoe UI",system-ui,"Microsoft YaHei",sans-serif;font-variant-numeric:tabular-nums;',
 		/* filter 必须一起过渡：hover 改的就是 brightness()，漏了它那一下就是硬切 */
 		'transition:filter .3s ease,border-color .4s ease,box-shadow .4s ease,color .4s ease,opacity .18s ease,transform .28s cubic-bezier(.2,.8,.3,1)}',
-		'#ttn-ball:hover{filter:brightness(1.2);box-shadow:0 8px 26px rgba(0,0,0,.55),0 0 20px -2px currentColor}',
-		'#ttn-ball:active{filter:brightness(1.05)}',
+		'#ttn-ball:hover{filter:saturate(1) brightness(1.2);box-shadow:0 8px 26px rgba(0,0,0,.55),0 0 20px -2px currentColor}',
+		'#ttn-ball:active{filter:saturate(1) brightness(1.05)}',
 		/* 开/关的语义：关=稍暗但保留颜色；开=提亮（和 hover 同一种"更亮"）+ 黑投影减弱。
 		 * 光晕用**真实子元素** .halo，动画全部由 JS（Web Animations API）驱动 ——
 		 * 不再依赖 CSS 过渡/关键帧那套"动画覆盖过渡"的坑（用户实测过"开关瞬变"）。 */
 		'#ttn-ball .halo{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:50%;',
 		'pointer-events:none;opacity:0;background:radial-gradient(circle,rgba(255,255,255,.26) 0%,rgba(255,255,255,0) 70%)}',
 		'#ttn-ball:not(.on){filter:saturate(.85) brightness(.9);box-shadow:0 5px 16px rgba(0,0,0,.42)}',
-		'#ttn-ball.on{filter:brightness(1.18);box-shadow:0 2px 7px rgba(0,0,0,.2),0 0 7px -3px currentColor}',
+		'#ttn-ball.on{filter:saturate(1) brightness(1.18);box-shadow:0 2px 7px rgba(0,0,0,.2),0 0 7px -3px currentColor}',
 		/* 小圆点与大球同一套语义（同样用 .halo 子元素 + JS 动画） */
 		'#ttn-dot .halo{position:absolute;left:-1px;top:-1px;right:-1px;bottom:-1px;border-radius:50%;',
 		'pointer-events:none;opacity:0;background:radial-gradient(circle,rgba(255,255,255,.34) 0%,rgba(255,255,255,0) 68%)}',
 		/* 开关两个方向都要有过渡 → transition 写在基样式上，而不是只写在 :not(.on) 里 */
 		'#ttn-dot{transition:transform .14s ease,box-shadow .3s ease,background .4s ease,color .4s ease,filter .45s ease}',
 		'#ttn-dot:not(.on){filter:saturate(.85) brightness(.9)}',
-		'#ttn-dot.on{filter:brightness(1.18)}',
+		'#ttn-dot.on{filter:saturate(1) brightness(1.18)}',
 		'#ttn-dot .halo{pointer-events:none}',
 		'#ttn-ball .t,#ttn-ball .m,#ttn-ball .b{transition:color .4s ease;max-width:60px;',
 		'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}',
@@ -2962,7 +2965,7 @@
 	 *     用户实测过"开关瞬变"，所以这里由 JS 明确地播一段动画，谁都拦不住；
 	 *   · 呼吸周期/强度随延迟变化（每次变化重建循环动画，量化过档位）。
 	 */
-	const GLOW_FILTER_ON = 'brightness(1.18)';
+	const GLOW_FILTER_ON = 'saturate(1) brightness(1.18)';
 	const GLOW_FILTER_OFF = 'saturate(.85) brightness(.9)';
 
 	function applyGlow(el, on, durMs, glowPx) {

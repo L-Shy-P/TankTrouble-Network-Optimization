@@ -640,7 +640,7 @@ step(function () {
 		 * 光晕是真实子元素 .halo，静态观感（关暗/开亮）仍写在类规则里。 */
 		var noCssKeyframes = css.indexOf('ttn-breathe') < 0;
 		var haloIsElement = /#ttn-ball \.halo\{/.test(css) && /#ttn-dot \.halo\{/.test(css);
-		var staticLook = /#ttn-ball\.on\{[^}]*filter:brightness/.test(css) &&
+		var staticLook = /#ttn-ball\.on\{[^}]*filter:saturate\(1\) brightness/.test(css) &&
 			/#ttn-ball:not\(\.on\)\{[^}]*saturate/.test(css);
 		window.__TOGGLE_ANIM__ = { noCssKeyframes: noCssKeyframes, haloIsElement: haloIsElement, staticLook: staticLook };
 		return noCssKeyframes && haloIsElement && staticLook;
@@ -748,8 +748,75 @@ step(function () {
 		document.querySelectorAll('style').forEach(function (el) {
 			if (el.textContent && el.textContent.indexOf('#ttn-ball') >= 0) css += el.textContent;
 		});
-		return /#ttn-dot\.on\{filter:brightness\(1\.18\)\}/.test(css);
+		return /#ttn-dot\.on\{filter:saturate\(1\) brightness\(1\.18\)\}/.test(css);
 	})(), 'CSS 里圆点开启亮度要和动画终点一致（1.18），否则动画结束时会跳一下');
+});
+
+step(function () {
+	/* 关键回归：**动画会播 ≠ 值在插值**。
+	 * 用户实测"依旧瞬变"，浏览器实测出来的原因是：两个 filter 端点函数列表形状不同
+	 * （saturate+brightness → brightness），规范规定这种情况按**离散**插值 →
+	 * 动画在跑，属性值却是到时间就跳。判据：把真实动画 pause 到 50%，读 computed 值，
+	 * 必须既不是起点也不是终点（是真正的中间值）。 */
+	var T = window.__TTN__;
+	T.hudState.hidden = false; T.hudState.ball = false; T.setHud(true);
+	T.setSmoothing(false);
+
+	function midValue(el, tag) {
+		T.setSmoothing(el.classList.contains('on') ? false : true);   // 触发一次真实开关动画
+		T.setSmoothing(el.classList.contains('on') ? true : false);
+		var a = el.__glowAnim;
+		if (!a) return { tag: tag, err: 'no-anim' };
+		var kf = [];
+		try { kf = a.effect.getKeyframes() || []; } catch (e) {}
+		var from = kf[0] ? kf[0].filter : '?';
+		var to = kf[1] ? kf[1].filter : '?';
+		try {
+			a.pause();
+			a.currentTime = (a.effect.getTiming().duration || 420) / 2;
+		} catch (e) { return { tag: tag, err: 'seek:' + e.message }; }
+		var v = getComputedStyle(el).filter;
+		try { a.cancel(); } catch (e) {}
+		return { tag: tag, from: from, to: to, mid: v, dur: a.effect.getTiming().duration };
+	}
+
+	window.__MID__ = { dot: midValue(q('ttn-dot'), 'dot') };
+	T.hudState.ball = true; T.setHud(true);
+	window.__MID__.ball = midValue(q('ttn-ball'), 'ball');
+	T.hudState.ball = false; T.setHud(true); T.setSmoothing(true);
+});
+
+step(function () {
+	var M = window.__MID__ || {};
+	function bad(o, name) {
+		if (!o) return name + ':missing';
+		if (o.err) return name + ':' + o.err;
+		var v = String(o.mid || '');
+		if (v === o.from || v === o.to) return name + ' 离散跳变 mid=' + v;
+		return null;
+	}
+	var bads = [bad(M.dot, 'dot'), bad(M.ball, 'ball')].filter(Boolean);
+	ck('glow-filter-really-interpolates', bads.length === 0,
+		'开关动画必须真的在插值（钉在 50% 时既不是起点也不是终点）: ' + (bads.join(' ; ') || 'ok') +
+		' || ' + JSON.stringify(M));
+	ck('filter-lists-same-shape', (function () {
+		/* 静态兜底：所有 filter 值都必须是 saturate(...) brightness(...) 这一种形状，
+		 * 否则又会退化成离散插值。 */
+		var shapes = {};
+		var css = '';
+		document.querySelectorAll('style').forEach(function (el) {
+			if (el.textContent && el.textContent.indexOf('#ttn-ball') >= 0) css += el.textContent;
+		});
+		var re = /(?:^|[;{\s])filter:\s*([^;}'"]+)/g, m;
+		while ((m = re.exec(css))) {
+			var v = m[1].trim();
+			if (v === 'none' || v.indexOf('drop-shadow') >= 0 || v.indexOf('blur(') >= 0) continue;
+			var names = (v.match(/[a-z-]+(?=\()/g) || []).join('+');
+			shapes[names] = (shapes[names] || 0) + 1;
+		}
+		window.__FILTER_SHAPES__ = shapes;
+		return Object.keys(shapes).length === 1;
+	})(), 'CSS 里所有 filter 必须同一种函数形状（否则离散插值）: ' + JSON.stringify(window.__FILTER_SHAPES__));
 });
 
 step(function () {
@@ -785,7 +852,7 @@ step(function () {
 		});
 		var offNotGray = /#ttn-ball:not\(\.on\)\{[^}]*saturate\(\.85\)/.test(css) &&
 			!/#ttn-ball:not\(\.on\)\{[^}]*grayscale/.test(css);
-		var onBright = /#ttn-ball\.on\{[^}]*filter:brightness\(1\.1[0-9]\)/.test(css);
+		var onBright = /#ttn-ball\.on\{[^}]*filter:saturate\(1\) brightness\(1\.1[0-9]\)/.test(css);
 		var shadowWeaker = /#ttn-ball\.on\{[^}]*box-shadow:0 2px 7px rgba\(0,0,0,\.2\)/.test(css);
 		var breatheWhite = /#ttn-ball \.halo\{[^}]*rgba\(255,255,255,\.2/.test(css);
 		window.__GLOW2__ = { offNotGray: offNotGray, onBright: onBright, shadowWeaker: shadowWeaker, breatheWhite: breatheWhite };
