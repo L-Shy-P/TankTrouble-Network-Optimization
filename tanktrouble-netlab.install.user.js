@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.3.11
+// @version      0.3.12
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,14 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.3.11';
+	const VERSION = '0.3.12';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.3.12', '修"大球纯亮、没阴影、没光晕、hover 无感"（都是 0.3.7 那轮"阴影要变弱/不要染色"改过头的后果）：开启态阴影恢复到看得见的 `0 6px 18px rgba(0,0,0,.42)` + 一点本色外光（关闭态是 `0 7px 20px rgba(0,0,0,.5)`，保持"开比关轻"但不再等于没有）',
+			'光晕改成**白色内圈光**并调高到看得见（渐变峰值 .55、呼吸 0.34↔0.58）—— 是"被点亮"而不是一大片染色',
+			'hover 改成明显更亮（1.18 → 1.34）且阴影同时变大变深（之前只 1.18→1.20，肉眼无感）；依旧**不碰 transform**（位置由内联 transform 管，碰了会抖）',
+			'亮度动画加兜底：`finished` 后 cancel，外加 520ms 超时强制收回 —— 万一动画卡住（页面被节流等），元素不会一直停在起始值（表现就是"没阴影/没光晕"）',
+			'新增四条回归：开启态必须留有 ≥12px/α≥.35 的落地阴影与本色外光；hover 亮度至少比开启态高 0.1 且改阴影、不碰 transform；光晕峰值 ≥.35；亮度动画不许带 fill'],
 		['0.3.11', '找到"依旧瞬变"的**真正根因**（浏览器实测，不是推测）：开关动画的两个 filter 端点函数列表**形状不一致**（`saturate(.85) brightness(.9)` → `brightness(1.18)`），而按规范这种情况按**离散**插值处理 —— 动画确实在播（所以"数 animate() 调用"的测试是绿的），但属性值是到点就跳。实测：把动画钉在 50% 时读 computed 值是 `brightness(1.18)`（终点）而不是中间值',
 			'修法：所有 filter 统一成 `saturate(...) brightness(...)` 这一种形状（开/关/hover/active 五处），并把 `.halo` 一并纳入形状检查',
 			'新增两条硬回归：① 把**真实动画** pause 到 50%，computed 值必须既不是起点也不是终点（这才叫"在插值"）；② CSS 里所有 filter 必须只有一种函数形状（否则离散插值）。反例：把 ON 改回 `brightness(1.18)` → 第一条立刻红'],
@@ -2066,18 +2071,20 @@
 		'font:9px/1.1 "Segoe UI",system-ui,"Microsoft YaHei",sans-serif;font-variant-numeric:tabular-nums;',
 		/* filter 必须一起过渡：hover 改的就是 brightness()，漏了它那一下就是硬切 */
 		'transition:filter .3s ease,border-color .4s ease,box-shadow .4s ease,color .4s ease,opacity .18s ease,transform .28s cubic-bezier(.2,.8,.3,1)}',
-		'#ttn-ball:hover{filter:saturate(1) brightness(1.2);box-shadow:0 8px 26px rgba(0,0,0,.55),0 0 20px -2px currentColor}',
+		'#ttn-ball:hover{filter:saturate(1) brightness(1.34);box-shadow:0 11px 30px rgba(0,0,0,.55),0 0 20px -1px currentColor}',
 		'#ttn-ball:active{filter:saturate(1) brightness(1.05)}',
 		/* 开/关的语义：关=稍暗但保留颜色；开=提亮（和 hover 同一种"更亮"）+ 黑投影减弱。
 		 * 光晕用**真实子元素** .halo，动画全部由 JS（Web Animations API）驱动 ——
 		 * 不再依赖 CSS 过渡/关键帧那套"动画覆盖过渡"的坑（用户实测过"开关瞬变"）。 */
 		'#ttn-ball .halo{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:50%;',
-		'pointer-events:none;opacity:0;background:radial-gradient(circle,rgba(255,255,255,.26) 0%,rgba(255,255,255,0) 70%)}',
-		'#ttn-ball:not(.on){filter:saturate(.85) brightness(.9);box-shadow:0 5px 16px rgba(0,0,0,.42)}',
-		'#ttn-ball.on{filter:saturate(1) brightness(1.18);box-shadow:0 2px 7px rgba(0,0,0,.2),0 0 7px -3px currentColor}',
+		'pointer-events:none;opacity:0;',
+		'background:radial-gradient(circle,rgba(255,255,255,.55) 0%,rgba(255,255,255,.18) 45%,rgba(255,255,255,0) 74%)}',
+		'#ttn-ball:not(.on){filter:saturate(.85) brightness(.9);box-shadow:0 7px 20px rgba(0,0,0,.5)}',
+		'#ttn-ball.on{filter:saturate(1) brightness(1.18);box-shadow:0 6px 18px rgba(0,0,0,.42),0 0 12px -2px currentColor}',
 		/* 小圆点与大球同一套语义（同样用 .halo 子元素 + JS 动画） */
 		'#ttn-dot .halo{position:absolute;left:-1px;top:-1px;right:-1px;bottom:-1px;border-radius:50%;',
-		'pointer-events:none;opacity:0;background:radial-gradient(circle,rgba(255,255,255,.34) 0%,rgba(255,255,255,0) 68%)}',
+		'pointer-events:none;opacity:0;',
+		'background:radial-gradient(circle,rgba(255,255,255,.6) 0%,rgba(255,255,255,.2) 48%,rgba(255,255,255,0) 72%)}',
 		/* 开关两个方向都要有过渡 → transition 写在基样式上，而不是只写在 :not(.on) 里 */
 		'#ttn-dot{transition:transform .14s ease,box-shadow .3s ease,background .4s ease,color .4s ease,filter .45s ease}',
 		'#ttn-dot:not(.on){filter:saturate(.85) brightness(.9)}',
@@ -2989,15 +2996,26 @@
 			const to = on ? GLOW_FILTER_ON : GLOW_FILTER_OFF;
 			try {
 				if (el.__glowAnim) el.__glowAnim.cancel();
-				el.__glowAnim = el.animate([{ filter: from }, { filter: to }],
+				const anim = el.animate([{ filter: from }, { filter: to }],
 					{ duration: dur, easing: 'ease' });
+				el.__glowAnim = anim;
+				/* 兜底：这段动画没有 fill，正常结束后会交还给 CSS；但万一它卡住
+				 * （页面被节流、时间轴不动），元素就会一直停在**起始值** —— 表现就是
+				 * "球变纯色、没有阴影/没有光晕"。所以无论如何 520ms 后强制收回。 */
+				try {
+					anim.finished.then(function () { try { anim.cancel(); } catch (e) {} })
+						.catch(function () {});
+				} catch (e) {}
+				setTimeout(function () {
+					try { if (anim.playState !== 'idle') anim.cancel(); } catch (e) {}
+				}, dur + 100);
 			} catch (e) {}
 		}
 		el.__glowOn = on;
 		el.__glowLast = { changed: changed, on: on, soft: soft, dur: dur };
 
 		if (!halo) return;
-		if (!canAnimate) { halo.style.opacity = on ? '0.22' : '0'; return; }
+		if (!canAnimate) { halo.style.opacity = on ? '0.34' : '0'; return; }
 
 		const fromOp = parseFloat(getComputedStyle(halo).opacity) || 0;   // ③ 先读
 		if (changed) {
@@ -3005,7 +3023,7 @@
 				if (el.__haloFade) el.__haloFade.cancel();
 				if (el.__haloLoop) { el.__haloLoop.cancel(); el.__haloLoop = null; }
 				el.__loopDur = null;                                       // 下次开时重建（带淡入延迟）
-				el.__haloFade = halo.animate([{ opacity: fromOp }, { opacity: on ? 0.22 : 0 }],
+				el.__haloFade = halo.animate([{ opacity: fromOp }, { opacity: on ? 0.34 : 0 }],
 					{ duration: dur, easing: 'ease', fill: 'forwards' });
 			} catch (e) {}
 		}
@@ -3017,8 +3035,8 @@
 			const big = soft ? 1 : 1 + Math.min(0.06, glowPx / 500);
 			try {
 				el.__haloLoop = halo.animate([
-					{ opacity: 0.20, transform: 'scale(1)' },
-					{ opacity: 0.30, transform: 'scale(' + big.toFixed(3) + ')' }
+					{ opacity: 0.34, transform: 'scale(1)' },
+					{ opacity: 0.58, transform: 'scale(' + big.toFixed(3) + ')' }
 				], {
 					duration: durMs, direction: 'alternate', iterations: Infinity, easing: 'ease-in-out',
 					delay: changed ? dur : 0

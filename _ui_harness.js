@@ -830,6 +830,72 @@ step(function () {
 });
 
 step(function () {
+	/* 用户实测："大球纯亮，没有任何阴影、没有任何光晕、没有鼠标悬浮变化"。三条都做成回归：
+	 *   ① 开启态必须有**看得见**的落地阴影 + 本色外光（上一版弱到 0 2px 7px rgba(0,0,0,.2) → 看着就是纯色）；
+	 *   ② 光晕不透明度峰值必须够高，否则等于没有；
+	 *   ③ hover 必须**明显**不同：亮度至少比开启态高 0.1，且阴影也变，同时不能碰 transform
+	 *      （位置由内联 transform 管，CSS 碰了就会抖）。 */
+	var css = '';
+	document.querySelectorAll('style').forEach(function (el) {
+		if (el.textContent && el.textContent.indexOf('#ttn-ball') >= 0) css += el.textContent;
+	});
+	function rule(sel) {
+		var i = css.indexOf(sel + '{');
+		if (i < 0) return '';
+		var j = css.indexOf('}', i);
+		return j < 0 ? '' : css.slice(i + sel.length + 1, j);
+	}
+	function brightnessOf(decl) {
+		var m = /brightness\(([\d.]+)\)/.exec(decl);
+		return m ? parseFloat(m[1]) : 0;
+	}
+	var onDecl = rule('#ttn-ball.on'), hoverDecl = rule('#ttn-ball:hover');
+	var onShadow = /box-shadow:\s*0\s+[\d.]+px\s+([\d.]+)px\s+rgba\(0,\s*0,\s*0,\s*\.(\d+)\)/.exec(onDecl);
+	var r = {
+		onShadowBlur: onShadow ? parseFloat(onShadow[1]) : 0,
+		onShadowAlpha: onShadow ? parseFloat('0.' + onShadow[2]) : 0,
+		onHasColorGlow: /currentColor/.test(onDecl)
+	};
+	window.__LOOK__ = r;
+	ck('on-look-keeps-depth', r.onShadowBlur >= 12 && r.onShadowAlpha >= 0.35 && r.onHasColorGlow,
+		'开启态必须有看得见的落地阴影（≥12px / alpha ≥.35）和一点本色外光: ' + JSON.stringify(r));
+
+	ck('hover-is-clearly-different', (function () {
+		var onB = brightnessOf(onDecl), hvB = brightnessOf(hoverDecl);
+		window.__HOVER__ = { onB: onB, hoverB: hvB, hoverHasShadow: hoverDecl.indexOf('box-shadow') >= 0,
+			noTransform: !/transform/.test(hoverDecl) };
+		return hvB - onB >= 0.1 && hoverDecl.indexOf('box-shadow') >= 0 && !/transform/.test(hoverDecl);
+	})(), 'hover 必须明显更亮（至少 +0.1）且阴影也变，且不能碰 transform: ' + JSON.stringify(window.__HOVER__));
+
+	ck('halo-peak-is-visible', (function () {
+		var T = window.__TTN__, ball = q('ttn-ball');
+		T.setSmoothing(true);
+		var loop = ball.__haloLoop, maxOp = 0, fadeTo = 0;
+		try {
+			(loop.effect.getKeyframes() || []).forEach(function (k) { maxOp = Math.max(maxOp, parseFloat(k.opacity) || 0); });
+		} catch (e) {}
+		try { fadeTo = parseFloat(ball.__haloFade.effect.getKeyframes()[1].opacity) || 0; } catch (e) {}
+		window.__HALO__ = { maxOp: maxOp, fadeTo: fadeTo, hasLoop: !!loop };
+		return maxOp >= 0.35 && fadeTo >= 0.3;
+	})(), '光晕峰值不透明度要够（呼吸 ≥.35 / 淡入终点 ≥.3），否则等于没有: ' + JSON.stringify(window.__HALO__));
+
+	ck('glow-anim-has-no-fill', (function () {
+		/* 亮度动画不能带 fill：结束后要交还 CSS。带 fill 的动画若卡住（页面被节流等），
+		 * 元素会一直停在被 fill 的那个值上 —— 观感就是"没有阴影/没有光晕"。 */
+		var T = window.__TTN__, ball = q('ttn-ball');
+		T.setSmoothing(false); T.setSmoothing(true);
+		var a = ball.__glowAnim;
+		if (!a) return false;
+		var t = a.effect.getTiming();
+		window.__FILL__ = { fill: t.fill, dur: t.duration, hasFinished: !!(a.finished && a.finished.then) };
+		return t.fill !== 'forwards' && t.fill !== 'both' && t.fill !== 'backwards';
+	})(), '亮度动画不能带 fill（结束后交还 CSS，否则卡住会冻住观感）: ' + JSON.stringify(window.__FILL__));
+
+	var T3 = window.__TTN__;
+	T3.hudState.ball = false; T3.setHud(true); T3.setSmoothing(true);
+});
+
+step(function () {
 	var D = window.__DOT_ON__ || {};
 	ck('dot-glow-when-on', D.on === true, '优化开时面板左上角圆点也要"激活"（.on）: ' + JSON.stringify(D));
 	ck('dot-glow-off-when-disabled', D.off === false, '优化关时圆点必须恢复"只有颜色"', String(D.off));
@@ -853,8 +919,22 @@ step(function () {
 		var offNotGray = /#ttn-ball:not\(\.on\)\{[^}]*saturate\(\.85\)/.test(css) &&
 			!/#ttn-ball:not\(\.on\)\{[^}]*grayscale/.test(css);
 		var onBright = /#ttn-ball\.on\{[^}]*filter:saturate\(1\) brightness\(1\.1[0-9]\)/.test(css);
-		var shadowWeaker = /#ttn-ball\.on\{[^}]*box-shadow:0 2px 7px rgba\(0,0,0,\.2\)/.test(css);
-		var breatheWhite = /#ttn-ball \.halo\{[^}]*rgba\(255,255,255,\.2/.test(css);
+		var shadowWeaker = (function () {
+			function blackAlpha(decl) {
+				var m = /rgba\(0,\s*0,\s*0,\s*\.(\d+)\)/.exec(decl || '');
+				return m ? parseFloat('0.' + m[1]) : 0;
+			}
+			var onD = /#ttn-ball\.on\{([^}]*)\}/.exec(css), offD = /#ttn-ball:not\(\.on\)\{([^}]*)\}/.exec(css);
+			var onA = blackAlpha(onD && onD[1]), offA = blackAlpha(offD && offD[1]);
+			window.__SHADOW__ = { on: onA, off: offA };
+			return onA > 0 && offA > 0 && onA < offA;      // 开要"更弱"但**不能没有**
+		})();
+		var breatheWhite = (function () {
+			var m = /#ttn-ball \.halo\{([^}]*)\}/.exec(css);
+			var d = m ? m[1] : '';
+			var a = /\(255,255,255,\.(\d+)\)/.exec(d);
+			return !!a && parseFloat('0.' + a[1]) >= 0.3;   // 白色内圈光，而且要看得见
+		})();
 		window.__GLOW2__ = { offNotGray: offNotGray, onBright: onBright, shadowWeaker: shadowWeaker, breatheWhite: breatheWhite };
 		return offNotGray && onBright && shadowWeaker && breatheWhite;
 	})(), '关=保留颜色（只稍暗）/ 开=提亮 + 黑投影减弱 + 白光呼吸（不是大片染色）: ' +
