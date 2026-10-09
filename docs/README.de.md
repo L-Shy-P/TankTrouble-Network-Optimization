@@ -1,6 +1,9 @@
 # 🇩🇪 TankTrouble — Netzwerk-Optimierung
 
-**Willst du **auf Deutsch** in TankTrouble schreiben? Ich habe eine mehrsprachige Chat-Erweiterung gebaut! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
+> [!TIP]
+> Willst du **auf Deutsch** in TankTrouble schreiben? Ich habe eine mehrsprachige Chat-Erweiterung gebaut! 👉 [TankTrouble-Chat-Unblock](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock)
+
+
 
 
 ![TankTrouble — Netzwerk-Optimierung](img/de.png)

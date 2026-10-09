@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.4.9
+// @version      0.5.0
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,13 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.4.9';
+	const VERSION = '0.5.0';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.5.0', '修"终点前还有极细微瞬变 + 标题栏瞬间变灰 + 收起时大球灰一下"（用户实测）—— 三个真因：① **CSS 过渡的层叠优先级高于 WAAPI**：变形时写内联起止值会派生 CSSTransition，和 WAAPI 抢同一个 transform/opacity/box-shadow，播到一半交还给动画就"跳一下"；② 标题栏 hover 换整条 `linear-gradient`，渐变之间不可插值（规范按离散处理）→ 必然瞬变；③ 元素刚从 display:none 变可见时 WAAPI 首帧不一定生效，会露一帧基础样式（灰/全尺寸）。',
+			'修法：① 变形期间用 `.ttn-morphing` class 先压掉 transform/opacity/box-shadow 的 CSS 过渡（filter/border/color 的 hover 过渡保留，绝不用内联 transition）；② 标题栏改成**同形状内阴影**过渡（`inset 0 0 0 0` → `inset 0 0 0 999px`，只有长度和 alpha 在插值）；③ 写动画前先把**完整起始姿态**写成内联值：面板 transform/opacity、球 transform（显式 scale）+ backgroundColor（=圆点实时色）+ boxShadow，元素从 display:none 出现的第一帧就是正确姿态。',
+			'交接细节：呼吸相位改成按"循环内进度比例"对齐，并确保取的是 iterations:Infinity 的循环动画（以前 `getAnimations()[0]` 会取到带 fill:forwards、永远卡在列表第一位的淡入 → 设错对象）；发光冻结的 220ms 定时器在连点/反向时先清掉，避免旧定时器提前清掉新内联值；圆点/hudTint 在**收起成球期间**也持续同步最新分级色（以前只在面板态更新，下次展开会从旧色起步）。',
+			'新增回归：ball-rows-have-own-colors（三项各自分级着色）、head-hover-is-interpolable（同形状内阴影 + 不再动 background）、morph-start-state-inline / collapse-first-frame-not-gray / expand-start-state-inline（起始态内联）、morph-suppresses-competing-transition（class 压制过渡）、morph-endpoints-match-static（底色/阴影/面板 opacity/scale 的终点=静止态，且钉 50% 证明真在插值）、collapsed-dot-keeps-live-tint、halo-phase-synced-on-handoff、hover-glow-freeze-covers-handoff。三处改动均做过"撤回 → 对应回归变红"的反例验证。'],
 		['0.4.9', '修"鼠标悬浮着过渡时发光状态会瞬变"：内部发光 (.hover-glow) 跨交接也冻结 —— 球是 hover 状态、而圆点在交接前不算 hovered，于是它会从 0 淡入。现在交接时把圆点的 .hover-glow 内联成球当前的实际值（内联不会被 :hover 规则盖过），220ms 后清掉交还 CSS；收起方向反之',
 			'文档：英文截图直接放到主页顶部（不再只在折叠块里），各语言截图裁掉全部空白（content-crop），页内推广句从"置底引用"改成**第一行正文**（正常字重、非灰色小字）'],
 		['0.4.8', '修"过渡结束后才出现光晕"（用户实测）：变形时阴影的**终点**以前取的是圆点的阴影，而圆点被球挡着不算 hovered → 取到"未悬浮"那份 → 变形过程中 hover 的外发光/内描边被插值抹掉、到终点才回来。现在终点取**球自己当前的**阴影（含 hover 状态），整个变形过程光晕不变（两边配方本来就共用）',
@@ -1976,8 +1980,13 @@
 		'#ttn-head{position:relative;display:flex;align-items:center;gap:8px;padding:9px 10px 9px 44px;',
 		'min-height:44px;cursor:move;touch-action:none;',
 		'background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.028));',
-		'border-bottom:1px solid rgba(255,255,255,.08);transition:background .22s ease}',
-		'#ttn-head:hover{background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.05))}',
+		'border-bottom:1px solid rgba(255,255,255,.08);',
+		/* 标题栏 hover 不再换另一条渐变（渐变之间不可插值 → 必然瞬变），
+		 * 改成同形状的内阴影叠加：长度 0→999px、颜色不变，两端一定可插值；
+		 * transition 必须留在同一个 `#ttn-head{...}` 规则里 —— 另起同特异度规则
+		 * 会把基础 transition 覆盖掉（0.4.9 的 title hover 就是这么漏的）。 */
+		'transition:box-shadow .22s ease;box-shadow:inset 0 0 0 0 rgba(255,255,255,0)}',
+		'#ttn-head:hover{box-shadow:inset 0 0 0 999px rgba(255,255,255,.055)}',
 		/* 圆点 = 面板上的"收起"按钮，也是收起后悬浮球的落点。
 		 * 24px；left/top 取 7（相对标题栏 padding box 定位，面板另有 1px 边框）→
 		 * 7+1+12 = 20，圆心严格落在变换原点 (20,20) 上。 */
@@ -2112,6 +2121,15 @@
 		 * 不再依赖 CSS 过渡/关键帧那套"动画覆盖过渡"的坑（用户实测过"开关瞬变"）。 */
 		/* 拖动中：跟手优先，关掉过渡（用 class，不用内联样式 —— 内联会漏、卡住就永远瞬变） */
 		'.ttn-drag{transition:none !important}',
+		/* 变形期间：transform/opacity/背景/阴影由 WAAPI 负责，CSS 过渡必须让位。
+		 * 规范里过渡的优先级高于动画：两边同动一个属性时过渡会赢，播到一半再交还给
+		 * 动画 = 终点前"轻微一跳"（用户这次报的极细微瞬变，真因就在这里）。
+		 * 依旧用 class（绝不用内联 transition，内联漏掉会永久卡死 hover）。 */
+		'#ttn-root.ttn-morphing{transition:none}',
+		/* 球只压制 WAAPI 正在动的属性；filter/border/color 的 hover 过渡必须保留
+		 * （否则拖动结束后的 hover 检查会看到 transition:none = 实际 hover 又瞬变）。 */
+		'#ttn-ball.ttn-morphing{transition:filter .3s ease,border-color .4s ease,color .4s ease}',
+		'#ttn-ball.ttn-morphing .t,#ttn-ball.ttn-morphing .m,#ttn-ball.ttn-morphing .b{transition:none !important}',
 		'#ttn-ball .hover-glow{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:50%;',
 		'pointer-events:none;opacity:0;transition:opacity .18s ease;',
 		/* 中心**不**最亮：微弱一点，主要在边缘拉起来（用户："边缘以及外部发光太弱，比中心弱"） */
@@ -3396,11 +3414,31 @@
 			return m;
 		} catch (e) { return fallback; }
 	}
+	/** 取元素上正在跑的**循环**动画（呼吸光晕），跳过带 fill 的淡入动画。
+	 * 以前直接拿 getAnimations()[0]：淡入动画带 fill:forwards 会一直留在列表第一位，
+	 * 于是相位同步设的是淡入的 currentTime，呼吸循环根本没对齐（交接时明暗会跳）。 */
+	function loopAnimOf(el) {
+		try {
+			const list = el && el.getAnimations ? el.getAnimations() : [];
+			for (let i = 0; i < list.length; i++) {
+				const t = list[i].effect && list[i].effect.getTiming ? list[i].effect.getTiming() : null;
+				if (t && t.iterations === Infinity) return list[i];
+			}
+		} catch (e) {}
+		return null;
+	}
 
 	function cancelMorph() {
 		(hudAnim.anims || []).forEach(function (a) { try { a.cancel(); } catch (e) {} });
 		hudAnim.anims = [];
 		if (hudAnim.fadeTimer) { clearTimeout(hudAnim.fadeTimer); hudAnim.fadeTimer = null; }
+		/* 发光冻结的 220ms 定时器也一起收掉：连点/反向时旧定时器若是晚一步触发，
+		 * 会把新交接刚写好的内联值提前清掉 → 那一下就是"极细微瞬变"。 */
+		if (hudAnim.glowTimer) { clearTimeout(hudAnim.glowTimer); hudAnim.glowTimer = null; }
+		if (hudAnim.glowTimer2) { clearTimeout(hudAnim.glowTimer2); hudAnim.glowTimer2 = null; }
+		/* 变形结束/取消时同时解除过渡抑制（class，不碰内联 transition）。 */
+		try { if (hud) hud.classList.remove('ttn-morphing'); } catch (e) {}
+		try { if (hudBall) hudBall.classList.remove('ttn-morphing'); } catch (e) {}
 	}
 
 	function hudAnimate(collapse) {
@@ -3415,15 +3453,20 @@
 		const fromScratch = hudAnim.phase === 'idle';
 		hudAnim.phase = collapse ? 'collapsing' : 'expanding';
 		hudAnimating = true;
+		/* 先用 class 压制 CSS 过渡，再写终点/起点内联值 —— 否则写值的这一步就会派生
+		 * 一个和 WAAPI 抢同一属性的 CSSTransition（规范里过渡优先级更高），终点前必然跳。 */
+		try { hud.classList.add('ttn-morphing'); } catch (e) {}
+		try { if (hudBall) hudBall.classList.add('ttn-morphing'); } catch (e) {}
 
 		const B = hudCache.BALL;
 		const s0 = DOT_SIZE / B;                 // 球要缩到圆点那么大，两个圆心才重合得上
 		const c = dotCenterRel();
 		const from = { x: hudState.x, y: hudState.y };   // 永远从"当前真实位置"起步
 		const fromBall = ballAtOf(from.x, from.y);
+		/* 永远显式写 scale(1)：起止关键帧同形状、插值不含隐藏跳变；
+		 * 元素刚 display:none→可见时 WAAPI 首帧可能还没生效，内联起点必须自成完整姿态。 */
 		const tPose = function (p, scale) {
-			return 'translate(' + Math.round(p.x) + 'px,' + Math.round(p.y) + 'px)' +
-				(scale === 1 ? '' : ' scale(' + scale + ')');
+			return 'translate(' + Math.round(p.x) + 'px,' + Math.round(p.y) + 'px) scale(' + scale + ')';
 		};
 		const DUR = 300;
 
@@ -3466,6 +3509,19 @@
 		let curPanelO = panelOpStart;
 		if (!fromScratch) {
 			try { curPanelO = getComputedStyle(hud).opacity || panelOpStart; } catch (e) {}
+		}
+
+		/* 先把**起始态**写成内联值：元素可能刚从 display:none 变可见，
+		 * 动画的 fill 在首帧不一定生效 → 会闪一帧基础样式（用户看到的"灰一下"）。 */
+		hud.style.transform = curPanelT;
+		hud.style.opacity = curPanelO;
+		if (hudBall) {
+			hudBall.style.transform = curBallT;
+			const bg0 = collapse ? (cssOf(dotMorph, 'backgroundColor') || BALL_SURFACE)
+				: (cssOf(hudBall, 'backgroundColor') || BALL_SURFACE);
+			hudBall.style.backgroundColor = bg0;
+			const sh0 = cssOf(hudBall, 'boxShadow');
+			if (sh0) hudBall.style.boxShadow = sh0;
 		}
 
 		hudAnim.anims = [];
@@ -3538,11 +3594,11 @@
 
 		/* 先把终态写进内联样式，再撤主变形动画 —— 撤的那一帧不会跳 */
 		hud.style.transform = 'translate(' + Math.round(ta.x) + 'px,' + Math.round(ta.y) + 'px)' +
-			(collapsed ? ' scale(0.03)' : '');
+			(collapsed ? ' scale(0.03)' : ' scale(1)');
 		hud.style.opacity = collapsed ? '0' : '1';
 		if (hudBall) {
 			hudBall.style.transform = 'translate(' + Math.round(bp.x) + 'px,' + Math.round(bp.y) + 'px)' +
-				(collapsed ? '' : ' scale(' + s0 + ')');
+				(collapsed ? ' scale(1)' : ' scale(' + s0 + ')');
 			hudBall.style.opacity = '1';
 			hudBall.style.backgroundColor = collapsed ? BALL_SURFACE : (hudTint.last || BALL_SURFACE);
 			if (collapsed) {
@@ -3601,13 +3657,23 @@
 			}
 		} catch (e) {}
 		/* 呼吸相位对齐：两个循环周期相同，但启动时刻不同 → 交接那一帧内圈光晕明暗可能不同。
-		 * 直接把圆点的循环 currentTime 设成球的，换过去就是同一个相位。 */
+		 * 按循环进度比例把圆点的**循环动画**（不是带 fill 的淡入）对到球的相位上。 */
 		try {
 			const bh = hudBall && hudBall.querySelector('.halo');
 			const dh = dotEl && dotEl.querySelector('.halo');
-			const bl = bh && bh.getAnimations ? bh.getAnimations()[0] : null;
-			const dl = dh && dh.getAnimations ? dh.getAnimations()[0] : null;
-			if (bl && dl) dl.currentTime = bl.currentTime;
+			const bl = loopAnimOf(bh), dl = loopAnimOf(dh);
+			if (bl && dl) {
+				/* 按"循环内进度比例"对齐，而不是裸拷 currentTime：两个循环的 duration 会随
+				 * 延迟各自重建，可能不同；delay 也可能不同。比例对齐才是真正的相位。 */
+				const tb = bl.effect.getTiming(), td = dl.effect.getTiming();
+				const db = Math.max(1, parseFloat(tb.duration) || 1);
+				const dd = Math.max(1, parseFloat(td.duration) || 1);
+				const c0 = function (v) { return typeof v === 'number' ? v : ((v && v.value) || 0); };
+				const bT = c0(bl.currentTime), dDelay = Math.max(0, parseFloat(td.delay) || 0);
+				const bDelay = Math.max(0, parseFloat(tb.delay) || 0);
+				const phase = ((((bT - bDelay) % db) + db) % db) / db;   // 0..1
+				dl.currentTime = dDelay + phase * dd;
+			}
 		} catch (e) {}
 		applyHudVisibility(false);      // 动画自己已经管过 opacity 了
 		clampHud();
@@ -3801,14 +3867,19 @@
 		if (hudBall && hudRefs) {
 			/* 每一行各自判断有没有数据：延迟缺了不影响稳定度那一行（反之亦然）。
 			 * 以前是"两块都齐才显示"，缺一块整球就全灰，看着像坏了。 */
+			/* 三项各自按自己的好坏分级着色：**数字和它的标签一起变**，
+			 * 不再整球一个综合色（用户实测要求）。 */
+			const cAvg = cstr(m.okPing ? gradeAvg(m.avg) : ST_GRAY);
+			const cNow = cstr(m.okPing ? gradeAvg(m.now) : ST_GRAY);
+			const cStab = cstr(m.okCad ? gradeStability(m.stability) : ST_GRAY);
 			setPlain(hudRefs.ballT.pre, tr('ballAvg') + ' ');
-			setVal(hudRefs.ballT, m.okPing ? String(m.avg) : '--',
-				cstr(m.okPing ? gradeAvg(m.avg) : ST_GRAY));
-			setVal(hudRefs.ballM, m.okPing ? String(m.now) : '--',
-				cstr(m.okPing ? gradeAvg(m.now) : ST_GRAY));
+			setVal(hudRefs.ballT, m.okPing ? String(m.avg) : '--', cAvg);
+			if (hudRefs.ballT.pre && hudRefs.ballT.pre.style.color !== cAvg) hudRefs.ballT.pre.style.color = cAvg;
+			setVal(hudRefs.ballM, m.okPing ? String(m.now) : '--', cNow);
+			if (hudRefs.ballM.pre && hudRefs.ballM.pre.style.color !== cNow) hudRefs.ballM.pre.style.color = cNow;
 			setPlain(hudRefs.ballB.pre, tr('ballStab') + ' ');
-			setVal(hudRefs.ballB, m.okCad ? String(m.stability) : '--',
-				cstr(m.okCad ? gradeStability(m.stability) : ST_GRAY));
+			setVal(hudRefs.ballB, m.okCad ? String(m.stability) : '--', cStab);
+			if (hudRefs.ballB.pre && hudRefs.ballB.pre.style.color !== cStab) hudRefs.ballB.pre.style.color = cStab;
 			if (hudBall.style.borderColor !== colStr) hudBall.style.borderColor = colStr;
 			if (hudBall.style.color !== colStr) hudBall.style.color = colStr;
 			/* 优化开：呼吸光晕（周期/强度跟着延迟走 —— 延迟越大，呼吸越慢、光晕越铺开）；
@@ -3824,6 +3895,15 @@
 			const tip = m.why || '';
 			if (hudBall.title !== tip) hudBall.title = tip;
 		}
+		/* 圆点与 hudTint 必须**无条件**同步到最新分级色：以前这段逻辑放在"面板开着"的
+		 * 分支里，收起成球时就完全不更新 → 下次展开的起点还是旧色，球会从旧色插值到新色
+		 * （用户实测"过渡颜色不对"）。球/圆点任何时刻都共用同一个实时色。 */
+		const dotLive = hud.querySelector('#ttn-dot');
+		if (dotLive) {
+			if (dotLive.style.background !== colStr) dotLive.style.background = colStr;
+			if (dotLive.style.color !== colStr) dotLive.style.color = colStr;
+		}
+		hudTint.last = colStr;
 
 		if (!hudState.ball && hudRefs) {
 			const c = primaryConn();
@@ -3860,27 +3940,8 @@
 					st.row.className = on ? 'on' : '';
 				}
 			}
-			/* 首次显示时，先给球/圆点一个中性色（和 CSS 基础色一致）。
-		 * 否则在 refreshHud 写入真实颜色之前会露出基础色 —— 用户实测"闪一下不该出现的绿色"。 */
-		const dotEl0 = hud.querySelector('#ttn-dot');
-		if (dotEl0) {
-			dotEl0.style.background = cstr(ST_GRAY);
-			dotEl0.style.color = cstr(ST_GRAY);
-		}
-		if (hudBall) {
-			hudBall.style.borderColor = cstr(ST_GRAY);
-			hudBall.style.color = cstr(ST_GRAY);
-		}
-
-		hudCache.w = hud.offsetWidth || 288;
+			hudCache.w = hud.offsetWidth || 288;
 			hudCache.h = hud.offsetHeight || 198;
-
-			hudTint.last = colStr;      // 变形要把球染成同一个色，交接才不会跳
-			const dot = hud.querySelector('#ttn-dot');
-			if (dot) {
-				if (dot.style.background !== colStr) dot.style.background = colStr;
-				if (dot.style.color !== colStr) dot.style.color = colStr;
-			}
 		}
 
 		clampHud();

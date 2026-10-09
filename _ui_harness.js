@@ -1424,6 +1424,29 @@ step(function () {
 });
 
 step(function () {
+	/* 用户要求：悬浮球三项数值**各自**用自己的分级色（数字和标签一起变），
+	 * 而不是整球一个综合色。判据：制造"平均好、实时差"的数据，两行颜色必须不同。 */
+	var T = window.__TTN__, ball = q('ttn-ball');
+	T.hudState.hidden = false; T.hudState.ball = false; T.setHud(true);
+	T.ping.samples.length = 0;
+	var now = Date.now();
+	for (var i = 0; i < 40; i++) T.ping.samples.push({ t: now - (39 - i) * 200, rtt: (i > 34 ? 300 : 70), src: 'probe' });
+	T.setHud(true);
+	var rows = ball.querySelectorAll('.t, .m, .b');
+	window.__BALLCOL__ = {};
+	Array.prototype.forEach.call(rows, function (r) {
+		var pre = r.querySelector('.pre');
+		window.__BALLCOL__[r.className] = { v: r.style.color, label: pre ? pre.style.color : null };
+	});
+	var c = window.__BALLCOL__;
+	var haveOwn = !!c.t && c.t.v && c.t.v === c.t.label;      /* 数字与标签同色 */
+	var differs = c.t && c.m && c.t.v !== c.m.v;              /* 三项各自不同 */
+	ck('ball-rows-have-own-colors', haveOwn && differs,
+		'三项数值必须各自分级着色（数字+标签同色，且不同项可以不同色）: ' + JSON.stringify(c));
+	T.setSmoothing(true);
+});
+
+step(function () {
 	var D = window.__DOT_ON__ || {};
 	ck('dot-glow-when-on', D.on === true, '优化开时面板左上角圆点也要"激活"（.on）: ' + JSON.stringify(D));
 	ck('dot-glow-off-when-disabled', D.off === false, '优化关时圆点必须恢复"只有颜色"', String(D.off));
@@ -1620,7 +1643,8 @@ step(function () {
 	[['#ttn-ball', ['filter', 'box-shadow', 'border-color']],
 	 ['#ttn-dot', ['transform', 'box-shadow', 'background']],
 	 ['.ttn-btn', ['background', 'transform', 'color']],
-	 ['#ttn-head', ['background']],
+	 /* 标题栏 hover 现在改的是同形状内阴影（background 渐变换不了，已删） */
+	 ['#ttn-head', ['box-shadow']],
 	 ['#ttn-status', ['max-height', 'opacity']]].forEach(function (pair) {
 		var body = cssRuleBody(pair[0]);
 		var m = /(?:^|;)transition:([^;}]*)/.exec(body);
@@ -1631,6 +1655,40 @@ step(function () {
 	});
 	ck('hover-props-are-transitioned', offenders.length === 0,
 		'悬浮/按下会改的属性，必须都在过渡列表里（否则就是"瞬间变化"）: ' + (offenders.join('；') || 'ok'));
+
+	/* 用户实测"展开时标题栏瞬间变灰一些"：真因是 hover 换整条 linear-gradient，
+	 * 渐变之间不能插值（规范按离散处理）→ 必然瞬变。回归要求：
+	 *  ① 基础规则里必须写着 box-shadow 的过渡（不能另起同特异度规则把它覆盖掉）；
+	 *  ② base : inset 0 0 0 0，hover : inset 0 0 0 999px，同形状、只变长度 → 一定可插值；
+	 *  ③ hover 规则不许再改 background。 */
+	ck('head-hover-is-interpolable', (function () {
+		function bodyAfter(sel) {
+			var re0 = new RegExp(sel.replace(/[.#:]/g, '\\$&') + '\\{([^}]*)\\}', 'g');
+			var m0, last = '';
+			while ((m0 = re0.exec(cssNoMedia)) !== null) last = m0[1];
+			return last;
+		}
+		function shadow(v) {
+			var m1 = /box-shadow\s*:\s*(inset)?\s*0\s+0\s+0\s+([\d.]+)(?:px)?\s+rgba\(([^)]*)\)/.exec(v || '');
+			return m1 ? { inset: !!m1[1], spread: parseFloat(m1[2]), color: m1[3] } : null;
+		}
+		var base = bodyAfter('#ttn-head');
+		var hover = bodyAfter('#ttn-head:hover');
+		var bs = shadow(base), hs = shadow(hover);
+		window.__HEADHOVER__ = {
+			baseTransition: (/transition:([^;}]*)/.exec(base) || [])[1] || '',
+			bs: bs, hs: hs, hoverBody: hover
+		};
+		function rgbOf(c) { return String(c || '').split(',').slice(0, 3).join(',').trim(); }
+		return /transition:box-shadow/.test(base) && !!bs && !!hs &&
+			bs.inset === true && hs.inset === true &&
+			Math.abs(bs.spread) < 0.001 && hs.spread > 100 &&
+			rgbOf(bs.color) === rgbOf(hs.color) &&
+			bs.color.split(',').length === 4 && hs.color.split(',').length === 4 &&
+			!/background\s*:/.test(hover);
+	})(), '标题栏 hover 必须只改同形状内阴影（0→999px，可插值），且不再换 background 渐变: ' +
+		JSON.stringify(window.__HEADHOVER__));
+
 
 	/* 悬浮球上不该再有"点击展开面板"这种提示字（用户明确说多余） */
 	var bt = q('ttn-ball').getAttribute('title') || '';
@@ -1953,6 +2011,246 @@ step(function () {
 	window.__TTN__.hudState.ball = false;
 	window.__TTN__.setHud(true);
 });
+step(function () {
+	/* —— 回归 ①（0.5.0 三处改动之一）：hudAnimate 必须先写"起始态"内联值。
+	 * 用户实测"收起时大球灰一下"：球刚从 display:none 变可见时，WAAPI 首帧不一定生效，
+	 * 会露一帧基础样式（全尺寸 + 深色盘面）。这里直接检查第一帧的内联值：
+	 * 收起 = 圆点大小 + 圆点实时色；展开 = 全尺寸 + 面板 0.03/透明。
+	 * 同时检查变形期间用 class 压掉与 WAAPI 抢 transform/opacity 的 CSS 过渡。 */
+	var T = window.__TTN__, ball = q('ttn-ball'), dot = q('ttn-dot'), root = q('ttn-root');
+	function scaleStr(s) { var m = /scale\(([\d.]+)\)/.exec(String(s || '')); return m ? parseFloat(m[1]) : null; }
+	T.hudState.hidden = false;
+	T.hudState.ball = false; T.setHud(true); T._finishHudAnim();
+	T.ping.samples.length = 0;
+	var t0 = Date.now();
+	for (var i = 0; i < 40; i++) T.ping.samples.push({ t: t0 - (39 - i) * 200, rtt: 70, src: 'probe' });
+	T.setHud(true);
+	var dotBg = getComputedStyle(dot).backgroundColor;
+	T.hudState.ball = true; T._hudAnimate(true);            // 展开态 → 收起
+	window.__STARTINLINE__ = {
+		wantScale: T.DOT_SIZE / T.hudCache.BALL,
+		collapseScale: scaleStr(ball.style.transform),
+		collapseBg: getComputedStyle(ball).backgroundColor, dotBg: dotBg,
+		opacity: ball.style.opacity,
+		morphClass: ball.classList.contains('ttn-morphing'),
+		trans: getComputedStyle(ball).transitionProperty
+	};
+	ck('collapse-first-frame-not-gray',
+		window.__STARTINLINE__.collapseBg === dotBg &&
+		window.__STARTINLINE__.collapseBg !== 'rgb(140, 147, 158)' &&
+		window.__STARTINLINE__.collapseBg !== 'rgba(18, 20, 26, 0.95)',
+		'收起第一帧球的颜色必须已经等于圆点实时色（不能露中性灰/深色盘面）: ' + JSON.stringify(window.__STARTINLINE__));
+	ck('morph-start-state-inline',
+		Math.abs(window.__STARTINLINE__.collapseScale - window.__STARTINLINE__.wantScale) < 1e-3 &&
+		ball.style.opacity === '1',
+		'收起第一帧必须先把"圆点大小 + 可见"写成内联起点: ' + JSON.stringify(window.__STARTINLINE__));
+	ck('morph-suppresses-competing-transition',
+		window.__STARTINLINE__.morphClass === true &&
+		window.__STARTINLINE__.trans.indexOf('transform') < 0 &&
+		window.__STARTINLINE__.trans.indexOf('opacity') < 0 &&
+		window.__STARTINLINE__.trans.indexOf('filter') >= 0,
+		'变形期间必须用 class 压掉与 WAAPI 抢 transform/opacity 的 CSS 过渡（filter 的 hover 过渡保留）: ' + JSON.stringify(window.__STARTINLINE__));
+	T._finishHudAnim();
+	window.__STARTINLINE__.collapsedBg = getComputedStyle(ball).backgroundColor;
+	T.hudState.ball = false; T._hudAnimate(false);          // 收起态 → 展开
+	window.__STARTINLINE__.expandScale = scaleStr(ball.style.transform);
+	window.__STARTINLINE__.expandRootScale = scaleStr(root.style.transform);
+	window.__STARTINLINE__.expandRootOpacity = root.style.opacity;
+	ck('expand-start-state-inline',
+		window.__STARTINLINE__.expandScale === 1 &&
+		window.__STARTINLINE__.expandRootOpacity === '0' &&
+		Math.abs(window.__STARTINLINE__.expandRootScale - 0.03) < 1e-6,
+		'展开第一帧必须先把"球=全尺寸、面板=0.03/透明"写成内联起点: ' + JSON.stringify(window.__STARTINLINE__));
+	T._finishHudAnim();
+	T.setSmoothing(true);
+});
+
+step(function () {
+	/* —— 回归 ②：变形动画的终点必须逐项等于静止态。
+	 * 之前的极细微瞬变真因：CSS 过渡（面板 opacity、球的 transform/box-shadow）优先级高于 WAAPI，
+	 * 两边同动一个属性时过渡会赢，播到一半交还给动画 → 终点前跳一下。现在变形期间用
+	 * .ttn-morphing 压掉这些过渡，并把动画钉到 duration 终点逐项对比静止态。
+	 * 顺带守住：圆点/hudTint 在**收起成球**期间也必须跟最新分级色同步（否则下次展开从旧色起步）。 */
+	var T = window.__TTN__, ball = q('ttn-ball'), dot = q('ttn-dot'), root = q('ttn-root');
+	function norm(v) { return String(v == null ? '' : v).replace(/\s+/g, '').toLowerCase(); }
+	function shapeOf(s) {
+		return String(s == null ? '' : s).replace(/rgba?\([^)]*\)/g, 'C')
+			.replace(/currentcolor/gi, 'C').replace(/\s+/g, ' ').trim();
+	}
+	function animWith(el, key) {
+		var list = el && el.getAnimations ? el.getAnimations() : [];
+		for (var i = 0; i < list.length; i++) {
+			try {
+				var kf = list[i].effect.getKeyframes();
+				if (kf.length >= 2 && kf.some(function (k) { return k[key]; })) return list[i];
+			} catch (e) {}
+		}
+		return null;
+	}
+	function pinEnd(a) {
+		if (!a) return;
+		try {
+			a.pause();
+			a.currentTime = (parseFloat(a.effect.getTiming().duration) || 300);
+		} catch (e) {}
+	}
+	function scaleComputed(el) {
+		var s = getComputedStyle(el).transform || '';
+		var m = /scale\(([\d.]+)\)/.exec(s);
+		if (m) return parseFloat(m[1]);
+		var mm = /matrix\(([^)]+)\)/.exec(s);
+		return mm ? (parseFloat(mm[1].split(',')[0]) || 0) : 1;
+	}
+	function endKf(a, key) { return a ? ((a.effect.getKeyframes()[1] || {})[key]) : null; }
+	function scaleInline(el) { var m = /scale\(([\d.]+)\)/.exec(String((el && el.style.transform) || '')); return m ? parseFloat(m[1]) : 1; }
+
+	/* 面板开 → 收起 */
+	T.hudState.hidden = false;
+	T.hudState.ball = false; T.setHud(true); T._finishHudAnim(); T.setSmoothing(true);
+	T.hudState.ball = true; T._hudAnimate(true);
+	var cb = animWith(ball, 'backgroundColor'), cr = animWith(root, 'opacity');
+	pinEnd(cb); pinEnd(cr); void ball.offsetWidth;
+	var colMidBg = null;
+	if (cb) {
+		try { cb.currentTime = (parseFloat(cb.effect.getTiming().duration) || 300) / 2; } catch (e) {}
+		void ball.offsetWidth;
+		colMidBg = getComputedStyle(ball).backgroundColor;
+		pinEnd(cb);
+		void ball.offsetWidth;
+	}
+	var col = {
+		ballBg: getComputedStyle(ball).backgroundColor, keyEndBg: endKf(cb, 'backgroundColor'),
+		startBg: cb ? ((cb.effect.getKeyframes()[0] || {}).backgroundColor) : null,
+		midBg: colMidBg, ballShadow: getComputedStyle(ball).boxShadow,
+		rootO: getComputedStyle(root).opacity, keyEndRootO: endKf(cr, 'opacity'),
+		rootScale: scaleComputed(root), ballScale: scaleComputed(ball)
+	};
+	T._finishHudAnim();
+	col.staticBallBg = getComputedStyle(ball).backgroundColor;
+	col.staticRootO = getComputedStyle(root).opacity;
+	col.staticRootScale = scaleInline(root);        // display:none 时 computed transform 恒为 none
+	col.staticBallScale = scaleInline(ball);
+	col.staticBallShadow = getComputedStyle(ball).boxShadow;
+
+	/* 收起 → 展开（同时制造"收起期间分级色变红"，验证圆点实时同步） */
+	T.hudState.ball = true; T.setHud(true); T._finishHudAnim();
+	var t1 = Date.now();
+	T.ping.samples.length = 0;
+	for (var i = 0; i < 40; i++) T.ping.samples.push({ t: t1 - (39 - i) * 200, rtt: 70, src: 'probe' });
+	T.setHud(true);                                          // 面板态：圆点更新为"好"
+	var greenDot = dot.style.background;
+	T.hudState.ball = true; T.setHud(true); T._finishHudAnim();   // 收起成球
+	T.ping.samples.length = 0;
+	for (i = 0; i < 40; i++) T.ping.samples.push({ t: t1 - (39 - i) * 200, rtt: 300, src: 'probe' });
+	T.setSmoothing(true);                                    // 收起状态刷新：圆点也必须更新
+	var redDot = dot.style.background, redBallBorder = ball.style.borderColor;
+	T.hudState.ball = false; T._hudAnimate(false);
+	var eb = animWith(ball, 'backgroundColor'), er = animWith(root, 'opacity');
+	pinEnd(eb); pinEnd(er); void ball.offsetWidth;
+	var expMidBg = null;
+	if (eb) {
+		try { eb.currentTime = (parseFloat(eb.effect.getTiming().duration) || 300) / 2; } catch (e) {}
+		void ball.offsetWidth;
+		expMidBg = getComputedStyle(ball).backgroundColor;
+		pinEnd(eb);
+		void ball.offsetWidth;
+	}
+	var exp = {
+		ballBg: getComputedStyle(ball).backgroundColor, keyEndBg: endKf(eb, 'backgroundColor'),
+		startBg: eb ? ((eb.effect.getKeyframes()[0] || {}).backgroundColor) : null,
+		midBg: expMidBg, ballShadow: getComputedStyle(ball).boxShadow,
+		rootO: getComputedStyle(root).opacity,
+		liveDotBg: getComputedStyle(dot).backgroundColor
+	};
+	T._finishHudAnim();
+	exp.staticBallBg = getComputedStyle(ball).backgroundColor;
+	exp.staticRootO = getComputedStyle(root).opacity;
+	exp.staticBallShadow = getComputedStyle(ball).boxShadow;
+	window.__ENDPT__ = { collapse: col, expand: exp, greenDot: greenDot, redDot: redDot, redBallBorder: redBallBorder };
+
+	var diffs = [];
+	if (norm(col.ballBg) !== norm(col.staticBallBg)) diffs.push('收起终点底色 ' + col.ballBg + ' != 静止态 ' + col.staticBallBg);
+	if (norm(col.keyEndBg) !== norm(col.staticBallBg)) diffs.push('收起关键帧终点底色与静止态不同');
+	if (norm(col.rootO) !== norm(col.staticRootO)) diffs.push('收起终点面板 opacity ' + col.rootO + ' != ' + col.staticRootO);
+	if (norm(col.keyEndRootO) !== norm(col.staticRootO)) diffs.push('收起关键帧 opacity 终点与静止态不同');
+	if (Math.abs(col.rootScale - col.staticRootScale) > 1e-6) diffs.push('收起终点面板 scale ' + col.rootScale + ' != ' + col.staticRootScale);
+	if (Math.abs(col.ballScale - col.staticBallScale) > 1e-6) diffs.push('收起终点球 scale ' + col.ballScale + ' != ' + col.staticBallScale);
+	if (norm(col.midBg) === norm(col.startBg) || norm(col.midBg) === norm(col.keyEndBg)) diffs.push('收起底色没有真正插值 mid=' + col.midBg);
+	if (shapeOf(col.ballShadow) !== shapeOf(col.staticBallShadow)) diffs.push('收起终点阴影形状与静止态不同: ' + col.ballShadow + ' vs ' + col.staticBallShadow);
+	if (norm(exp.ballBg) !== norm(exp.staticBallBg)) diffs.push('展开终点底色 ' + exp.ballBg + ' != 静止态 ' + exp.staticBallBg);
+	if (norm(exp.ballBg) !== norm(exp.liveDotBg)) diffs.push('展开终点底色不是圆点实时色: ' + exp.ballBg + ' vs ' + exp.liveDotBg);
+	if (norm(exp.keyEndBg) !== norm(exp.liveDotBg)) diffs.push('展开关键帧终点底色不是圆点实时色');
+	if (norm(exp.rootO) !== norm(exp.staticRootO)) diffs.push('展开终点面板 opacity ' + exp.rootO + ' != ' + exp.staticRootO);
+	if (norm(exp.midBg) === norm(exp.startBg) || norm(exp.midBg) === norm(exp.keyEndBg)) diffs.push('展开底色没有真正插值 mid=' + exp.midBg);
+	if (shapeOf(exp.ballShadow) !== shapeOf(exp.staticBallShadow)) diffs.push('展开终点阴影形状与静止态不同: ' + exp.ballShadow + ' vs ' + exp.staticBallShadow);
+	ck('morph-endpoints-match-static', diffs.length === 0,
+		'变形终点必须逐项等于静止态（底色/面板 opacity/scale），否则终点前会跳: ' +
+		(diffs.join(' ; ') || 'ok') + ' || ' + JSON.stringify(window.__ENDPT__));
+	ck('collapsed-dot-keeps-live-tint', redDot !== greenDot && redDot === redBallBorder,
+		'收起成球期间圆点/hudTint 也必须跟最新分级色（否则下次展开从旧色起步）: ' +
+		JSON.stringify({ greenDot: greenDot, redDot: redDot, redBallBorder: redBallBorder }));
+	T.ping.samples.length = 0;
+	T.hudState.ball = false; T.setHud(true); T._finishHudAnim(); T.setSmoothing(true);
+});
+
+step(function () {
+	/* —— B 项排查证据：交接时的呼吸相位 + 跨交接冻结的内发光。
+	 * 呼吸：以前直接拿 getAnimations()[0]，而带 fill:forwards 的淡入动画会一直占第一位，
+	 * 设的是淡入的 currentTime，循环相位根本没对齐 → 交接那一层白光会"忽明忽暗"。 */
+	var T = window.__TTN__, ball = q('ttn-ball'), dot = q('ttn-dot');
+	function loopOf(el) {
+		var list = el && el.getAnimations ? el.getAnimations() : [];
+		for (var i = 0; i < list.length; i++) {
+			try {
+				var t = list[i].effect.getTiming();
+				if (t && t.iterations === Infinity) return list[i];
+			} catch (e) {}
+		}
+		return null;
+	}
+	function phaseOf(a) {
+		var t = a.effect.getTiming(), d = Math.max(1, parseFloat(t.duration) || 1);
+		var delay = Math.max(0, parseFloat(t.delay) || 0);
+		var cur = (typeof a.currentTime === 'number' ? a.currentTime : ((a.currentTime && a.currentTime.value) || 0));
+		return ((((cur - delay) % d) + d) % d) / d;
+	}
+	T.hudState.hidden = false;
+	T.hudState.ball = true; T.setHud(true); T.setSmoothing(true); T._finishHudAnim();
+	T.setSmoothing(false); T.setSmoothing(true);             // 强制重建两边循环，保证都存在
+	var bl = loopOf(ball.querySelector('.halo')), dl = loopOf(dot.querySelector('.halo'));
+	if (bl) bl.currentTime = 321;
+	if (dl) dl.currentTime = 999;
+	/* 造一个确定的"球当前内发光"值：WAAPI fill:both 钉住 0.37，finishHudAnim 读到的就是它。
+	 * （直接写内联会触发 0.18s CSS 过渡，无头环境读到的是过渡起点，判据会不稳。） */
+	var bGlow = ball.querySelector('.hover-glow'), dGlow = dot.querySelector('.hover-glow');
+	var glowPin = bGlow ? bGlow.animate([{ opacity: '0.37' }, { opacity: '0.37' }],
+		{ duration: 1000, fill: 'both' }) : null;
+	T.hudState.ball = false; T._hudAnimate(false); T._finishHudAnim();
+	if (glowPin) { try { glowPin.cancel(); } catch (e) {} }
+	var bl2 = loopOf(ball.querySelector('.halo')), dl2 = loopOf(dot.querySelector('.halo'));
+	window.__HALOHANDOFF__ = {
+		hadLoop: !!bl && !!dl, afterLoop: !!bl2 && !!dl2,
+		ballPhase: bl2 ? phaseOf(bl2) : null, dotPhase: dl2 ? phaseOf(dl2) : null,
+		dotBefore: dl ? 999 : null, dotAfter: dl2 ? dl2.currentTime : null,
+		glowInline: dGlow ? dGlow.style.opacity : null,
+		glowTrans: dGlow ? (getComputedStyle(dGlow).transitionProperty + ' / ' + getComputedStyle(dGlow).transitionDuration) : null,
+		glowTimer: !!T._hudAnim.glowTimer, glowLoopCount: (dot.querySelector('.halo').getAnimations() || []).length
+	};
+	ck('halo-phase-synced-on-handoff',
+		window.__HALOHANDOFF__.afterLoop === true &&
+		Math.abs(window.__HALOHANDOFF__.ballPhase - window.__HALOHANDOFF__.dotPhase) < 0.03 &&
+		window.__HALOHANDOFF__.dotAfter !== 999,
+		'交接时对齐的必须是循环动画且相位一致（不是带 fill 的淡入）: ' + JSON.stringify(window.__HALOHANDOFF__));
+	ck('hover-glow-freeze-covers-handoff',
+		window.__HALOHANDOFF__.glowInline === '0.37' &&
+		window.__HALOHANDOFF__.glowTimer === true &&
+		/opacity/.test(window.__HALOHANDOFF__.glowTrans || '') &&
+		parseFloat(String(window.__HALOHANDOFF__.glowTrans || '').split('/').pop()) > 0,
+		'交接时圆点内发光必须冻结成球当前值，且 220ms 后清内联时有 opacity 过渡兜底: ' +
+		JSON.stringify(window.__HALOHANDOFF__));
+	T.hudState.ball = false; T.setHud(true); T._finishHudAnim(); T.setSmoothing(true);
+});
+
 
 step(function () {
 	ck('report-ok', (function () {

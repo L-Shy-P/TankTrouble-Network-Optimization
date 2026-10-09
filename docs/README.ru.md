@@ -1,6 +1,9 @@
 # 🇷🇺 TankTrouble — оптимизация сети
 
-**Хотите писать **по-русски** в TankTrouble? Я сделал многоязычное расширение для чата! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
+> [!TIP]
+> Хотите писать **по-русски** в TankTrouble? Я сделал многоязычное расширение для чата! 👉 [TankTrouble-Chat-Unblock](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock)
+
+
 
 
 ![TankTrouble — оптимизация сети](img/ru.png)

@@ -56,5 +56,5 @@ git push -u origin main
 | `tanktrouble-netlab.user.js` | 主脚本（油猴直接安装这个） |
 | `tanktrouble-netlab.install.user.js` | 同一份内容 + UTF-8 BOM（拖拽安装用） |
 | `ttn-smoke-test.js` | 逻辑测试（vm 沙盒，303 项） |
-| `ui-check-build.js` + `_ui_harness.js` | 生成浏览器交互测试页（138 项） |
+| `ui-check-build.js` + `_ui_harness.js` | 生成浏览器交互测试页（180 项） |
 | `LICENSE` | MIT |

@@ -1,6 +1,9 @@
 # 🇫🇷 TankTrouble — optimisation réseau
 
-**Envie d'écrire **en français** dans TankTrouble ? J'ai fait une extension de chat multilingue ! 👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
+> [!TIP]
+> Envie d'écrire **en français** dans TankTrouble ? J'ai fait une extension de chat multilingue ! 👉 [TankTrouble-Chat-Unblock](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock)
+
+
 
 
 ![TankTrouble — optimisation réseau](img/fr.png)

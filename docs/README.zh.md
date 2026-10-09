@@ -1,6 +1,9 @@
 # 🇨🇳 TankTrouble 网络优化
 
-**想要在 TankTrouble 里发送 **中文** 吗？我做了一款多语言聊天扩展！👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
+> [!TIP]
+> 想要在 TankTrouble 里发送 **中文** 吗？我做了一款多语言聊天扩展！👉 [TankTrouble-Chat-Unblock](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock)
+
+
 
 
 ![TankTrouble 网络优化](img/zh.png)

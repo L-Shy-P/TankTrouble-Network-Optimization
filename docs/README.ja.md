@@ -1,6 +1,9 @@
 # 🇯🇵 TankTrouble ネットワーク最適化
 
-**TankTrouble で **日本語** を送りたい？多言語チャット拡張を作りました！👉 https://github.com/L-Shy-P/TankTrouble-Chat-Unblock**
+> [!TIP]
+> TankTrouble で **日本語** を送りたい？多言語チャット拡張を作りました！👉 [TankTrouble-Chat-Unblock](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock)
+
+
 
 
 ![TankTrouble ネットワーク最適化](img/ja.png)
