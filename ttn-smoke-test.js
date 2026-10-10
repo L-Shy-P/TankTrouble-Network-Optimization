@@ -13,6 +13,7 @@
 const fs = require('fs');
 const vm = require('vm');
 const path = require('path');
+const NodeURL = require('url').URL;      // 沙盒的 URL 必须是真实现（脚本用 new URL 解析探测 URL）
 
 const SCRIPT = path.join(__dirname, 'tanktrouble-netlab.user.js');
 const code = fs.readFileSync(SCRIPT, 'utf8');
@@ -160,13 +161,22 @@ function makeClassy() {
 	};
 }
 
-const quietConsole = { log() {}, warn() {}, error: console.error };
+/* 捕获 console.log：失败预算"只打一条日志"要靠它计数（其它普通日志不影响断言） */
+const consoleLines = [];
+const quietConsole = {
+	log() { consoleLines.push(Array.prototype.map.call(arguments, String).join(' ')); },
+	warn() {}, error: console.error
+};
+
+function URLStub(u) { return new NodeURL(u); }        // 可 new、可当函数调用（浏览器 URL 的用法）
+URLStub.createObjectURL = () => 'blob:x';
+URLStub.revokeObjectURL = () => {};
 
 const sandbox = {
 	performance: { now: () => clock },
 	console: quietConsole,
 	Blob: class { constructor(p) { this.parts = p; } },
-	URL: { createObjectURL: () => 'blob:x', revokeObjectURL() {} },
+	URL: URLStub,
 	// 语言自动检测：给个中文浏览器（默认语言 = zh），后面再单独测换语言
 	navigator: { userAgent: 'smoke', clipboard: null, language: 'zh-CN' },
 	location: { href: 'https://tanktrouble.com/game' },
@@ -1485,6 +1495,158 @@ ok(T.smoothing.enabled === true, '老存档没有开关字段 → 保留当前�
 T.setLang('zh'); T.setSmoothing(true); T.hudState.ball = false;
 T.hudState.x = 8; T.hudState.y = 8;
 sandbox.localStorage.removeItem('ttn.hud.v4');
+
+/* ---------------- [21] 探测 URL 复用 / 失败预算 / 指标降级 ----------------
+ * 用户实测："游戏更新后控制台反复出现 WebSocket connection to
+ * wss://asia-central1-mp1.tanktrouble.com/ failed"。真因：脚本自己的 ping 探测
+ * 只取主机名再硬拼 :443，且失败后每 4 秒无限重连。下面 4 条是回归。 */
+console.log('\n[21] 探测 URL 复用 / 失败预算 / 指标降级');
+
+function stopPingProbe() {
+	try { if (T.ping.ws) { T.ping.ws.onclose = null; T.ping.ws.onerror = null; T.ping.ws.close(); } } catch (e) {}
+	T.ping.ws = null; T.ping.started = false; T.ping.pendingAt = 0;
+}
+
+/* ---- 回归 1：probe-uses-full-game-url ----
+ * 游戏 URL 带非 443 端口 + 路径时，探测必须原样复用（不能 :443 覆盖、不能丢路径）。 */
+const FULL_URL = 'wss://asia-central1-mp1.tanktrouble.com:8443/ws?x=1';
+stopPingProbe();
+T.startPingProbe({ url: FULL_URL });
+ok(!!T.ping.ws && T.ping.ws.url === FULL_URL,
+	'probe-uses-full-game-url：探测构造出的 URL 与游戏 URL 完全相同（端口/路径不丢）',
+	T.ping.ws ? T.ping.ws.url : 'no-ws');
+ok(T.ping.url === FULL_URL && T.ping.host === 'asia-central1-mp1.tanktrouble.com',
+	'完整 URL 进 ping.url（换服判定按它比较），主机名仍供 connHost 报告显示',
+	T.ping.url + ' / ' + T.ping.host);
+const parsedFull = T.parseConnUrl(FULL_URL);
+ok(!!parsedFull && parsedFull.raw === FULL_URL && parsedFull.port === '8443' && parsedFull.path === '/ws?x=1',
+	'parseConnUrl 只解析不规范化：raw 原样、port/path 拆得出来', JSON.stringify(parsedFull));
+const sameWs = T.ping.ws;
+T.ping.samples.push({ t: clock, rtt: 123, host: T.ping.host, src: 'probe' });
+T.startPingProbe({ url: FULL_URL });          // 传新的 conn 对象，完整 URL 相同
+ok(T.ping.samples.length === 1 && T.ping.ws === sameWs,
+	'同一个完整 URL 重复调用不重连、不清样本（换服只看完整 URL）', T.ping.samples.length);
+
+/* ---- 回归 2：probe-gives-up-after-failures ----
+ * 连续 3 次"从未 onopen 就失败"→ 不再自动重连，且只记录一条日志。 */
+stopPingProbe();
+consoleLines.length = 0;
+const GIVEUP_URL = 'wss://giveup-test-mp1.tanktrouble.com:9443/ws?x=1';
+T.startPingProbe({ url: GIVEUP_URL });
+const attempts = [];
+for (let i = 0; i < 6; i++) {
+	const w = T.ping.ws;
+	if (!w) break;
+	attempts.push(w.url);
+	/* 真实浏览器握手失败：先 onerror 再 onclose，两条都要能触发一次计数（不能重复计） */
+	if (w.onerror) w.onerror({});
+	if (w.onclose) w.onclose({ code: 1006, wasClean: false });
+	if (T.ping.giveUp) break;
+	/* 没放弃时排了一个重连定时器（沙盒里 setTimeout 不真跑）→ 手动触发，模拟"到点了" */
+	const idx = timeouts.length - 1;
+	if (idx >= 0 && timeouts[idx] && timeouts[idx].ms === 2000) {
+		const fn = timeouts[idx].fn;
+		timeouts.splice(idx, 1);
+		fn();
+	} else break;
+}
+ok(attempts.length === 3 && attempts.every(u => u === GIVEUP_URL),
+	'probe-gives-up-after-failures：恰好尝试 3 次就停（不再每 4 秒猛冲）', JSON.stringify(attempts));
+ok(T.ping.giveUp === true && T.ping.giveUpAt > 0 && T.ping.neverOpenedStreak === 3,
+	'giveUp 标记 + giveUpAt + 连续失败计数都记下了',
+	JSON.stringify({ giveUp: T.ping.giveUp, at: T.ping.giveUpAt, streak: T.ping.neverOpenedStreak }));
+const giveUpLogs = consoleLines.filter(l => l.indexOf('own ping probe unavailable') >= 0);
+ok(giveUpLogs.length === 1 && T.ping.giveUpLogged === 1,
+	'放弃时只记录一条英文日志（不会再刷屏）', JSON.stringify(giveUpLogs));
+T.startPingProbe({ url: GIVEUP_URL });        // 每秒的轮询还会调用它
+ok(T.ping.giveUp === true && T.ping.ws === null && T.ping.reconnectTimer === null &&
+	consoleLines.filter(l => l.indexOf('own ping probe unavailable') >= 0).length === 1,
+	'giveUp 后同一 URL 不再重连、不重复日志', 'ws=' + T.ping.ws);
+
+/* 另一种情况：曾 open 过再断（协议/路径是对的，只是被踢）→ 单独计数 + 2s→4s→8s 退避，不放弃 */
+stopPingProbe();
+const OPENDROP_URL = 'wss://open-then-drop-mp1.tanktrouble.com:9443/ws';
+T.startPingProbe({ url: OPENDROP_URL });
+const backoffs = [];
+for (let i = 0; i < 4; i++) {
+	const w = T.ping.ws;
+	if (!w) break;
+	if (w.onopen) w.onopen();
+	if (w.onclose) w.onclose({ code: 1006, wasClean: false });
+	const idx = timeouts.length - 1;
+	if (idx < 0 || !timeouts[idx]) break;
+	backoffs.push(timeouts[idx].ms);
+	const fn = timeouts[idx].fn;
+	timeouts.splice(idx, 1);
+	fn();
+}
+ok(backoffs.join(',') === '2000,4000,8000,16000',
+	'曾 open 过再断：退避 2s→4s→8s→16s（上限 30s），不无限 4 秒猛冲', backoffs.join(','));
+ok(T.ping.giveUp === false && T.ping.dropsAfterOpen === 4,
+	'这种情况单独计数、不放弃（协议/路径是对的）',
+	JSON.stringify({ giveUp: T.ping.giveUp, drops: T.ping.dropsAfterOpen }));
+
+/* ---- 回归 3：ping-falls-back-to-game-probe ----
+ * 自建探测 giveUp 后，延迟/抖动仍要从游戏自己的 _typeId:15→28 探测里取到。 */
+stopPingProbe();
+T.ping.started = true; T.ping.giveUp = true; T.ping.connected = false;
+T.ping.samples.length = 0;
+const gm = T.primaryConn();
+gm.gapLog.length = 0; gm.stalls.length = 0;
+for (let i = 0; i < 120; i++) gm.gapLog.push({ t: clock, gap: 33 });
+T._recordOut(gm, '{"_typeId":15}');
+clock += 37;
+T._recordIn(gm, { data: '{"_typeId":28}' });
+const fm = T.netMetrics();
+ok(fm.okPing === true && fm.latSrc === 'game',
+	'ping-falls-back-to-game-probe：giveUp 后延迟改由游戏自己的 15→28 提供（src=game）',
+	JSON.stringify({ okPing: fm.okPing, latSrc: fm.latSrc, why: fm.why }));
+ok(fm.okCad === true && typeof fm.jitter === 'number' && fm.stability > 0,
+	'降级后稳定度/抖动行不空（悬浮球不灰、面板不卡"等待连接…"）',
+	JSON.stringify({ okCad: fm.okCad, jitter: fm.jitter, stability: fm.stability }));
+T.setHud(true);
+const hudTree = findEl(sandbox.document.documentElement, 'ttn-root');
+const hudRowsTxt = hudTree ? treeText(hudTree.querySelector('#ttn-rows')) : '';
+ok(hudRowsTxt.indexOf('游戏探测') >= 0,
+	'HUD「实时延迟」行点明当前来源 = 游戏探测', hudRowsTxt.replace(/\s+/g, ' ').slice(0, 120));
+
+/* ---- 回归 4：probe-region-uses-observed-shape ----
+ * 区域探测优先用观测到的游戏连接做 host+port+path 模板，不写死 :443。 */
+const OBS_URL = 'wss://us-south1-mp1.tanktrouble.com:9443/game/ws?token=abc';
+T.conns.push({
+	url: OBS_URL, kind: 'mp', ws: { readyState: 1 }, lastT: clock, framesIn: 9,
+	gapLog: [], stalls: [], shapes: new Map(), nonJson: 0, binaryIn: 0, bytesIn: 0, bytesOut: 0,
+	framesOut: 0, gaps: [], med: 0, stallCount: 0, maxGap: 0, pending: null,
+	openedAt: Date.now(), closedAt: null,
+	binFirst: [], binLast: [], binOutFirst: [], binOutLast: [], outStacks: [], outSamples: []
+});
+const tpls = T.regionTemplates();
+const tpl = tpls.filter(t => t.host === 'us-south1-mp1.tanktrouble.com')[0];
+ok(!!tpl && tpl.observed === true && tpl.url === OBS_URL && tpl.port === '9443' && tpl.path === '/game/ws?token=abc',
+	'probe-region-uses-observed-shape：观测到的连接原样做模板（端口/路径都保留）',
+	JSON.stringify(tpl));
+const wsBefore = wsInstances.length;
+T.pingRegion(tpl, 5000);
+ok(wsInstances.length === wsBefore + 1 && wsInstances[wsBefore].url === OBS_URL,
+	'区域探测真的用这个模板原样建连接（没有 :443 覆盖、没有丢路径）',
+	wsInstances[wsBefore] ? wsInstances[wsBefore].url : 'no-ws');
+ok(T.regionHosts().indexOf('us-south1-mp1.tanktrouble.com') >= 0,
+	'兼容旧接口 regionHosts() 仍返回主机名', JSON.stringify(T.regionHosts()));
+T.conns.pop();
+/* 完全没有观测时才用兜底列表（且兜底不写死 :443） */
+const keptConns = T.conns.splice(0, T.conns.length);
+const fbTpls = T.regionTemplates();
+ok(fbTpls.length === 7 && fbTpls.every(t => t.fallback === true && t.url.indexOf(':443') < 0),
+	'没有观测时才退回兜底主机列表，且不写死 :443',
+	JSON.stringify(fbTpls.map(t => t.url)));
+T.conns.push.apply(T.conns, keptConns);
+
+/* ---- 收尾核对：报告里的 pingProbe 字段齐全（以后再排查同样问题一眼可见） ---- */
+const repPing = T.report().pingProbe;
+ok(!!repPing && ['url', 'everOpened', 'neverOpenedStreak', 'giveUp', 'lastErr', 'lastClose', 'src']
+	.every(k => Object.prototype.hasOwnProperty.call(repPing, k)),
+	'报告含 pingProbe: { url, everOpened, neverOpenedStreak, giveUp, lastErr, lastClose, src }',
+	JSON.stringify(repPing));
 
 /* ---------------- 汇总 ---------------- */
 console.log('\n' + '='.repeat(58));

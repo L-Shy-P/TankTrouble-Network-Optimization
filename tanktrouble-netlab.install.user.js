@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.5.3
+// @version      0.5.4
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,12 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.5.3';
+	const VERSION = '0.5.4';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.5.4', '修"控制台反复出现 WebSocket connection to wss://asia-central1-mp1.tanktrouble.com/ failed"（用户实测，疑似游戏更新后出现）—— 真因：脚本自己的 ping 探测只从游戏连接 URL 里正则取了**主机名**，然后硬拼 `wss://主机名:443`：游戏一旦用非 443 端口或带路径（本次更新很可能如此），探测连的就是错误的 URL，握手必然失败；而浏览器对失败的 WebSocket 握手**总会**打一行红字，脚本无法静音。更糟的是失败后每 4 秒无限重连：一条游戏会话被反作弊/限流拒绝时，控制台就会被刷满。',
+			'修法：① 探测**原样复用游戏自己的连接 URL**（scheme+host+port+path 一个都不改，用 new URL 解析但用原始字符串建连），换服判定也改成按完整 URL 比较；`connHost()` 保留，仅用于报告/展示，不再拿来拼连接串。② 新增失败预算：连续 3 次"从未 onopen 就失败"→ `ping.giveUp` 停止自动重连，只打一条英文日志，延迟改用游戏自己的 `_typeId:15→28` 探测帧；"曾 open 过再断"（协议/路径是对的，只是被踢）单独计数并按 2s→4s→8s…上限 30s 退避重连；换到不同完整 URL 时计数归零。③ 指标优雅降级：HUD「实时延迟」行点明当前来源（自建探测 / 游戏探测），面板/悬浮球不会卡在"等待连接…"或一直灰；报告新增 `pingProbe: { url, everOpened, neverOpenedStreak, giveUp, lastErr, lastClose, src }`。④ `probeRegions`（Ctrl+Shift+P）优先用观测到的游戏连接 URL 作 host+port+path 模板，完全没有观测才退回兜底主机表；同一 host 连续失败 2 次即短路，不再每轮重试。',
+			'新增回归：probe-uses-full-game-url（非 443 端口+路径原样复用）、probe-gives-up-after-failures（3 次失败后不再重连、只记一条日志）、ping-falls-back-to-game-probe（giveUp 后 netMetrics 仍从游戏帧拿到 game 来源延迟且抖动/稳定度不空）、probe-region-uses-observed-shape（区域探测用观测到的 host+port+path，不写死 :443）。四条都做了"撤回 → 对应回归变红"的反例验证。'],
 		['0.5.3', '修"每次进页面控制台都打印所有版本的中文简介"：启动日志不再遍历 CHANGELOG，只保留一行英文版本提示 + 两条简短 API 提示；运行期剩余 console 文案（区域排名 / 报告导出 / 剪贴板回执 / 平滑开关）也统一改成英文。完整变更记录仍保留在代码 CHANGELOG 与导出报告里，需要时才看。',
 			'安装教程按用户要求合并第 4/5 步：现在只写"进入游戏即可看到悬浮球并直接开始使用"，拖拽 / 快捷键等细节统一看下面的 Hotkeys 表。'],
 		['0.5.2', '新增越南语（vi），全方面覆盖：面板 / 悬浮球 / 语言菜单 / 状态原因 / 按钮文案全部有越南语词条，浏览器语言是 vi 时自动选中；语言代码列表扩到 11 国，语言菜单、无截断扫描、文档/安装教程/README/截图同步补齐。',
@@ -1602,14 +1605,81 @@
 		'australia-east1-mp1.tanktrouble.com'
 	];
 
-	function regionHosts() {
-		const seen = new Set();
-		conns.forEach(c => {
-			const m = String(c.url).match(/^wss?:\/\/([a-z0-9-]*mp\d+\.tanktrouble\.com)/i);
-			if (m) seen.add(m[1]);
+	/**
+	 * 把 conn / URL 解析成"可复用模板"。
+	 * 关键：连接本身永远用 `raw`（原始字符串）建，scheme+host+port+path 一个都不许改 ——
+	 * 以前只取主机名再硬拼 `:443`，游戏一旦换成非 443 端口或带路径就必然连不上；
+	 * 而浏览器对失败的 WebSocket 握手**总会**在控制台打一行红字（脚本没法静音），
+	 * 所以唯一的办法就是"原样复用 + 失败几次就停"。
+	 */
+	function parseConnUrl(connOrUrl) {
+		const raw = (typeof connOrUrl === 'string')
+			? connOrUrl
+			: (connOrUrl && connOrUrl.url != null ? String(connOrUrl.url) : '');
+		if (!raw) return null;
+		if (!/^wss?:\/\//i.test(raw)) {
+			// 兼容老调用（__TTN__.startPingProbe('host') 这种调试写法）：只给主机名时补成 URL。
+			// 生产路径一律传 conn，走下面的 new URL 分支，绝不在这里拼端口。
+			const h = raw.replace(/^\/+|\/+$/g, '');
+			if (!h) return null;
+			return { raw: 'wss://' + h + '/', scheme: 'wss:', host: h, port: '443', path: '/', ok: true, legacy: true };
+		}
+		try {
+			const u = new URL(raw);
+			return {
+				raw: raw,                     // ← 原样（不能回填 u.href：URL 规范化会吃掉显式 :443）
+				scheme: u.protocol,
+				host: u.hostname,
+				port: u.port || (u.protocol === 'wss:' ? '443' : '80'),
+				path: (u.pathname || '/') + (u.search || ''),
+				ok: true
+			};
+		} catch (e) {
+			const h = connHost({ url: raw });
+			return h ? { raw: raw, scheme: 'wss:', host: h, port: '443', path: '/', ok: false, err: e.message } : null;
+		}
+	}
+
+	/** 模板 → 连接串：观测到的连接原样返回；兜底列表只有主机名（端口按 wss 默认，不写死 :443） */
+	function buildWsUrl(t) {
+		if (!t) return null;
+		if (t.url && /^wss?:\/\//i.test(t.url)) return t.url;
+		if (t.raw && /^wss?:\/\//i.test(t.raw)) return t.raw;
+		if (!t.host) return null;
+		const port = t.port ? (':' + t.port) : '';
+		const path = t.path ? (t.path.charAt(0) === '/' ? t.path : '/' + t.path) : '/';
+		return 'wss://' + t.host + port + path;
+	}
+
+	function fallbackTemplates() {
+		return FALLBACK_HOSTS.map(function (h) {
+			return { host: h, port: '', path: '/', url: 'wss://' + h + '/', fallback: true };
 		});
-		const fromGame = Array.from(seen);
-		return fromGame.length ? fromGame : FALLBACK_HOSTS.slice();
+	}
+
+	/**
+	 * 区域探测的目标模板：**优先原样复用已观测到的游戏连接**（host+port+path 都留着），
+	 * 完全没有观测（还没连过游戏）时才退回兜底主机名列表。
+	 * 返回 [{ host, port, path, url, observed|fallback }]
+	 */
+	function regionTemplates() {
+		const seen = new Set();
+		const out = [];
+		conns.forEach(function (c) {
+			if (!c || c.probe) return;        // 自己开的探测连接不算"观测到的游戏连接"
+			const p = parseConnUrl(c.url);
+			if (!p || !p.host || !/^[a-z0-9-]*mp\d+\.tanktrouble\.com$/i.test(p.host)) return;
+			const key = p.host;               // 排名按主机聚合；同主机保留第一条观测到的形态
+			if (seen.has(key)) return;
+			seen.add(key);
+			out.push({ host: p.host, port: p.port, path: p.path, url: p.raw, observed: true });
+		});
+		return out.length ? out : fallbackTemplates();
+	}
+
+	/** 兼容旧接口：只返回主机名（报告/老调用用） */
+	function regionHosts() {
+		return regionTemplates().map(function (t) { return t.host; });
 	}
 
 	function rawWS() {
@@ -1617,13 +1687,15 @@
 	}
 
 	/** 单次探测：返回 消息 RTT（open→收到应答）与 建连耗时（t0→open） */
-	function pingRegion(host, timeoutMs) {
+	function pingRegion(target, timeoutMs) {
 		return new Promise(resolve => {
 			const t0 = now();
 			let tOpen = null;
 			let settled = false;
 			let ws = null;
 			let timer = null;
+			const tpl = (typeof target === 'string') ? parseConnUrl(target) : target;
+			const url = buildWsUrl(tpl);
 
 			function finish(res) {
 				if (settled) return;
@@ -1633,8 +1705,9 @@
 				resolve(res);
 			}
 
+			if (!url) { finish({ ok: false, reason: 'badurl' }); return; }
 			try {
-				ws = new (rawWS())('wss://' + host + ':443');
+				ws = new (rawWS())(url);      // ← 原样：观测到的模板端口/路径都不改
 			} catch (e) { finish({ ok: false, reason: 'ctor' }); return; }
 
 			timer = setTimeout(() => finish({ ok: false, reason: 'timeout' }), timeoutMs);
@@ -1684,9 +1757,11 @@
 		if (regionProbe.running) return regionProbe.result;
 
 		const durMs = Math.min(180000, Math.max(6000, (seconds || 30) * 1000));
-		const hosts = regionHosts();
+		const templates = regionTemplates();             // 优先复用观测到的游戏连接（含端口/路径）
+		const hosts = templates.map(t => t.host);
 		const samples = new Map(hosts.map(h => [h, []]));
 		const failures = new Map(hosts.map(h => [h, 0]));
+		const failStreak = new Map(hosts.map(h => [h, 0]));   // 失败短路：同一 host 连续失败 2 次就不再每轮重试
 
 		regionProbe.running = true;
 		regionProbe.hosts = hosts;
@@ -1698,11 +1773,13 @@
 
 		while (now() < deadline && rounds < maxRounds) {
 			rounds++;
-			const round = await Promise.all(hosts.map(h => pingRegion(h, 5000)));
+			const live = templates.filter(t => failStreak.get(t.host) < 2);
+			if (!live.length) break;                     // 全部连续失败 → 直接收工，别把控制台刷满
+			const round = await Promise.all(live.map(t => pingRegion(t, 5000)));
 			round.forEach((r, i) => {
-				const h = hosts[i];
-				if (r.ok) samples.get(h).push(r.rtt);
-				else failures.set(h, failures.get(h) + 1);
+				const h = live[i].host;
+				if (r.ok) { samples.get(h).push(r.rtt); failStreak.set(h, 0); }
+				else { failures.set(h, failures.get(h) + 1); failStreak.set(h, failStreak.get(h) + 1); }
 			});
 			await new Promise(res => setTimeout(res, 1500));
 		}
@@ -1725,10 +1802,15 @@
 	 *   open  —— 连接 open 到第一帧的时间（含握手，偏大，只做兜底，会标注）
 	 * 注意 ping 是小包，测不出大流量状态流的抖动 —— 抖动另算（见 netMetrics）。 */
 	const ping = {
-		ws: null, host: null, samples: [], pendingAt: 0, started: false,
+		ws: null, url: null, host: null, samples: [], pendingAt: 0, started: false,
 		connected: false, fails: 0, sends: 0, answers: 0,
 		lastErr: null, lastClose: null, sawTypes: {}, failsSinceStart: 0,
-		interval: 2000, openedAt: 0, lastAnswerAt: 0
+		interval: 2000, openedAt: 0, lastAnswerAt: 0, timer: null, reconnectTimer: null,
+		// —— 失败预算：连续"从未 onopen 就失败"≥3 次 → 放弃自动重连（浏览器对失败握手总会打红字，
+		//    脚本没法静音；唯一的办法就是失败几次就停，把延迟来源降级到游戏自己的探测帧）——
+		everOpened: false, neverOpenedStreak: 0, dropsAfterOpen: 0,
+		giveUp: false, giveUpAt: 0, giveUpUrl: null, giveUpLogged: 0,
+		reconnectDelay: 2000
 	};
 
 	/** 记一条延迟样本。带 host/src，便于"换服后旧样本不能混进来"和"来源标注"。 */
@@ -1739,21 +1821,39 @@
 		return true;
 	}
 
-	/** 从连接 URL 取主机名（报告里用来核对"测的是哪条线路"） */
+	/**
+	 * 从连接 URL 取主机名 —— **只用于报告/展示**（核对"测的是哪条线路"）。
+	 * 绝不能再拿它去拼连接串：端口和路径都会被丢掉，遇到游戏换端口/带路径就必然连不上。
+	 */
 	function connHost(conn) {
 		const m = conn && String(conn.url).match(/^wss?:\/\/([^:\/]+)/);
 		return m ? m[1] : null;
 	}
 
-	function startPingProbe(host) {
-		if (!host) return;
-		if (ping.started && ping.host === host) return;      // 同一个服，继续测
+	/**
+	 * 启动/切换常驻探测。参数是**游戏连接的完整 URL 或 conn 对象**：
+	 * 探测连接用 `conn.url` 原样建（scheme+host+port+path 一个都不改）。
+	 * 老式"只给主机名"的调试调用也兼容（内部补成 wss://host/），但生产路径永远传 conn。
+	 *
+	 * 失败预算（直接决定控制台噪不噪）：
+	 *   · 每条"从未 onopen 就失败"的连接算一次 neverOpenedStreak；
+	 *     连续 ≥3 次 → giveUp，停止自动重连，只打一条英文日志，延迟改从游戏自己的探测帧取；
+	 *   · "曾 open 过再断"（协议/路径是对的，只是被踢）单独计数，重连退避 2s→4s→8s…上限 30s。
+	 * 换到**不同完整 URL**（换服）时，样本和这些计数一起归零。
+	 */
+	function startPingProbe(connOrUrl) {
+		const parsed = parseConnUrl(connOrUrl);
+		if (!parsed || !parsed.host) return;
+		const url = parsed.raw;                                   // ← 原样复用，不做任何拼接
+
+		if (ping.started && ping.url === url) return;              // 同一个服：继续测（giveUp 后也不再重连）
 		if (ping.started) {
 			// 换服了：关掉旧探测、清空样本（那些是上一个服的延迟，混在一起就是错的）
 			try {
 				if (ping.ws) { ping.ws.onclose = null; ping.ws.onerror = null; ping.ws.close(); }
 			} catch (e) {}
 			if (ping.timer) { clearInterval(ping.timer); ping.timer = null; }
+			if (ping.reconnectTimer) { clearTimeout(ping.reconnectTimer); ping.reconnectTimer = null; }
 			ping.ws = null;
 			ping.connected = false;
 			ping.pendingAt = 0;
@@ -1765,11 +1865,65 @@
 			ping.lastSwitchAt = Date.now();
 		}
 		ping.started = true;
-		ping.host = host;
+		ping.url = url;
+		ping.host = parsed.host;
+		// 新目标 = 新预算：失败计数/退避/放弃状态全部从头开始
+		ping.everOpened = false;
+		ping.neverOpenedStreak = 0;
+		ping.dropsAfterOpen = 0;
+		ping.giveUp = false;
+		ping.giveUpAt = 0;
+		ping.giveUpUrl = null;
+		ping.giveUpLogged = 0;
+		ping.reconnectDelay = 2000;
+
+		function scheduleReconnect() {
+			if (!ping.started || ping.giveUp || ping.reconnectTimer) return;   // 只排一次
+			// 曾 open 过再被踢：2s→4s→8s…上限 30s（不要 4 秒无限猛冲）；
+			// 从未 open：先按 2s 再试，连续 3 次就放弃（见 noteAttemptDown）。
+			const delay = ping.everOpened ? (ping.reconnectDelay || 2000) : 2000;
+			if (ping.everOpened) ping.reconnectDelay = Math.min(30000, delay * 2);
+			ping.reconnectTimer = setTimeout(function () {
+				ping.reconnectTimer = null;
+				connect();
+			}, delay);
+		}
+
+		/** 记一次连接失败。返回 true = 还可以重连；false = 已放弃（giveUp）。同一条连接只记一次。 */
+		function noteAttemptDown(ws, err) {
+			if (ws && ws.__ttnDownSeen) return !ping.giveUp;
+			if (ws) ws.__ttnDownSeen = true;
+			ping.fails++;
+			if (err) ping.lastErr = err;
+
+			if (ws && ws.__ttnOpened) {
+				// 曾 open 过再断开 = 协议/路径是对的，只是被踢/被限流：单独计数 + 退避
+				ping.dropsAfterOpen = (ping.dropsAfterOpen || 0) + 1;
+			} else {
+				// 从未 onopen 就失败：连续 3 次 → 放弃自动重连（不再制造失败握手）
+				ping.neverOpenedStreak = (ping.neverOpenedStreak || 0) + 1;
+				if (ping.neverOpenedStreak >= 3) {
+					ping.giveUp = true;
+					ping.giveUpAt = Date.now();
+					ping.giveUpUrl = ping.url;
+					if (!ping.giveUpLogged) {
+						ping.giveUpLogged = 1;
+						console.log('[TTN] own ping probe unavailable (blocked/unreachable) - falling back to the game\'s own probe');
+					}
+					if (ping.timer) { clearInterval(ping.timer); ping.timer = null; }
+					return false;
+				}
+			}
+			return true;
+		}
 
 		function connect() {
+			if (!ping.started || ping.giveUp) return;
 			let ws;
-			try { ws = new (rawWS())('wss://' + host + ':443'); } catch (e) { ping.fails++; ping.lastErr = 'ctor: ' + e.message; return; }
+			try { ws = new (rawWS())(ping.url); } catch (e) {
+				if (noteAttemptDown(null, 'ctor: ' + e.message)) scheduleReconnect();
+				return;
+			}
 			ping.ws = ws;
 			/* 我们自己这条探测连接也会被 instrument 观测到。
 			 * 必须打上标记：① primaryConn 绝不能选它当"游戏连接"
@@ -1779,16 +1933,27 @@
 				const c = conns[conns.length - 1];
 				if (c && c.ws === ws) { c.probe = true; c.kind = 'probe'; }
 			} catch (e) {}
-			ws.onopen = function () { ping.connected = true; ping.openedAt = now(); sendPing(); };
+			ws.onopen = function () {
+				ping.connected = true;
+				ping.openedAt = now();
+				ws.__ttnOpened = true;              // 这条连接确实 open 过 → 之后的断开算"被踢"
+				ping.everOpened = true;
+				ping.neverOpenedStreak = 0;         // "连续从未 open"被这次成功握手打断
+				sendPing();
+			};
 			ws.onclose = function (ev) {
 				ping.connected = false;
 				// 服务器主动关门 = 我们猜错了协议/被限流，把原因记下来（"一直灰"时全靠这个判断）
 				ping.lastClose = { at: Math.round(now()), code: ev && ev.code, reason: (ev && ev.reason) || '', wasClean: !!(ev && ev.wasClean) };
-				// 已被换服逻辑关掉的旧连接不要再自动重连
-				if (ping.ws !== ws || !ping.started) return;
-				setTimeout(connect, 4000);
+				if (ping.ws === ws) ping.ws = null;
+				// 已被换服/放弃逻辑关掉的旧连接不要再自动重连
+				if (!ping.started || ping.giveUp) return;
+				if (noteAttemptDown(ws, null)) scheduleReconnect();
 			};
-			ws.onerror = function () { ping.fails++; ping.lastErr = 'ws error'; };
+			ws.onerror = function () {
+				if (ping.ws === ws) ping.connected = false;
+				noteAttemptDown(ws, 'ws error');    // 计数；重连统一由 onclose 排（避免 onerror+onclose 排两次）
+			};
 			ws.onmessage = function (ev) {
 				if (typeof ev.data !== 'string') return;
 				// 先记一笔"服务器会主动发什么"，这样探测不到应答时能看出到底是哪种情况
@@ -1802,10 +1967,11 @@
 				if (!o || o._typeId !== 28) return;
 				const rtt = now() - ping.pendingAt;
 				ping.pendingAt = 0;
-				if (pushLatency(rtt, host, 'probe')) {
+				if (pushLatency(rtt, ping.host, 'probe')) {
 					ping.answers++;
 					ping.failsSinceStart = 0;
 					ping.interval = 2000;          // 通了就立刻回到 2s，别让退避拖累"实时"
+					ping.reconnectDelay = 2000;    // 真的有应答 → 退避重置，下次被踢仍从 2s 起
 					ping.lastAnswerAt = now();
 				}
 			};
@@ -2227,11 +2393,11 @@
 			stab: 'Stability', opt: 'Optimize', status: 'Status', lang: 'Language',
 			on: 'ON', off: 'OFF', btnOn: 'ON', btnOff: 'OFF', smoothed: 'smoothed', ignored: 'corrections ignored',
 			rttJitter: '· RTT jitter', ballAvg: 'Avg', ballStab: 'Stab',
-			waitConn: 'waiting for connection…', dotTip: 'Collapse into floating ball', copiedLine: 'Line copied',
+			waitConn: 'waiting for connection…', dotTip: 'Collapse into floating ball', copiedLine: 'Line copied', latSrcProbe: "own probe", latSrcGame: "game probe",
 			optTip: 'Toggle optimization (live A/B)', reportBtn: '⤓ Report', reportTip: 'Export diagnostic report',
 			whyWaitGame: 'waiting for the game socket…', whyProbeOff: 'latency probe not started',
 			whyProbeDown: 'latency probe not connected{code}', whyClose: ' (close code {code})',
-			whyProbeSilent: 'latency probe silent after {n} pings{types}', whyTypes: ' (server sends only {t})',
+			whyProbeSilent: 'latency probe silent after {n} pings{types}', whyTypes: ' (server sends only {t})', whyProbeGiveUp: "own probe gave up (blocked/unreachable) - using the game's own probe",
 			whyLatThin: 'not enough latency samples ({n}/3)',
 			whyFrameSparse: 'not enough frame samples (lobby / between rounds)'
 		},
@@ -2240,11 +2406,11 @@
 			stab: '稳定度', opt: '优化', status: '状态', lang: '语言',
 			on: '开', off: '关', btnOn: '开', btnOff: '关', smoothed: '已抹平', ignored: '忽略修正',
 			rttJitter: '· RTT 抖动', ballAvg: '平均', ballStab: '稳定',
-			waitConn: '等待连接…', dotTip: '收起成悬浮球', copiedLine: '已复制线路',
+			waitConn: '等待连接…', dotTip: '收起成悬浮球', copiedLine: '已复制线路', latSrcProbe: "自建探测", latSrcGame: "游戏探测",
 			optTip: '开/关网络优化（实时对比）', reportBtn: '⤓ 报告', reportTip: '导出诊断报告',
 			whyWaitGame: '等待游戏连接…', whyProbeOff: '延迟探测未启动',
 			whyProbeDown: '延迟探测未连上{code}', whyClose: '（关闭码 {code}）',
-			whyProbeSilent: '延迟探测 {n} 次无应答{types}', whyTypes: '（对方只发 {t}）',
+			whyProbeSilent: '延迟探测 {n} 次无应答{types}', whyTypes: '（对方只发 {t}）', whyProbeGiveUp: "自建探测已放弃（连不上/被拦），改用游戏自带的探测",
 			whyLatThin: '延迟样本不足（{n}/3）',
 			whyFrameSparse: '帧样本不足（大厅/局间）'
 		},
@@ -2253,11 +2419,11 @@
 			stab: '安定度', opt: '最適化', status: '状態', lang: '言語',
 			on: 'オン', off: 'オフ', btnOn: 'オン', btnOff: 'オフ', smoothed: '平滑化', ignored: '修正を無視',
 			rttJitter: '· RTT ジッター', ballAvg: '平均', ballStab: '安定',
-			waitConn: '接続を待機…', dotTip: 'ボールに折りたたむ', copiedLine: '回線をコピーしました',
+			waitConn: '接続を待機…', dotTip: 'ボールに折りたたむ', copiedLine: '回線をコピーしました', latSrcProbe: "自前プローブ", latSrcGame: "ゲームプローブ",
 			optTip: '最適化のオン/オフ（A/B 比較）', reportBtn: '⤓ レポート', reportTip: '診断レポートを書き出す',
 			whyWaitGame: 'ゲーム接続を待機…', whyProbeOff: '遅延プローブ未起動',
 			whyProbeDown: '遅延プローブ未接続{code}', whyClose: '（コード {code} で切断）',
-			whyProbeSilent: '{n} 回応答なし{types}', whyTypes: '（相手は {t} のみ送信）',
+			whyProbeSilent: '{n} 回応答なし{types}', whyTypes: '（相手は {t} のみ送信）', whyProbeGiveUp: "自前プローブを断念（ブロック/到達不可）— ゲーム本来のプローブに切替",
 			whyLatThin: '遅延サンプル不足（{n}/3）',
 			whyFrameSparse: 'フレームサンプル不足（ロビー/ラウンド間）'
 		},
@@ -2266,11 +2432,11 @@
 			stab: '안정도', opt: '최적화', status: '상태', lang: '언어',
 			on: '켜짐', off: '꺼짐', btnOn: '켜짐', btnOff: '꺼짐', smoothed: '평활화', ignored: '보정 무시',
 			rttJitter: '· RTT 지터', ballAvg: '평균', ballStab: '안정',
-			waitConn: '연결 대기 중…', dotTip: '공으로 접기', copiedLine: '회선 복사됨',
+			waitConn: '연결 대기 중…', dotTip: '공으로 접기', copiedLine: '회선 복사됨', latSrcProbe: "자체 프로브", latSrcGame: "게임 프로브",
 			optTip: '최적화 켜기/끄기(실시간 A/B)', reportBtn: '⤓ 보고서', reportTip: '진단 보고서 내보내기',
 			whyWaitGame: '게임 연결 대기 중…', whyProbeOff: '지연 프로브 미시작',
 			whyProbeDown: '지연 프로브 미연결{code}', whyClose: '(종료 코드 {code})',
-			whyProbeSilent: '{n}회 무응답{types}', whyTypes: '(상대는 {t}만 전송)',
+			whyProbeSilent: '{n}회 무응답{types}', whyTypes: '(상대는 {t}만 전송)', whyProbeGiveUp: "자체 프로브 포기(차단/도달 불가) - 게임 자체 프로브로 대체",
 			whyLatThin: '지연 샘플 부족({n}/3)',
 			whyFrameSparse: '프레임 샘플 부족(로비/라운드 사이)'
 		},
@@ -2279,11 +2445,11 @@
 			stab: 'Стабильность', opt: 'Оптимизация', status: 'Статус', lang: 'Язык',
 			on: 'ВКЛ', off: 'ВЫКЛ', btnOn: 'ВКЛ', btnOff: 'ВЫКЛ', smoothed: 'сглажено', ignored: 'правок проигнор.',
 			rttJitter: '· джиттер RTT', ballAvg: 'Сред.', ballStab: 'Стаб.',
-			waitConn: 'ожидание соединения…', dotTip: 'Свернуть в шар', copiedLine: 'Линия скопирована',
+			waitConn: 'ожидание соединения…', dotTip: 'Свернуть в шар', copiedLine: 'Линия скопирована', latSrcProbe: "свой зонд", latSrcGame: "зонд игры",
 			optTip: 'Вкл/выкл оптимизацию (A/B)', reportBtn: '⤓ Отчёт', reportTip: 'Экспорт отчёта',
 			whyWaitGame: 'ожидание соединения с игрой…', whyProbeOff: 'пробник задержки не запущен',
 			whyProbeDown: 'пробник не подключён{code}', whyClose: ' (код {code})',
-			whyProbeSilent: '{n} пингов без ответа{types}', whyTypes: ' (сервер шлёт только {t})',
+			whyProbeSilent: '{n} пингов без ответа{types}', whyTypes: ' (сервер шлёт только {t})', whyProbeGiveUp: "свой зонд недоступен (блокировка/нет связи) — используем зонд игры",
 			whyLatThin: 'мало замеров задержки ({n}/3)',
 			whyFrameSparse: 'мало замеров кадров (лобби/между раундами)'
 		},
@@ -2292,11 +2458,11 @@
 			stab: 'الاستقرار', opt: 'التحسين', status: 'الحالة', lang: 'اللغة',
 			on: 'مفعّل', off: 'معطّل', btnOn: 'مفعّل', btnOff: 'معطّل', smoothed: 'تم التنعيم', ignored: 'تصحيحات مُهملة',
 			rttJitter: '· اهتزاز RTT', ballAvg: 'المتوسط', ballStab: 'الاستقرار',
-			waitConn: 'في انتظار الاتصال…', dotTip: 'الطي إلى كرة', copiedLine: 'تم نسخ الخط',
+			waitConn: 'في انتظار الاتصال…', dotTip: 'الطي إلى كرة', copiedLine: 'تم نسخ الخط', latSrcProbe: "مسبار خاص", latSrcGame: "مسبار اللعبة",
 			optTip: 'تشغيل/إيقاف التحسين (مقارنة)', reportBtn: '⤓ تقرير', reportTip: 'تصدير تقرير التشخيص',
 			whyWaitGame: 'في انتظار اتصال اللعبة…', whyProbeOff: 'مسبار التأخير غير مُشغّل',
 			whyProbeDown: 'مسبار التأخير غير متصل{code}', whyClose: ' (رمز الإغلاق {code})',
-			whyProbeSilent: '{n} محاولات بلا رد{types}', whyTypes: ' (الخادم يرسل {t} فقط)',
+			whyProbeSilent: '{n} محاولات بلا رد{types}', whyTypes: ' (الخادم يرسل {t} فقط)', whyProbeGiveUp: "تخلّينا عن المسبار الخاص (محجوب/غير متاح) — نستخدم مسبار اللعبة",
 			whyLatThin: 'عيّنات تأخير غير كافية ({n}/3)',
 			whyFrameSparse: 'عيّنات إطارات غير كافية (الردهة/بين الجولات)'
 		},
@@ -2305,11 +2471,11 @@
 			stab: 'Stabilité', opt: 'Optimisation', status: 'État', lang: 'Langue',
 			on: 'ACTIVÉ', off: 'DÉSACTIVÉ', btnOn: 'ACTIVÉ', btnOff: 'DÉSACTIVÉ', smoothed: 'lissé', ignored: 'corrections ignorées',
 			rttJitter: '· gigue RTT', ballAvg: 'Moy.', ballStab: 'Stab.',
-			waitConn: 'en attente de connexion…', dotTip: 'Réduire en ballon', copiedLine: 'Ligne copiée',
+			waitConn: 'en attente de connexion…', dotTip: 'Réduire en ballon', copiedLine: 'Ligne copiée', latSrcProbe: "sonde locale", latSrcGame: "sonde du jeu",
 			optTip: "Activer/désactiver l'optimisation (A/B)", reportBtn: '⤓ Rapport', reportTip: 'Exporter le rapport',
 			whyWaitGame: 'en attente du socket de jeu…', whyProbeOff: 'sonde de latence non démarrée',
 			whyProbeDown: 'sonde non connectée{code}', whyClose: ' (code {code})',
-			whyProbeSilent: '{n} pings sans réponse{types}', whyTypes: " (le serveur n'envoie que {t})",
+			whyProbeSilent: '{n} pings sans réponse{types}', whyTypes: " (le serveur n'envoie que {t})", whyProbeGiveUp: "sonde locale abandonnée (bloquée/injoignable) - on utilise celle du jeu",
 			whyLatThin: 'échantillons de latence insuffisants ({n}/3)',
 			whyFrameSparse: 'échantillons de frames insuffisants (lobby/entre manches)'
 		},
@@ -2318,11 +2484,11 @@
 			stab: 'Estabilidad', opt: 'Optimización', status: 'Estado', lang: 'Idioma',
 			on: 'ACTIVADO', off: 'DESACTIVADO', btnOn: 'ACTIVADO', btnOff: 'DESACTIVADO', smoothed: 'suavizado', ignored: 'correcciones ignoradas',
 			rttJitter: '· jitter RTT', ballAvg: 'Med.', ballStab: 'Est.',
-			waitConn: 'esperando conexión…', dotTip: 'Contraer en bola', copiedLine: 'Línea copiada',
+			waitConn: 'esperando conexión…', dotTip: 'Contraer en bola', copiedLine: 'Línea copiada', latSrcProbe: "sonda propia", latSrcGame: "sonda del juego",
 			optTip: 'Activar/desactivar optimización (A/B)', reportBtn: '⤓ Informe', reportTip: 'Exportar informe',
 			whyWaitGame: 'esperando el socket del juego…', whyProbeOff: 'sonda de latencia no iniciada',
 			whyProbeDown: 'sonda no conectada{code}', whyClose: ' (código {code})',
-			whyProbeSilent: '{n} pings sin respuesta{types}', whyTypes: ' (el servidor solo envía {t})',
+			whyProbeSilent: '{n} pings sin respuesta{types}', whyTypes: ' (el servidor solo envía {t})', whyProbeGiveUp: "sonda propia descartada (bloqueada/inalcanzable): usamos la del juego",
 			whyLatThin: 'muestras de latencia insuficientes ({n}/3)',
 			whyFrameSparse: 'muestras de frames insuficientes (lobby/entre rondas)'
 		},
@@ -2331,11 +2497,11 @@
 			stab: 'Stabilität', opt: 'Optimierung', status: 'Status', lang: 'Sprache',
 			on: 'AN', off: 'AUS', btnOn: 'AN', btnOff: 'AUS', smoothed: 'geglättet', ignored: 'Korrekturen ignoriert',
 			rttJitter: '· RTT-Jitter', ballAvg: 'Ø', ballStab: 'Stab.',
-			waitConn: 'warte auf Verbindung…', dotTip: 'Zum Ball einklappen', copiedLine: 'Leitung kopiert',
+			waitConn: 'warte auf Verbindung…', dotTip: 'Zum Ball einklappen', copiedLine: 'Leitung kopiert', latSrcProbe: "eigener Test", latSrcGame: "Spiel-Test",
 			optTip: 'Optimierung ein/aus (A/B)', reportBtn: '⤓ Bericht', reportTip: 'Diagnosebericht exportieren',
 			whyWaitGame: 'warte auf Spiel-Verbindung…', whyProbeOff: 'Latenz-Sonde nicht gestartet',
 			whyProbeDown: 'Sonde nicht verbunden{code}', whyClose: ' (Code {code})',
-			whyProbeSilent: '{n} Pings ohne Antwort{types}', whyTypes: ' (Server sendet nur {t})',
+			whyProbeSilent: '{n} Pings ohne Antwort{types}', whyTypes: ' (Server sendet nur {t})', whyProbeGiveUp: "eigener Test aufgegeben (blockiert/nicht erreichbar) - nutze den Test des Spiels",
 			whyLatThin: 'zu wenige Latenz-Messwerte ({n}/3)',
 			whyFrameSparse: 'zu wenige Frame-Messwerte (Lobby/zwischen Runden)'
 		},
@@ -2344,11 +2510,11 @@
 			stab: 'Estabilidade', opt: 'Otimização', status: 'Estado', lang: 'Idioma',
 			on: 'ATIVADO', off: 'DESATIVADO', btnOn: 'ATIVADO', btnOff: 'DESATIVADO', smoothed: 'suavizado', ignored: 'correções ignoradas',
 			rttJitter: '· jitter RTT', ballAvg: 'Méd.', ballStab: 'Est.',
-			waitConn: 'aguardando conexão…', dotTip: 'Recolher em bola', copiedLine: 'Linha copiada',
+			waitConn: 'aguardando conexão…', dotTip: 'Recolher em bola', copiedLine: 'Linha copiada', latSrcProbe: "sonda própria", latSrcGame: "sonda do jogo",
 			optTip: 'Ligar/desligar otimização (A/B)', reportBtn: '⤓ Relatório', reportTip: 'Exportar relatório',
 			whyWaitGame: 'aguardando o socket do jogo…', whyProbeOff: 'sonda de latência não iniciada',
 			whyProbeDown: 'sonda não conectada{code}', whyClose: ' (código {code})',
-			whyProbeSilent: '{n} pings sem resposta{types}', whyTypes: ' (o servidor só envia {t})',
+			whyProbeSilent: '{n} pings sem resposta{types}', whyTypes: ' (o servidor só envia {t})', whyProbeGiveUp: "sonda própria desistiu (bloqueada/inacessível) - usar a sonda do jogo",
 			whyLatThin: 'amostras de latência insuficientes ({n}/3)',
 			whyFrameSparse: 'amostras de frames insuficientes (lobby/entre rodadas)'
 		},
@@ -2357,11 +2523,11 @@
 			stab: 'Ổn định', opt: 'Tối ưu', status: 'Trạng thái', lang: 'Ngôn ngữ',
 			on: 'BẬT', off: 'TẮT', btnOn: 'BẬT', btnOff: 'TẮT', smoothed: 'mượt', ignored: 'bỏ qua sửa',
 			rttJitter: '· Jitter RTT', ballAvg: 'TB', ballStab: 'Ổn',
-			waitConn: 'đang chờ kết nối…', dotTip: 'Thu gọn thành bóng', copiedLine: 'Đã sao chép tuyến',
+			waitConn: 'đang chờ kết nối…', dotTip: 'Thu gọn thành bóng', copiedLine: 'Đã sao chép tuyến', latSrcProbe: "dò riêng", latSrcGame: "dò của game",
 			optTip: 'Bật/tắt tối ưu hóa (A/B trực tiếp)', reportBtn: '⤓ Báo cáo', reportTip: 'Xuất báo cáo chẩn đoán',
 			whyWaitGame: 'đang chờ kết nối game…', whyProbeOff: 'chưa khởi động dò độ trễ',
 			whyProbeDown: 'dò độ trễ chưa kết nối{code}', whyClose: ' (mã đóng {code})',
-			whyProbeSilent: '{n} lần ping không phản hồi{types}', whyTypes: ' (máy chủ chỉ gửi {t})',
+			whyProbeSilent: '{n} lần ping không phản hồi{types}', whyTypes: ' (máy chủ chỉ gửi {t})', whyProbeGiveUp: "dò riêng bỏ cuộc (bị chặn/không tới được) - dùng dò của game",
 			whyLatThin: 'chưa đủ mẫu độ trễ ({n}/3)',
 			whyFrameSparse: 'chưa đủ mẫu khung (sảnh/giữa ván)'
 		}
@@ -2564,7 +2730,10 @@
 		} else {
 			if (!okPing) {
 				if (!ping.started) whyParts.push({ k: 'whyProbeOff' });
-				else if (!ping.connected) {
+				else if (ping.giveUp) {
+					// 自建探测已放弃（3 次连不上/被拦）：明说改用游戏自己的探测帧
+					whyParts.push({ k: 'whyProbeGiveUp' });
+				} else if (!ping.connected) {
 					whyParts.push({ k: 'whyProbeDown', args: { code: (ping.lastClose && ping.lastClose.code) ? tr('whyClose', { code: ping.lastClose.code }) : '' } });
 				} else if (ping.sends >= 3 && ping.answers === 0) {
 					whyParts.push({ k: 'whyProbeSilent', args: {
@@ -2650,7 +2819,8 @@
 		 * 单位（ms / %）永远不变 → 独立节点、永不参与动画（用户明确要求）。 */
 		const VAL_LAYOUT = {
 			line: { pre: false, unit: '' },
-			live: { pre: false, unit: ' ms' },
+			// live 行尾部带「 · 来源」：自建探测 / 游戏探测（降级点明，不让面板看着像坏了）
+			live: { pre: false, unit: ' ms', note: true },
 			avg: { pre: true, unit: ' ms' },
 			max: { pre: false, unit: ' ms' },
 			jit: { pre: false, unit: '%' },
@@ -4062,6 +4232,13 @@
 			setVal(hudRefs.line, c ? host : tr('waitConn'), null);
 			setVal(hudRefs.live, m.okPing ? String(m.now) : '—',
 				m.okPing ? cstr(gradeAvg(m.now)) : null);      // 实时延迟（在平均延迟上面）
+			// 点明"当前延迟来源"：自建探测 / 游戏自己的探测帧。自有探测被服务器拦住而降级时，
+			// 面板上仍看得到数字和来源，不会像"卡在等待连接/一直灰"。
+			if (hudRefs.live && hudRefs.live.note) {
+				const srcTag = (m.latSrc === 'game') ? tr('latSrcGame')
+					: (m.latSrc === 'probe' ? tr('latSrcProbe') : '');
+				setPlain(hudRefs.live.note, srcTag ? ' · ' + srcTag : '');
+			}
 			setPlain(hudRefs.avg.pre, m.thin ? '≈ ' : '');     // 前缀：内容不变就不动
 			setVal(hudRefs.avg, m.okPing ? String(m.avg) : '—',
 				m.okPing ? cstr(gradeAvg(m.avg)) : null);
@@ -4101,6 +4278,7 @@
 	/* ============================ ④ 报告 ============================ */
 
 	function buildReport() {
+		const mm = netMetrics();          // 报告里的 metrics 与 pingProbe.src 必须来自同一次判定
 		return {
 			script: 'tanktrouble-netlab',
 			version: VERSION,
@@ -4161,21 +4339,31 @@
 			entities: entityStats,
 			modelProfile: modelProfile.samples,
 			// 悬浮球"全灰"时的排查全靠这一段：探测连没连上、有没有应答、对方都发些什么
-			metrics: (function () {
-				const m = netMetrics();
-				return {
-					ok: m.ok, okPing: m.okPing, okCad: m.okCad, why: m.why,
-					avg: m.avg, now: m.now, max: m.max, stability: m.stability,
-					samples: m.samples, thin: m.thin, latSrc: m.latSrc,
-					latAgeMs: m.latAge, latWinSec: m.latWin,
-					base: m.base, stallMax: m.stallMax, stalls60: m.stalls
-				};
-			})(),
+			metrics: {
+				ok: mm.ok, okPing: mm.okPing, okCad: mm.okCad, why: mm.why,
+				avg: mm.avg, now: mm.now, max: mm.max, stability: mm.stability,
+				samples: mm.samples, thin: mm.thin, latSrc: mm.latSrc,
+				latAgeMs: mm.latAge, latWinSec: mm.latWin,
+				base: mm.base, stallMax: mm.stallMax, stalls60: mm.stalls
+			},
 			ping: { host: ping.host, connected: ping.connected, interval: ping.interval,
 				sends: ping.sends, answers: ping.answers, fails: ping.fails,
 				switches: ping.switches || 0, failsSinceStart: ping.failsSinceStart,
 				lastErr: ping.lastErr, lastClose: ping.lastClose, sawTypes: ping.sawTypes,
 				samples: ping.samples.slice(-40) },
+			// 一眼判断"探测为什么噪 / 为什么降级"：原样 URL、open 过没有、连续失败几次、放弃没有
+			pingProbe: {
+				url: ping.url,
+				host: ping.host,
+				everOpened: !!ping.everOpened,
+				neverOpenedStreak: ping.neverOpenedStreak || 0,
+				dropsAfterOpen: ping.dropsAfterOpen || 0,
+				giveUp: !!ping.giveUp,
+				giveUpAt: ping.giveUpAt || null,
+				lastErr: ping.lastErr || null,
+				lastClose: ping.lastClose || null,
+				src: mm.latSrc
+			},
 			latencySources: (function () {
 				const out = {};
 				ping.samples.forEach(function (s) {
@@ -4357,10 +4545,8 @@
 		// 一旦有游戏连接，就开一条独立的 ping 连接测真 RTT
 		try {
 			const gc = primaryConn();
-			if (gc && gc.framesIn > 20) {
-				const hm = String(gc.url).match(/^wss?:\/\/([^:\/]+)/);
-				if (hm) startPingProbe(hm[1]);
-			}
+			// 传**整条游戏连接**：探测必须原样复用它的 URL（含端口/路径），不能只拿主机名拼 :443
+			if (gc && gc.framesIn > 20) startPingProbe(gc);
 		} catch (e) {}
 	}, 1000);
 
@@ -4405,6 +4591,8 @@
 		connHost: connHost,
 		pushLatency: pushLatency,
 		startPingProbe: startPingProbe,
+		parseConnUrl: parseConnUrl,       // 测试用：URL → 模板（原样 URL + host/port/path）
+		buildWsUrl: buildWsUrl,           // 测试用：模板 → 连接串
 		_grade: { avg: gradeAvg, max: gradeMax, stability: gradeStability },
 		_overallColor: overallColor,
 		installSpawnHooks: installSpawnHooks,
@@ -4420,6 +4608,8 @@
 		_loadHudState: loadHudState,       // 测试用：模拟重新载入存档
 		_saveHudState: saveHudState,
 		regionHosts: regionHosts,
+		regionTemplates: regionTemplates,   // 测试用：区域探测实际用的模板（观测优先）
+		pingRegion: pingRegion,             // 测试用：单次区域探测（原样建连接）
 		setHud(on) { CFG.hud = !!on; ensureHud(); applyHudVisibility(); refreshHud(); clampHud(); },
 		hudState: hudState,          // 调试/测试用
 		clampHud: clampHud,
