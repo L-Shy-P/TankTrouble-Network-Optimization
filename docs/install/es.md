@@ -2,7 +2,7 @@
 
 > 🇪🇸 **TankTrouble — optimización de red** — Más rico, más en tiempo real y más preciso: el estado de la red y una optimización real.
 
-<p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · <b>🇪🇸 Español</b> · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md)</sub></p>
+<p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · <b>🇪🇸 Español</b> · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · [🇻🇳 Tiếng Việt](vi.md)</sub></p>
 
 ## Instalación en un clic
 

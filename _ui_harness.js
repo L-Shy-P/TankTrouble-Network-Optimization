@@ -266,14 +266,14 @@ step(function () {
 	ck('lang-menu-opens', !!menu && menu.classList.contains('on') && getComputedStyle(menu).display !== 'none',
 		'点一下要能弹出语言菜单');
 	var items = menu ? menu.querySelectorAll('.ttn-langitem') : [];
-	ck('lang-options-10', items.length === 10, '语言列表必须是 10 国', items.length + ' 项');
+	ck('lang-options-11', items.length === 11, '语言列表必须是 11 国', items.length + ' 项');
 	var codes = [], clipped = [];
 	for (var i = 0; i < items.length; i++) {
 		codes.push(items[i].getAttribute('data-lang'));
 		var t = items[i].querySelector('.nm');
 		if (t.scrollWidth > t.clientWidth + 1) clipped.push(items[i].getAttribute('data-lang'));
 	}
-	ck('lang-codes-match-chatfix', codes.join(',') === 'en,zh,ja,ko,ru,ar,fr,es,de,pt',
+	ck('lang-codes-match-chatfix', codes.join(',') === 'en,zh,ja,ko,ru,ar,fr,es,de,pt,vi',
 		'语言代码与 TankTrouble-Chat-Fix 一致', codes.join(','));
 	ck('lang-names-not-clipped', clipped.length === 0,
 		'菜单里的语言全名不能被截断: ' + (clipped.join(',') || 'ok') + ' ; ' + (function () {
@@ -427,7 +427,7 @@ step(function () {
 
 step(function () {
 	/* 关键回归（用户实测："改语言后很多字会超出范围被截断"）：
-	 * 10 国语言逐个切，面板里每一行、每个数值、每个按钮都不许溢出/截断。 */
+	 * 11 国语言逐个切，面板里每一行、每个数值、每个按钮都不许溢出/截断。 */
 	var T = window.__TTN__;
 	T.hudState.ball = false; T.setHud(true);
 	var bad = [];
@@ -452,7 +452,7 @@ step(function () {
 		if (ttl && ttl.scrollWidth > ttl.clientWidth + 1) bad.push(l[0] + ':title');
 	});
 	ck('no-truncation-in-any-language', bad.length === 0,
-		'10 国语言逐个切，面板里不许有任何文字被截断: ' + (bad.slice(0, 6).join(' | ') || 'ok'));
+		'11 国语言逐个切，面板里不许有任何文字被截断: ' + (bad.slice(0, 6).join(' | ') || 'ok'));
 
 	/* 悬浮球也一样：三个数值 + 语言名都不能溢出 */
 	T.hudState.ball = true; T.setHud(true);
@@ -465,7 +465,7 @@ step(function () {
 		});
 	});
 	ck('ball-no-truncation-in-any-language', bad2.length === 0,
-		'悬浮球里的字在 10 国语言下都不能溢出', bad2.slice(0, 6).join(' | '));
+		'悬浮球里的字在 11 国语言下都不能溢出', bad2.slice(0, 6).join(' | '));
 	T.setLang('zh');
 	T.hudState.ball = false; T.setHud(true);
 });
@@ -1574,7 +1574,7 @@ step(function () {
 	btn.style.width = saveW; btn.style.flex = saveFlex;
 	T.setLang('zh');
 	ck('lang-name-fits-all-languages', bad.length === 0,
-		'10 国语言逐个选中，按钮上的名字都不能被截断: ' + (bad.join(' ; ') || 'ok'),
+		'11 国语言逐个选中，按钮上的名字都不能被截断: ' + (bad.join(' ; ') || 'ok'),
 		sizes.join(' '));
 });
 
@@ -1604,7 +1604,7 @@ step(function () {
 	});
 	T.setLang('zh');
 	ck('lang-switch-layout-stable', moved.length === 0 && grown.length === 0,
-		'10 国语言下行动位置、按钮长度、语言按钮宽度都必须保持不变: ' +
+		'11 国语言下行动位置、按钮长度、语言按钮宽度都必须保持不变: ' +
 		'移动[' + moved.slice(0, 3).join(' ') + '] 变化[' + grown.slice(0, 3).join(' ') + ']');
 	ck('no-label-wrapping', (function () {
 		var re = /white-space:\s*nowrap/.test((function () {

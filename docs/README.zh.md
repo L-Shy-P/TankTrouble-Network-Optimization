@@ -6,7 +6,7 @@
 
 
 
-![TankTrouble 网络优化](img/v051/zh.png?v=0.5.1)
+![TankTrouble 网络优化](img/v052/zh.png?v=0.5.2)
 
 
 > 更丰富、更实时、更准确的网络情况显示，以及真正的网络优化。
@@ -34,5 +34,5 @@
 
 * [Repository](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) · [安装教程](install/zh.md) · [Technical notes (中文)](TECHNICAL.zh.md)
 
-<p align="right"><sub>[🇬🇧 English](en.md) · <b>🇨🇳 中文</b> · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md)</sub></p>
+<p align="right"><sub>[🇬🇧 English](en.md) · <b>🇨🇳 中文</b> · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · [🇻🇳 Tiếng Việt](vi.md)</sub></p>
 

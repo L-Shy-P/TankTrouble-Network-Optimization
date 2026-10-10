@@ -1,6 +1,6 @@
 # 🇬🇧 TankTrouble Network Optimization
 
-![TankTrouble Network Optimization](img/v051/en.png?v=0.5.1)
+![TankTrouble Network Optimization](img/v052/en.png?v=0.5.2)
 
 
 > Richer, more real-time and more accurate network display — plus real optimization.
@@ -28,4 +28,4 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 * [Repository](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) · [Install tutorial](install/en.md) · [Technical notes (中文)](TECHNICAL.zh.md)
 
-<p align="right"><sub><b>🇬🇧 English</b> · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md)</sub></p>
+<p align="right"><sub><b>🇬🇧 English</b> · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · [🇻🇳 Tiếng Việt](vi.md)</sub></p>

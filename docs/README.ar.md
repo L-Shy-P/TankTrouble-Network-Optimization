@@ -6,7 +6,7 @@
 
 
 
-![TankTrouble — تحسين الشبكة](img/v051/ar.png?v=0.5.1)
+![TankTrouble — تحسين الشبكة](img/v052/ar.png?v=0.5.2)
 
 
 > عرض أغنى وأكثر لحظية ودقة لحالة الشبكة، مع تحسين حقيقي.
@@ -34,5 +34,5 @@
 
 * [Repository](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) · [دليل التثبيت](install/ar.md) · [Technical notes (中文)](TECHNICAL.zh.md)
 
-<p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · <b>🇸🇦 العربية</b> · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md)</sub></p>
+<p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · <b>🇸🇦 العربية</b> · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · [🇻🇳 Tiếng Việt](vi.md)</sub></p>
 

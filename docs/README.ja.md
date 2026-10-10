@@ -6,7 +6,7 @@
 
 
 
-![TankTrouble ネットワーク最適化](img/v051/ja.png?v=0.5.1)
+![TankTrouble ネットワーク最適化](img/v052/ja.png?v=0.5.2)
 
 
 > より豊富・よりリアルタイム・より正確な回線表示と、実際の最適化。
@@ -34,5 +34,5 @@
 
 * [Repository](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) · [インストール手順](install/ja.md) · [Technical notes (中文)](TECHNICAL.zh.md)
 
-<p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · <b>🇯🇵 日本語</b> · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md)</sub></p>
+<p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · <b>🇯🇵 日本語</b> · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · [🇻🇳 Tiếng Việt](vi.md)</sub></p>
 

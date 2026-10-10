@@ -105,7 +105,7 @@ TankTrouble 是「**浏览器里跑完整物理模拟 + 服务端做权威校验
 
 ### 视觉规范
 
-* **不许截断**：10 国语言逐个切，面板里每个标签/数值/副行/按钮/语言名/标题都不许 `scrollWidth > clientWidth`。
+* **不许截断**：11 国语言逐个切，面板里每个标签/数值/副行/按钮/语言名/标题都不许 `scrollWidth > clientWidth`。
 * **切语言不许跳版**：标签 `nowrap`（超长才省略）、语言行的标签固定宽 → 语言按钮与菜单**宽度恒定**。
 * **`z-index` 不要超过 `2147483647`**（超了会被浏览器忽略，菜单就被面板盖住 —— 踩过）。
 * **`font:11px/1.4 inherit` 是非法值**（`inherit` 不能写在 `font` 简写里），整条声明会被丢弃 ——
@@ -120,7 +120,7 @@ TankTrouble 是「**浏览器里跑完整物理模拟 + 服务端做权威校验
 
 ## 6. 多语言与设置缓存
 
-* 10 国语言：`en / zh / ja / ko / ru / ar / fr / es / de / pt`（与 TankTrouble-Chat-Fix 一致）。
+* 11 国语言：`en / zh / ja / ko / ru / ar / fr / es / de / pt / vi`（与 TankTrouble-Chat-Fix 一致）。
 * 默认跟随 `navigator.language`；用户选过就以存档为准。
 * 按钮里的语言名**实测自适应**：11px 起，放不下就 0.5px 一档往下缩（最多 9px）——
   不同系统字体宽度不同，写死字号总会有人被截断。
@@ -132,7 +132,7 @@ TankTrouble 是「**浏览器里跑完整物理模拟 + 服务端做权威校验
 ## 7. 开发与测试
 
 ```bash
-node ttn-smoke-test.js      # 303 项逻辑测试（vm 沙盒：可派发真实 pointer 事件）
+node ttn-smoke-test.js      # 304 项逻辑测试（vm 沙盒：可派发真实 pointer 事件）
 node ui-check-build.js      # 生成 _ui_check.html
 # 用无头浏览器跑（Chrome；Edge 也可以）：
 chrome --headless=new --disable-gpu --no-sandbox --disable-extensions \

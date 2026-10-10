@@ -13,7 +13,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const RAW = 'https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js';
 const REPO = 'https://github.com/L-Shy-P/TankTrouble-Network-Optimization';
-const ORDER = ['en', 'zh', 'ja', 'ko', 'ru', 'ar', 'fr', 'es', 'de', 'pt'];
+const ORDER = ['en', 'zh', 'ja', 'ko', 'ru', 'ar', 'fr', 'es', 'de', 'pt', 'vi'];
 
 /* 各语言的小节标题 / 说明句 / 快捷键说明 */
 const S = {
@@ -21,13 +21,13 @@ const S = {
 		tut: 'Install tutorial', one: 'One-click install', steps: 'Steps', keys: 'Hotkeys', trouble: 'Troubleshooting', links: 'Links',
 		click: 'Click the badge (or open the URL below) → Tampermonkey opens the install page → press **Install**:',
 		k: ['toggle the network optimization (live A/B)', 'hide / show the HUD', 'export the diagnostic report (also copied to clipboard)', 'probe all 7 server regions and rank them'],
-		note: 'The **⚡** button in the panel does the same as `Ctrl+Shift+S`. The panel also lets you pick one of **10 languages**; language, optimization switch and floating-ball position are cached in `localStorage`.'
+		note: 'The **⚡** button in the panel does the same as `Ctrl+Shift+S`. The panel also lets you pick one of **11 languages**; language, optimization switch and floating-ball position are cached in `localStorage`.'
 	},
 	zh: {
 		tut: '安装教程', one: '一键安装', steps: '步骤', keys: '快捷键', trouble: '常见问题', links: '相关',
 		click: '点上面的按钮（或直接打开下面的地址）→ 油猴会弹出安装页 → 点 **安装**：',
 		k: ['开关网络优化（实时 A/B 对比）', '隐藏 / 显示 HUD', '导出诊断报告（同时复制到剪贴板）', '探测 7 个服务器区域并排名'],
-		note: '面板里的 **⚡** 按钮和 `Ctrl+Shift+S` 等价。面板里还能选 **10 国语言**，语言 / 优化开关 / 悬浮球位置都会缓存在 `localStorage`。'
+		note: '面板里的 **⚡** 按钮和 `Ctrl+Shift+S` 等价。面板里还能选 **11 国语言**，语言 / 优化开关 / 悬浮球位置都会缓存在 `localStorage`。'
 	},
 	ja: {
 		tut: 'インストール手順', one: 'ワンクリックインストール', steps: '手順', keys: 'ショートカット', trouble: 'よくある質問', links: 'リンク',
@@ -39,7 +39,7 @@ const S = {
 		tut: '설치 안내', one: '원클릭 설치', steps: '단계', keys: '단축키', trouble: '문제 해결', links: '링크',
 		click: '위 버튼(또는 아래 URL)을 열면 → Tampermonkey 설치 화면이 뜹니다 → **설치**를 누르세요:',
 		k: ['네트워크 최적화 켜기/끄기 (실시간 A/B)', 'HUD 숨기기 / 표시', '진단 보고서 내보내기(클립보드에도 복사)', '7개 지역 서버를 측정해 순위 표시'],
-		note: '패널의 **⚡** 버튼은 `Ctrl+Shift+S`와 같습니다. 패널에서 **10개 언어**를 고를 수 있고, 언어·최적화 스위치·공 위치는 `localStorage`에 저장됩니다.'
+		note: '패널의 **⚡** 버튼은 `Ctrl+Shift+S`와 같습니다. 패널에서 **11개 언어**를 고를 수 있고, 언어·최적화 스위치·공 위치는 `localStorage`에 저장됩니다.'
 	},
 	ru: {
 		tut: 'Руководство по установке', one: 'Установка в один клик', steps: 'Шаги', keys: 'Горячие клавиши', trouble: 'Если что-то не работает', links: 'Ссылки',
@@ -57,25 +57,31 @@ const S = {
 		tut: "Tutoriel d'installation", one: 'Installation en un clic', steps: 'Étapes', keys: 'Raccourcis', trouble: 'Dépannage', links: 'Liens',
 		click: 'Cliquez le badge (ou ouvrez l’URL ci-dessous) → Tampermonkey ouvre la page d’installation → **Installer** :',
 		k: ['activer/désactiver l’optimisation (A/B en direct)', 'masquer / afficher le HUD', 'exporter le rapport de diagnostic (aussi copié)', 'tester les 7 régions et les classer'],
-		note: 'Le bouton **⚡** du panneau équivaut à `Ctrl+Shift+S`. Le panneau propose **10 langues** ; langue, interrupteur et position du ballon sont mémorisés dans `localStorage`.'
+		note: 'Le bouton **⚡** du panneau équivaut à `Ctrl+Shift+S`. Le panneau propose **11 langues** ; langue, interrupteur et position du ballon sont mémorisés dans `localStorage`.'
 	},
 	es: {
 		tut: 'Tutorial de instalación', one: 'Instalación en un clic', steps: 'Pasos', keys: 'Atajos', trouble: 'Solución de problemas', links: 'Enlaces',
 		click: 'Pulsa el badge (o abre la URL de abajo) → Tampermonkey abre la página de instalación → **Instalar**:',
 		k: ['activar/desactivar la optimización (A/B en vivo)', 'ocultar / mostrar el HUD', 'exportar el informe de diagnóstico (también se copia)', 'probar las 7 regiones y clasificarlas'],
-		note: 'El botón **⚡** del panel equivale a `Ctrl+Shift+S`. El panel permite elegir entre **10 idiomas**; idioma, interruptor y posición de la bola se guardan en `localStorage`.'
+		note: 'El botón **⚡** del panel equivale a `Ctrl+Shift+S`. El panel permite elegir entre **11 idiomas**; idioma, interruptor y posición de la bola se guardan en `localStorage`.'
 	},
 	de: {
 		tut: 'Installationsanleitung', one: 'Installation mit einem Klick', steps: 'Schritte', keys: 'Tastenkürzel', trouble: 'Fehlerbehebung', links: 'Links',
 		click: 'Klicke den Badge (oder öffne die URL unten) → Tampermonkey öffnet die Installationsseite → **Installieren**:',
 		k: ['Optimierung ein-/ausschalten (Live-A/B)', 'HUD aus-/einblenden', 'Diagnosebericht exportieren (auch in die Zwischenablage)', 'alle 7 Regionen testen und ranken'],
-		note: 'Der **⚡**-Button im Panel entspricht `Ctrl+Shift+S`. Im Panel gibt es **10 Sprachen**; Sprache, Schalter und Kugelposition werden in `localStorage` gespeichert.'
+		note: 'Der **⚡**-Button im Panel entspricht `Ctrl+Shift+S`. Im Panel gibt es **11 Sprachen**; Sprache, Schalter und Kugelposition werden in `localStorage` gespeichert.'
 	},
 	pt: {
 		tut: 'Tutorial de instalação', one: 'Instalação em um clique', steps: 'Passos', keys: 'Atalhos', trouble: 'Solução de problemas', links: 'Links',
 		click: 'Clique no badge (ou abra a URL abaixo) → o Tampermonkey abre a página de instalação → **Instalar**:',
 		k: ['ligar/desligar a otimização (A/B ao vivo)', 'ocultar / mostrar o HUD', 'exportar o relatório de diagnóstico (também copiado)', 'testar as 7 regiões e classificá-las'],
-		note: 'O botão **⚡** do painel equivale a `Ctrl+Shift+S`. O painel permite escolher entre **10 idiomas**; idioma, chave e posição da bola ficam no `localStorage`.'
+		note: 'O botão **⚡** do painel equivale a `Ctrl+Shift+S`. O painel permite escolher entre **11 idiomas**; idioma, chave e posição da bola ficam no `localStorage`.'
+	},
+	vi: {
+		tut: 'Hướng dẫn cài đặt', one: 'Cài đặt một cú nhấp', steps: 'Các bước', keys: 'Phím tắt', trouble: 'Khắc phục sự cố', links: 'Liên kết',
+		click: 'Nhấp vào badge (hoặc mở URL bên dưới) → Tampermonkey mở trang cài đặt → nhấn **Cài đặt**:',
+		k: ['bật/tắt tối ưu hóa mạng (so sánh A/B trực tiếp)', 'ẩn / hiện HUD', 'xuất báo cáo chẩn đoán (đồng thời sao chép)', 'dò 7 khu vực máy chủ và xếp hạng'],
+		note: 'Nút **⚡** trong bảng tương đương `Ctrl+Shift+S`. Bảng cho chọn một trong **11 ngôn ngữ**; ngôn ngữ, công tắc tối ưu và vị trí bóng được lưu trong `localStorage`.'
 	}
 };
 
@@ -212,7 +218,7 @@ the game server sees exactly the same bytes as before.
 
 ---
 
-## 📦 What it does (10 languages)
+## 📦 What it does (11 languages)
 
 ${blocks}
 
@@ -220,7 +226,7 @@ ${blocks}
 
 ## 🔗 Links
 
-* [Install tutorial (10 languages)](docs/install/en.md)
+* [Install tutorial (11 languages)](docs/install/en.md)
 * [Technical notes — how it works & the dead ends (中文)](docs/TECHNICAL.zh.md)
 * [Changelog](tanktrouble-netlab.user.js) — see the \`CHANGELOG\` constant in the script
 * [License (MIT)](LICENSE)

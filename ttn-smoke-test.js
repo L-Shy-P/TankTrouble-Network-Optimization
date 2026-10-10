@@ -1411,11 +1411,11 @@ ok(T._glide.active === false, '真实拖动路径：轻放不甩（要能精确�
 ok(Math.abs(T.hudState.x - 515) <= 1, '轻放后就停在松手处', T.hudState.x);
 
 /* ---------------- [20] 多语言 / 设置缓存 ----------------
- * 用户要求：面板里能选 10 国语言，并把「选中的语言 + 优化开关 + 悬浮球位置」一起缓存。 */
+ * 用户要求：面板里能选 11 国语言，并把「选中的语言 + 优化开关 + 悬浮球位置」一起缓存。 */
 console.log('\n[20] 多语言 / 设置缓存');
 const codes = T.langs.map(l => l[0]).join(',');
-ok(codes === 'en,zh,ja,ko,ru,ar,fr,es,de,pt',
-	'10 国语言代码与 TankTrouble-Chat-Fix 一致', codes);
+ok(codes === 'en,zh,ja,ko,ru,ar,fr,es,de,pt,vi',
+	'11 国语言代码与 TankTrouble-Chat-Fix 一致', codes);
 ok(T.getLang() === 'zh', '默认语言跟随浏览器（沙盒是 zh-CN → zh）', T.getLang());
 
 /* 每个语言包都必须把英文包里的键填全，否则界面上会出现 key 本身 */
@@ -1428,7 +1428,7 @@ T.langs.forEach(function (l) {
 		if (pack[k] == null || String(pack[k]).trim() === '') missing.push(l[0] + '.' + k);
 	});
 });
-ok(missing.length === 0, '10 个语言包都完整（缺词条会显示成 key 本身）', missing.slice(0, 8).join(', '));
+ok(missing.length === 0, '11 个语言包都完整（缺词条会显示成 key 本身）', missing.slice(0, 8).join(', '));
 
 /* 取词 + 占位符替换 + 缺词回退 */
 ok(T.tr('avg') === '平均延迟', 'tr() 取当前语言', T.tr('avg'));
@@ -1443,6 +1443,9 @@ ok(T.tr('avg') === '平均遅延', '换成日文后取词变了', T.tr('avg'));
 ok(T._grade && T.tr('on') === 'オン', '开关文案也走语言包', T.tr('on'));
 T.setLang('ar');
 ok(T.tr('status') === 'الحالة', '阿拉伯语词条可用', T.tr('status'));
+T.setLang('vi');
+ok(T.tr('avg') === 'Ping TB' && T.tr('status') === 'Trạng thái' && T.tr('title') === 'TankTrouble Mạng',
+	'越南语词条可用（面板 / 状态 / 标题都走 vi 包）', [T.tr('avg'), T.tr('status'), T.tr('title')].join(' | '));
 T.setLang('zh');
 ok(T.tr('avg') === '平均延迟', '换回中文', T.tr('avg'));
 ok(T.setLang('xx') === 'zh', '非法语言代码被忽略（不会把界面搞坏）', T.getLang());

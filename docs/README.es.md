@@ -6,7 +6,7 @@
 
 
 
-![TankTrouble — optimización de red](img/v051/es.png?v=0.5.1)
+![TankTrouble — optimización de red](img/v052/es.png?v=0.5.2)
 
 
 > Más rico, más en tiempo real y más preciso: el estado de la red y una optimización real.
@@ -34,5 +34,5 @@ La optimización solo cambia *lo que ves*: la posición se suaviza en el momento
 
 * [Repository](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) · [Tutorial de instalación](install/es.md) · [Technical notes (中文)](TECHNICAL.zh.md)
 
-<p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · <b>🇪🇸 Español</b> · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md)</sub></p>
+<p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · <b>🇪🇸 Español</b> · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · [🇻🇳 Tiếng Việt](vi.md)</sub></p>
 

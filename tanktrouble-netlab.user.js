@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.5.1
+// @version      0.5.2
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -26,7 +26,7 @@
  *      拖标题栏或球本身可移动（带惯性）。
  *   3. Ctrl+Shift+S 或面板里的 ⚡ 开关网络优化，可实时 A/B 对比；
  *      Ctrl+Shift+L 隐藏/显示 HUD；Ctrl+Shift+E 导出诊断报告（同时进剪贴板）。
- *   4. 面板里可选 10 国语言；位置 / 语言 / 开关 / 收起状态都会缓存。
+ *   4. 面板里可选 11 国语言；位置 / 语言 / 开关 / 收起状态都会缓存。
  *   5. 控制台可用 window.__TTN__：report() / export() / conns / probeRegions(30) /
  *      langs / setLang('ja') / motion / setSmoothing(false) 等。
  *   6. 优化默认只动"画面"：游戏逻辑、物理、服务端校验全程用真值；自己的坦克以本地为准。
@@ -38,9 +38,11 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.5.1';
+	const VERSION = '0.5.2';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.5.2', '新增越南语（vi），全方面覆盖：面板 / 悬浮球 / 语言菜单 / 状态原因 / 按钮文案全部有越南语词条，浏览器语言是 vi 时自动选中；语言代码列表扩到 11 国，语言菜单、无截断扫描、文档/安装教程/README/截图同步补齐。',
+			'文档新增 docs/README.vi.md 与 docs/install/vi.md，主页语言表和 10 个旧语言页的 switcher 都加上 🇻🇳 Tiếng Việt；tools/build-docs.js 与 docs/langs.json 同步加入 vi。'],
 		['0.5.1', '修"变小的终点有时候会闪，闪过黑/接近本色/各种中间色 + 变大的终点光晕会突变"（用户实测，属多条 bug 叠加）—— 真因：① 动画没结束前**一按下就 finishHudAnim()**，把插值到一半的颜色/阴影硬切到终点（中间色被当成"随机闪一下"）；② 变形 300ms 里 refreshHud 仍每 250ms 更新分级色，而 WAAPI 关键帧终点是动画开始那一刻的 tint，两端异色 → 交接闪；③ 圆点的 background/color 自己带 .4s 过渡，可能带着上一拍的中间值去交接；④ 收起方向在 .ttn-morphing（box-shadow 过渡被压住）还没撤时就清内联阴影，CSS 目标瞬间顶上 → 光晕突变；⑤ hover 态没有跟 display 切换一起交接，入场元素的亮度/阴影和外发光和出场元素不一致；⑥ 刷新恰好落在变形里时 applyGlow 会重建呼吸循环，相位/明暗被顶掉。',
 			'修法：① 变形中按一下不再立即落终态，只有真拖动（>4px）才落终态 —— "点击反向"从当前插值继续，不再硬切；② 整个变形期间把两端颜色钉在 hudAnim.tint（refreshHud 只更新文字、不动颜色），交接帧球/圆点同色，落终态后的下一拍才恢复更新；③ 变形期间给 #ttn-dot 也加 .ttn-morphing（压住 background/color 过渡），入场时圆点就是精确的 tint；④ 先 cancelMorph() 恢复过渡、再安排清冻结内联，且收起终点先把动画终点的阴影钉住，清的时候 box-shadow 过渡已经可用；⑤ 新增 .ttn-hover：pointerenter/leave 同步 ball/dot 的悬浮态，CSS 配方与 :hover 完全共用，交接瞬间按指针/出场元素继承，终点光晕不突变；⑥ 变形期间跳过 applyGlow 的循环重建，变形结束后下一拍用原有淡入平滑生效；⑦ 呼吸循环因延迟变化必须重建时，按旧循环的当前相位接着播（不能从 0 重来）。',
 			'反向/边界：反向收起时球正可见，不再清它可能残留的内联 filter/box-shadow（只有当前不可见的入场元素才清），否则清冻结本身就是一次光影突变；冻结内联的 220ms 定时器在 cancelMorph 之后才排程，避免被"新变形"提前清掉。',
@@ -2198,7 +2200,7 @@
 	let hudAnimating = false;
 	const HUD_KEY = 'ttn.hud.v4';
 
-	/* ============================ 多语言（10 国） ============================
+	/* ============================ 多语言（11 国） ============================
 	 * 语言代码与显示名沿用 TankTrouble-Chat-Fix 的那一套（en/zh/ja/ko/ru/ar/fr/es/de/pt），
 	 * 这样同一台机器上两个插件的语言是一致的。
 	 * 选中的语言会和「优化开关」「悬浮球位置/收起状态」一起存进 localStorage（键 ttn.hud.v4，向后兼容）。
@@ -2213,7 +2215,8 @@
 		['fr', 'Français (French)'],
 		['es', 'Español (Spanish)'],
 		['de', 'Deutsch (German)'],
-		['pt', 'Português (Portuguese)']
+		['pt', 'Português (Portuguese)'],
+		['vi', 'Tiếng Việt (Vietnamese)']
 	];
 
 	const I18N = {
@@ -2346,6 +2349,19 @@
 			whyProbeSilent: '{n} pings sem resposta{types}', whyTypes: ' (o servidor só envia {t})',
 			whyLatThin: 'amostras de latência insuficientes ({n}/3)',
 			whyFrameSparse: 'amostras de frames insuficientes (lobby/entre rodadas)'
+		},
+		vi: {
+			title: 'TankTrouble Mạng', line: 'Tuyến', live: 'Ping hiện tại', avg: 'Ping TB', max: 'Trễ tối đa', jit: 'Jitter',
+			stab: 'Ổn định', opt: 'Tối ưu', status: 'Trạng thái', lang: 'Ngôn ngữ',
+			on: 'BẬT', off: 'TẮT', btnOn: 'BẬT', btnOff: 'TẮT', smoothed: 'mượt', ignored: 'bỏ qua sửa',
+			rttJitter: '· Jitter RTT', ballAvg: 'TB', ballStab: 'Ổn',
+			waitConn: 'đang chờ kết nối…', dotTip: 'Thu gọn thành bóng', copiedLine: 'Đã sao chép tuyến',
+			optTip: 'Bật/tắt tối ưu hóa (A/B trực tiếp)', reportBtn: '⤓ Báo cáo', reportTip: 'Xuất báo cáo chẩn đoán',
+			whyWaitGame: 'đang chờ kết nối game…', whyProbeOff: 'chưa khởi động dò độ trễ',
+			whyProbeDown: 'dò độ trễ chưa kết nối{code}', whyClose: ' (mã đóng {code})',
+			whyProbeSilent: '{n} lần ping không phản hồi{types}', whyTypes: ' (máy chủ chỉ gửi {t})',
+			whyLatThin: 'chưa đủ mẫu độ trễ ({n}/3)',
+			whyFrameSparse: 'chưa đủ mẫu khung (sảnh/giữa ván)'
 		}
 	};
 
@@ -4396,7 +4412,7 @@
 		setSmoothing(on) { SMOOTH.enabled = !!on; if (!SMOOTH.enabled) snapAllSmoothers(); saveHudState(); updateOptLabel(); refreshHud(); return SMOOTH.enabled; },
 		setLang: setLang,                  // 换语言：立刻生效 + 存档
 		getLang() { return LANG; },
-		langs: LANGS,                      // [[code, displayName], …] 10 国
+		langs: LANGS,                      // [[code, displayName], …] 11 国
 		i18n: I18N,
 		tr: tr,
 		_loadHudState: loadHudState,       // 测试用：模拟重新载入存档

@@ -648,5 +648,70 @@
         "É a sua linha. Exporte um relatório (`Ctrl+Shift+E`) e compare regiões."
       ]
     ]
+  },
+  "vi": {
+    "name": "Tiếng Việt",
+    "flag": "🇻🇳",
+    "title": "TankTrouble — tối ưu hóa mạng",
+    "tag": "Hiển thị mạng phong phú hơn, thời gian thực hơn và chính xác hơn — kèm tối ưu hóa thật sự.",
+    "intro": [
+      "Userscript Tampermonkey cho **tanktrouble.com**: hiển thị chính xác tình trạng kết nối của bạn và biến tình trạng tắc nghẽn TCP (đứng hình → dịch chuyển tức thời) thành chuyển động mượt.",
+      "**Không cần máy chủ, không cần cấu hình mạng, không phải VPN.** Chạy hoàn toàn phía client — máy chủ nhận đúng từng byte như trước.",
+      "Tối ưu hóa chỉ thay đổi *những gì bạn thấy*: vị trí được làm mượt lúc render, còn logic game, vật lý và xác thực máy chủ luôn dùng giá trị thật. Xe tăng của bạn do máy bạn quyết định, nên khi kết nối lại sẽ không bị kéo ngược."
+    ],
+    "features": [
+      [
+        "Phong phú hơn",
+        "tuyến / trung bình / hiện tại / tối đa / jitter / khựng / ổn định, cập nhật liên tục"
+      ],
+      [
+        "Thời gian thực hơn",
+        "đầu dò ping riêng mỗi 2 giây — RTT thật, không phải khoảng cách khung hình"
+      ],
+      [
+        "Chính xác hơn",
+        "phân biệt khựng thật (tắc nghẽn TCP) với khoảng nghỉ ở sảnh/giữa các ván"
+      ],
+      [
+        "Tối ưu hóa thật",
+        "làm mượt lúc render + quyền quyết định cục bộ + ngoại suy, có công tắc A/B trực tiếp"
+      ]
+    ],
+    "steps": [
+      [
+        "Cài Tampermonkey",
+        "Chrome/Edge: mở [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). Nhấn *Thêm vào trình duyệt* → *Thêm tiện ích*."
+      ],
+      [
+        "Bật chế độ nhà phát triển (chỉ Chrome/Edge)",
+        "Mở `chrome://extensions` (hoặc `edge://extensions`) và bật **Chế độ nhà phát triển** ở góc trên bên phải. Chrome gần đây yêu cầu bật để cài userscript."
+      ],
+      [
+        "Cài script",
+        "Nhấn **Cài đặt script** bên dưới — Tampermonkey mở trang cài đặt. Nhấn **Cài đặt**."
+      ],
+      [
+        "Mở game",
+        "Vào <https://tanktrouble.com/game> và tham gia một ván. Bảng điều khiển xuất hiện ở góc trên bên trái."
+      ],
+      [
+        "Cách dùng",
+        "Kéo thanh tiêu đề để di chuyển. Nhấp vào chấm tròn để thu gọn thành bóng (trung bình / ping hiện tại / ổn định); nhấp vào bóng để mở rộng. `Ctrl+Shift+S` bật/tắt tối ưu hóa, `Ctrl+Shift+L` ẩn HUD, `Ctrl+Shift+E` xuất báo cáo."
+      ]
+    ],
+    "trouble": [
+      [
+        "Không thấy gì xuất hiện",
+        "Kiểm tra URL khớp `*://*.tanktrouble.com/*` và script đang bật, sau đó nhấn `Ctrl+F5`."
+      ],
+      [
+        "Bảng điều khiển biến mất",
+        "Nhấn `Ctrl+Shift+L`. Vị trí và trạng thái thu gọn được ghi nhớ."
+      ],
+      [
+        "Vẫn bị giật",
+        "Đó là do tuyến mạng của bạn, không phải script. Xuất báo cáo (`Ctrl+Shift+E`) và so sánh các khu vực trong bảng."
+      ]
+    ]
   }
 }

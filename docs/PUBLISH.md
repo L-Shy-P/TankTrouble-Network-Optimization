@@ -50,11 +50,11 @@ git push -u origin main
 | 路径 | 说明 |
 |---|---|
 | `README.md` | 仓库主页：只放**多语言介绍** + 语言/教程跳转（用户要求） |
-| `docs/README.<lang>.md` | 各语言的介绍页（10 国） |
-| `docs/install/<lang>.md` | 各语言的**从安装油猴开始**的安装教程（10 国） |
+| `docs/README.<lang>.md` | 各语言的介绍页（11 国） |
+| `docs/install/<lang>.md` | 各语言的**从安装油猴开始**的安装教程（11 国） |
 | `docs/TECHNICAL.zh.md` | 技术原理 / 实测结论 / 踩坑记录（中文） |
 | `tanktrouble-netlab.user.js` | 主脚本（油猴直接安装这个） |
 | `tanktrouble-netlab.install.user.js` | 同一份内容 + UTF-8 BOM（拖拽安装用） |
-| `ttn-smoke-test.js` | 逻辑测试（vm 沙盒，303 项） |
+| `ttn-smoke-test.js` | 逻辑测试（vm 沙盒，304 项） |
 | `ui-check-build.js` + `_ui_harness.js` | 生成浏览器交互测试页（190 项） |
 | `LICENSE` | MIT |
