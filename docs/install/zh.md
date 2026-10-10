@@ -30,11 +30,7 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 
 4. **打开游戏**
 
-   访问 <https://tanktrouble.com/game> 并进一局。左上角会出现面板。
-
-5. **怎么用**
-
-   拖标题栏可移动；点左上角圆点收起成悬浮球（平均 / 实时延迟 / 稳定度）；点球展开。`Ctrl+Shift+S` 开关优化，`Ctrl+Shift+L` 隐藏 HUD，`Ctrl+Shift+E` 导出报告。
+   访问 <https://tanktrouble.com/game> 并进一局，左上角会出现悬浮球，直接就能开始使用。
 
 ## 快捷键
 

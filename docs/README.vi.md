@@ -4,7 +4,7 @@
 > Muốn gửi **tiếng Việt** trong TankTrouble? Tôi đã làm một tiện ích chat đa ngôn ngữ! 👉 [TankTrouble-Chat-Unblock](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock)
 
 
-<img src="img/v052/vi.png?v=0.5.2" alt="TankTrouble — tối ưu hóa mạng">
+<img src="img/v053/vi.png?v=0.5.3" alt="TankTrouble — tối ưu hóa mạng">
 
 
 > Hiển thị mạng phong phú hơn, thời gian thực hơn và chính xác hơn — kèm tối ưu hóa thật sự.

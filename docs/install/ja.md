@@ -30,11 +30,7 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 
 4. **ゲームを開く**
 
-   <https://tanktrouble.com/game> で対戦に入ると、左上にパネルが出ます。
-
-5. **使い方**
-
-   タイトルバーをドラッグで移動。左上の点をクリックするとボールに折りたたまれ（平均 / リアルタイム / 安定度）、ボールをクリックで展開。`Ctrl+Shift+S` 最適化、`Ctrl+Shift+L` HUD 表示切替、`Ctrl+Shift+E` レポート出力。
+   <https://tanktrouble.com/game> で対戦に入ると、左上にボールが表示され、そのまま使い始められます。
 
 ## ショートカット
 

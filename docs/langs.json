@@ -42,11 +42,7 @@
       ],
       [
         "Open the game",
-        "Go to <https://tanktrouble.com/game> and join a match. A panel appears in the top-left corner."
-      ],
-      [
-        "Use it",
-        "Drag the title bar to move it. Click the dot to collapse into the floating ball (avg / live latency / stability); click the ball to expand. `Ctrl+Shift+S` toggles the optimization, `Ctrl+Shift+L` hides the HUD, `Ctrl+Shift+E` exports a report."
+        "Go to <https://tanktrouble.com/game> and join a match: the floating ball appears in the top-left corner, and you can start using it right away."
       ]
     ],
     "trouble": [
@@ -107,11 +103,7 @@
       ],
       [
         "打开游戏",
-        "访问 <https://tanktrouble.com/game> 并进一局。左上角会出现面板。"
-      ],
-      [
-        "怎么用",
-        "拖标题栏可移动；点左上角圆点收起成悬浮球（平均 / 实时延迟 / 稳定度）；点球展开。`Ctrl+Shift+S` 开关优化，`Ctrl+Shift+L` 隐藏 HUD，`Ctrl+Shift+E` 导出报告。"
+        "访问 <https://tanktrouble.com/game> 并进一局，左上角会出现悬浮球，直接就能开始使用。"
       ]
     ],
     "trouble": [
@@ -172,11 +164,7 @@
       ],
       [
         "ゲームを開く",
-        "<https://tanktrouble.com/game> で対戦に入ると、左上にパネルが出ます。"
-      ],
-      [
-        "使い方",
-        "タイトルバーをドラッグで移動。左上の点をクリックするとボールに折りたたまれ（平均 / リアルタイム / 安定度）、ボールをクリックで展開。`Ctrl+Shift+S` 最適化、`Ctrl+Shift+L` HUD 表示切替、`Ctrl+Shift+E` レポート出力。"
+        "<https://tanktrouble.com/game> で対戦に入ると、左上にボールが表示され、そのまま使い始められます。"
       ]
     ],
     "trouble": [
@@ -237,11 +225,7 @@
       ],
       [
         "게임 열기",
-        "<https://tanktrouble.com/game>에서 경기에 들어가면 좌측 상단에 패널이 나타납니다."
-      ],
-      [
-        "사용법",
-        "제목 표시줄을 끌어 이동. 좌측 상단 점을 클릭하면 공으로 접히고(평균 / 실시간 / 안정도), 공을 클릭하면 펼쳐집니다. `Ctrl+Shift+S` 최적화, `Ctrl+Shift+L` HUD 숨기기, `Ctrl+Shift+E` 보고서 내보내기."
+        "<https://tanktrouble.com/game>에서 경기에 들어가면 좌측 상단에 공이 나타나고 바로 사용할 수 있습니다."
       ]
     ],
     "trouble": [
@@ -302,11 +286,7 @@
       ],
       [
         "Откройте игру",
-        "Зайдите на <https://tanktrouble.com/game> и в бой — панель появится в левом верхнем углу."
-      ],
-      [
-        "Как пользоваться",
-        "Перетаскивайте за заголовок. Клик по точке слева сверху сворачивает в шар (средний / текущий / стабильность), клик по шару разворачивает. `Ctrl+Shift+S` — оптимизация, `Ctrl+Shift+L` — скрыть HUD, `Ctrl+Shift+E` — отчёт."
+        "Зайдите на <https://tanktrouble.com/game> и в бой: в левом верхнем углу появится шар, и можно сразу пользоваться."
       ]
     ],
     "trouble": [
@@ -367,11 +347,7 @@
       ],
       [
         "افتح اللعبة",
-        "اذهب إلى <https://tanktrouble.com/game> وادخل مباراة — ستظهر اللوحة أعلى اليسار."
-      ],
-      [
-        "الاستخدام",
-        "اسحب شريط العنوان للتحريك. اضغط النقطة للطيّ إلى كرة (المتوسط / اللحظي / الاستقرار)، واضغط الكرة للفتح. `Ctrl+Shift+S` للتحسين، `Ctrl+Shift+L` لإخفاء الواجهة، `Ctrl+Shift+E` لتصدير التقرير."
+        "اذهب إلى <https://tanktrouble.com/game> وادخل مباراة: ستظهر الكرة أعلى اليسار ويمكنك البدء بالاستخدام مباشرة."
       ]
     ],
     "trouble": [
@@ -432,11 +408,7 @@
       ],
       [
         "Ouvrir le jeu",
-        "Allez sur <https://tanktrouble.com/game> et entrez en partie : le panneau apparaît en haut à gauche."
-      ],
-      [
-        "Utilisation",
-        "Glissez la barre de titre pour déplacer. Cliquez le point pour réduire en ballon (moyenne / ping actuel / stabilité), cliquez le ballon pour déplier. `Ctrl+Shift+S` optimisation, `Ctrl+Shift+L` masquer, `Ctrl+Shift+E` exporter un rapport."
+        "Allez sur <https://tanktrouble.com/game> et entrez en partie : le ballon apparaît en haut à gauche et vous pouvez commencer tout de suite."
       ]
     ],
     "trouble": [
@@ -497,11 +469,7 @@
       ],
       [
         "Abre el juego",
-        "Ve a <https://tanktrouble.com/game> y entra en partida: el panel aparece arriba a la izquierda."
-      ],
-      [
-        "Uso",
-        "Arrastra la barra de título para moverlo. Clic en el punto para contraer en bola (media / ping actual / estabilidad), clic en la bola para expandir. `Ctrl+Shift+S` optimización, `Ctrl+Shift+L` ocultar, `Ctrl+Shift+E` exportar informe."
+        "Ve a <https://tanktrouble.com/game> y entra en partida: la bola aparece arriba a la izquierda y puedes empezar a usarla al instante."
       ]
     ],
     "trouble": [
@@ -562,11 +530,7 @@
       ],
       [
         "Spiel öffnen",
-        "Gehe auf <https://tanktrouble.com/game> und starte eine Runde — das Panel erscheint oben links."
-      ],
-      [
-        "Bedienung",
-        "Titelleiste ziehen zum Verschieben. Klick auf den Punkt klappt zur Kugel (Ø / aktuell / Stabilität), Klick auf die Kugel öffnet. `Ctrl+Shift+S` Optimierung, `Ctrl+Shift+L` HUD ausblenden, `Ctrl+Shift+E` Bericht exportieren."
+        "Gehe auf <https://tanktrouble.com/game> und starte eine Runde: Die Kugel erscheint oben links, und du kannst sofort loslegen."
       ]
     ],
     "trouble": [
@@ -627,11 +591,7 @@
       ],
       [
         "Abra o jogo",
-        "Vá para <https://tanktrouble.com/game> e entre em uma partida: o painel aparece no canto superior esquerdo."
-      ],
-      [
-        "Como usar",
-        "Arraste a barra de título para mover. Clique no ponto para recolher em bola (média / ping atual / estabilidade); clique na bola para expandir. `Ctrl+Shift+S` otimização, `Ctrl+Shift+L` ocultar, `Ctrl+Shift+E` exportar relatório."
+        "Vá para <https://tanktrouble.com/game> e entre em uma partida: a bola aparece no canto superior esquerdo e você já pode começar a usar."
       ]
     ],
     "trouble": [
@@ -692,11 +652,7 @@
       ],
       [
         "Mở game",
-        "Vào <https://tanktrouble.com/game> và tham gia một ván. Bảng điều khiển xuất hiện ở góc trên bên trái."
-      ],
-      [
-        "Cách dùng",
-        "Kéo thanh tiêu đề để di chuyển. Nhấp vào chấm tròn để thu gọn thành bóng (trung bình / ping hiện tại / ổn định); nhấp vào bóng để mở rộng. `Ctrl+Shift+S` bật/tắt tối ưu hóa, `Ctrl+Shift+L` ẩn HUD, `Ctrl+Shift+E` xuất báo cáo."
+        "Vào <https://tanktrouble.com/game> và tham gia một ván: bóng nổi xuất hiện ở góc trên bên trái và bạn có thể dùng ngay."
       ]
     ],
     "trouble": [

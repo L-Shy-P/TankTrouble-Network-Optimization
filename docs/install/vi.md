@@ -27,10 +27,7 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
    Nhấn **Cài đặt script** bên dưới — Tampermonkey mở trang cài đặt. Nhấn **Cài đặt**.
 4. **Mở game**
 
-   Vào <https://tanktrouble.com/game> và tham gia một ván. Bảng điều khiển xuất hiện ở góc trên bên trái.
-5. **Cách dùng**
-
-   Kéo thanh tiêu đề để di chuyển. Nhấp vào chấm tròn để thu gọn thành bóng (trung bình / ping hiện tại / ổn định); nhấp vào bóng để mở rộng. `Ctrl+Shift+S` bật/tắt tối ưu hóa, `Ctrl+Shift+L` ẩn HUD, `Ctrl+Shift+E` xuất báo cáo.
+   Vào <https://tanktrouble.com/game> và tham gia một ván: bóng nổi xuất hiện ở góc trên bên trái và bạn có thể dùng ngay.
 
 ## Phím tắt
 

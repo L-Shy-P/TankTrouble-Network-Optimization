@@ -30,11 +30,7 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 
 4. **Ouvrir le jeu**
 
-   Allez sur <https://tanktrouble.com/game> et entrez en partie : le panneau apparaît en haut à gauche.
-
-5. **Utilisation**
-
-   Glissez la barre de titre pour déplacer. Cliquez le point pour réduire en ballon (moyenne / ping actuel / stabilité), cliquez le ballon pour déplier. `Ctrl+Shift+S` optimisation, `Ctrl+Shift+L` masquer, `Ctrl+Shift+E` exporter un rapport.
+   Allez sur <https://tanktrouble.com/game> et entrez en partie : le ballon apparaît en haut à gauche et vous pouvez commencer tout de suite.
 
 ## Raccourcis
 

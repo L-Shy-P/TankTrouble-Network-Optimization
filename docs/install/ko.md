@@ -30,11 +30,7 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 
 4. **게임 열기**
 
-   <https://tanktrouble.com/game>에서 경기에 들어가면 좌측 상단에 패널이 나타납니다.
-
-5. **사용법**
-
-   제목 표시줄을 끌어 이동. 좌측 상단 점을 클릭하면 공으로 접히고(평균 / 실시간 / 안정도), 공을 클릭하면 펼쳐집니다. `Ctrl+Shift+S` 최적화, `Ctrl+Shift+L` HUD 숨기기, `Ctrl+Shift+E` 보고서 내보내기.
+   <https://tanktrouble.com/game>에서 경기에 들어가면 좌측 상단에 공이 나타나고 바로 사용할 수 있습니다.
 
 ## 단축키
 

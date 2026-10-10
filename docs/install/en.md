@@ -30,11 +30,7 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 
 4. **Open the game**
 
-   Go to <https://tanktrouble.com/game> and join a match. A panel appears in the top-left corner.
-
-5. **Use it**
-
-   Drag the title bar to move it. Click the dot to collapse into the floating ball (avg / live latency / stability); click the ball to expand. `Ctrl+Shift+S` toggles the optimization, `Ctrl+Shift+L` hides the HUD, `Ctrl+Shift+E` exports a report.
+   Go to <https://tanktrouble.com/game> and join a match: the floating ball appears in the top-left corner, and you can start using it right away.
 
 ## Hotkeys
 

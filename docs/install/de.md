@@ -30,11 +30,7 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 
 4. **Spiel öffnen**
 
-   Gehe auf <https://tanktrouble.com/game> und starte eine Runde — das Panel erscheint oben links.
-
-5. **Bedienung**
-
-   Titelleiste ziehen zum Verschieben. Klick auf den Punkt klappt zur Kugel (Ø / aktuell / Stabilität), Klick auf die Kugel öffnet. `Ctrl+Shift+S` Optimierung, `Ctrl+Shift+L` HUD ausblenden, `Ctrl+Shift+E` Bericht exportieren.
+   Gehe auf <https://tanktrouble.com/game> und starte eine Runde: Die Kugel erscheint oben links, und du kannst sofort loslegen.
 
 ## Tastenkürzel
 

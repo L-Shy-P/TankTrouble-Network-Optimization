@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.5.2
+// @version      0.5.3
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,11 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.5.2';
+	const VERSION = '0.5.3';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.5.3', '修"每次进页面控制台都打印所有版本的中文简介"：启动日志不再遍历 CHANGELOG，只保留一行英文版本提示 + 两条简短 API 提示；运行期剩余 console 文案（区域排名 / 报告导出 / 剪贴板回执 / 平滑开关）也统一改成英文。完整变更记录仍保留在代码 CHANGELOG 与导出报告里，需要时才看。',
+			'安装教程按用户要求合并第 4/5 步：现在只写"进入游戏即可看到悬浮球并直接开始使用"，拖拽 / 快捷键等细节统一看下面的 Hotkeys 表。'],
 		['0.5.2', '新增越南语（vi），全方面覆盖：面板 / 悬浮球 / 语言菜单 / 状态原因 / 按钮文案全部有越南语词条，浏览器语言是 vi 时自动选中；语言代码列表扩到 11 国，语言菜单、无截断扫描、文档/安装教程/README/截图同步补齐。',
 			'文档新增 docs/README.vi.md 与 docs/install/vi.md，主页语言表和 10 个旧语言页的 switcher 都加上 🇻🇳 Tiếng Việt；tools/build-docs.js 与 docs/langs.json 同步加入 vi。'],
 		['0.5.1', '修"变小的终点有时候会闪，闪过黑/接近本色/各种中间色 + 变大的终点光晕会突变"（用户实测，属多条 bug 叠加）—— 真因：① 动画没结束前**一按下就 finishHudAnim()**，把插值到一半的颜色/阴影硬切到终点（中间色被当成"随机闪一下"）；② 变形 300ms 里 refreshHud 仍每 250ms 更新分级色，而 WAAPI 关键帧终点是动画开始那一刻的 tint，两端异色 → 交接闪；③ 圆点的 background/color 自己带 .4s 过渡，可能带着上一拍的中间值去交接；④ 收起方向在 .ttn-morphing（box-shadow 过渡被压住）还没撤时就清内联阴影，CSS 目标瞬间顶上 → 光晕突变；⑤ hover 态没有跟 display 切换一起交接，入场元素的亮度/阴影和外发光和出场元素不一致；⑥ 刷新恰好落在变形里时 applyGlow 会重建呼吸循环，相位/明暗被顶掉。',
@@ -1708,7 +1710,7 @@
 		regionProbe.result = rankRegions(hosts.map(h => aggregateRegion(h, samples.get(h), failures.get(h))));
 		regionProbe.running = false;
 		regionProbe.lastRun = new Date().toISOString();
-		console.log('[TTN] 区域质量排名（分数越低越好）：', regionProbe.result);
+		console.log('[TTN] region quality ranking (lower is better):', regionProbe.result);
 		return regionProbe.result;
 	}
 
@@ -4317,16 +4319,16 @@
 			document.body.appendChild(a);
 			a.click();
 			setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-		} catch (e) { console.warn('[TTN] 下载失败：', e); }
+		} catch (e) { console.warn('[TTN] download failed:', e); }
 
 		try {
 			if (navigator.clipboard) navigator.clipboard.writeText(text).then(
-				() => console.log('[TTN] 报告已复制到剪贴板，同时已下载文件。'),
-				() => console.log('[TTN] 报告已下载（剪贴板被拒绝）。')
+				() => console.log('[TTN] report copied to clipboard and downloaded.'),
+				() => console.log('[TTN] report downloaded (clipboard permission denied).')
 			);
 		} catch (e) {}
 
-		console.log('[TTN] 报告：', rep);
+		console.log('[TTN] report:', rep);
 		return rep;
 	}
 
@@ -4340,7 +4342,7 @@
 		else if (ev.code === 'KeyS') {
 			SMOOTH.enabled = !SMOOTH.enabled;
 			if (!SMOOTH.enabled) snapAllSmoothers();
-			console.log('[TTN] 平滑已' + (SMOOTH.enabled ? '开启' : '关闭'));
+			console.log('[TTN] smoothing ' + (SMOOTH.enabled ? 'on' : 'off'));
 			ev.preventDefault();
 		}
 	}, true);
@@ -4439,11 +4441,10 @@
 		_hudAnim: hudAnim
 	};
 
-	console.log('%c[TT NetLab v' + VERSION + '] 已装载。进一局对战后按 Ctrl+Shift+E 导出报告。', 'color:#4ade80');
-	console.log('[TTN] 控制台接口：__TTN__.report() / __TTN__.export() / __TTN__.conns / __TTN__.tankWatch');
-	console.log('[TTN] 选线路：__TTN__.probeRegions(30) —— 换梯子节点后重跑一次，比较排名，别再靠玄学。');
-	console.log('%c[TTN] 版本 ' + VERSION + ' 变更记录：', 'color:#7aa2f7');
-	CHANGELOG.forEach(function (c) {
-		console.log('  v' + c[0] + '  ' + c.slice(1).join('；'));
-	});
+	/* 启动日志保持极简英文：不再遍历 CHANGELOG（以前每次加载都会在控制台
+	 * 打印所有版本的中文简介，页面一开就刷屏）。完整变更记录在 CHANGELOG 常量和
+	 * 导出报告里，需要时再看。 */
+	console.log('%c[TT NetLab v' + VERSION + '] loaded. Press Ctrl+Shift+E in a match to export a report.', 'color:#4ade80');
+	console.log('[TTN] console API: __TTN__.report() / export() / conns / tankWatch');
+	console.log('[TTN] region probe: __TTN__.probeRegions(30)');
 })();

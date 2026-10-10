@@ -6,7 +6,7 @@
 
 
 
-![TankTrouble — Netzwerk-Optimierung](img/v052/de.png?v=0.5.2)
+![TankTrouble — Netzwerk-Optimierung](img/v053/de.png?v=0.5.3)
 
 
 > Reichere, aktuellere und genauere Netzwerkanzeige — plus echte Optimierung.

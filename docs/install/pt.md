@@ -30,11 +30,7 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 
 4. **Abra o jogo**
 
-   Vá para <https://tanktrouble.com/game> e entre em uma partida: o painel aparece no canto superior esquerdo.
-
-5. **Como usar**
-
-   Arraste a barra de título para mover. Clique no ponto para recolher em bola (média / ping atual / estabilidade); clique na bola para expandir. `Ctrl+Shift+S` otimização, `Ctrl+Shift+L` ocultar, `Ctrl+Shift+E` exportar relatório.
+   Vá para <https://tanktrouble.com/game> e entre em uma partida: a bola aparece no canto superior esquerdo e você já pode começar a usar.
 
 ## Atalhos
 
