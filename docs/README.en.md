@@ -1,6 +1,6 @@
 # 🇬🇧 TankTrouble Network Optimization
 
-![TankTrouble Network Optimization](img/en.png)
+![TankTrouble Network Optimization](img/v051/en.png?v=0.5.1)
 
 
 > Richer, more real-time and more accurate network display — plus real optimization.

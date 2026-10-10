@@ -6,7 +6,7 @@
 
 
 
-![TankTrouble 네트워크 최적화](img/ko.png)
+![TankTrouble 네트워크 최적화](img/v051/ko.png?v=0.5.1)
 
 
 > 더 풍부하고, 더 실시간이며, 더 정확한 네트워크 표시와 실제 최적화.

@@ -6,7 +6,7 @@
 
 
 
-![TankTrouble — optimisation réseau](img/fr.png)
+![TankTrouble — optimisation réseau](img/v051/fr.png?v=0.5.1)
 
 
 > Plus riche, plus temps réel et plus précis : l'état du réseau, et une vraie optimisation.

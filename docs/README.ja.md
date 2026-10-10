@@ -6,7 +6,7 @@
 
 
 
-![TankTrouble ネットワーク最適化](img/ja.png)
+![TankTrouble ネットワーク最適化](img/v051/ja.png?v=0.5.1)
 
 
 > より豊富・よりリアルタイム・より正確な回線表示と、実際の最適化。

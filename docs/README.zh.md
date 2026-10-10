@@ -6,7 +6,7 @@
 
 
 
-![TankTrouble 网络优化](img/zh.png)
+![TankTrouble 网络优化](img/v051/zh.png?v=0.5.1)
 
 
 > 更丰富、更实时、更准确的网络情况显示，以及真正的网络优化。

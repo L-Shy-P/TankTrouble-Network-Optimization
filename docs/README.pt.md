@@ -6,7 +6,7 @@
 
 
 
-![TankTrouble — otimização de rede](img/pt.png)
+![TankTrouble — otimização de rede](img/v051/pt.png?v=0.5.1)
 
 
 > Exibição de rede mais rica, mais em tempo real e mais precisa — e otimização de verdade.
