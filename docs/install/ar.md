@@ -12,7 +12,7 @@
 
 [![Install](https://img.shields.io/badge/install-ar-brightgreen)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
 
-بعد تثبيت Tampermonkey اضغط الشارة أو افتح الرابط أدناه؛ سيفتح Tampermonkey صفحة التثبيت، ثم اضغط **تثبيت**.
+اضغط الشارة (أو افتح الرابط بالأسفل). عند النجاح سيفتح Tampermonkey صفحة التثبيت الخاصة به — صفحة داكنة تعرض اسم السكربت والإصدار وزر **Install**؛ ولن يكتمل التثبيت إلا بالضغط على **Install**. (إذا ظهرت صفحة كاملة من الكود تبدأ بـ `// ==UserScript==`، أو نُزِّل الملف فقط، فهذا يعني أن النقرة لم تصل إلى Tampermonkey — راجع FAQ أدناه.)
 
 ```
 https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js
@@ -61,6 +61,9 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 - **هل أبقي ZIP/المجلد بعد التثبيت؟** — لا. السكربت أصبح داخل Tampermonkey؛ يمكنك حذف ZIP. التحديث من Tampermonkey أو بإعادة تثبيت رابط raw.
 - **في Tampermonkey يوجد «استيراد من ملف»/«Add file» — هل أرفع الملف هناك؟** — لا، هذا الزر لملفات النسخ الاحتياطي `.zip` الخاصة بـ Tampermonkey. لتثبيت هذا السكربت استخدم لوحة التحكم → الأدوات → التثبيت من URL، أو اسحب ملف `.user.js` الواحد إلى اللوحة.
 - **هل أغيّر الاسم أو أعدّل أو أفك ضغط `.user.js`؟** — لا، استخدم الملف كما هو. الملف نفسه هو نص السكربت؛ لا تضعه في `chrome://extensions` ولا ترفع المجلد كاملاً.
+- **ضغطت على التثبيت بنقرة واحدة (الطريقة A) — هل ثبت فعلًا؟** — إذا نجحت العملية، **سيفتح Tampermonkey صفحة التثبيت الخاصة به**: صفحة داكنة تعرض اسم السكربت "TankTrouble Network Optimization" ورقم الإصدار وزر **Install** — ولن يكتمل التثبيت إلا بالضغط على **Install**. أما إذا ظهرت لك صفحة كاملة من الكود تبدأ بـ `// ==UserScript==`، أو نُزِّل الملف فقط، فهذا يعني أن النقرة لم تصل إلى Tampermonkey. استخدم بدلًا من ذلك **Dashboard → Utilities → Install from URL** (الصق `https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js`)، أو اسحب ملف `tanktrouble-netlab.install.user.js` الذي حمّلته إلى صفحة **Dashboard**. ملاحظة: قد تكون روابط raw في GitHub مخزّنة مؤقتًا لبضع دقائق؛ إذا ظهر إصدار قديم في صفحة التثبيت، انتظر قليلًا أو اضغط `Ctrl+F5` ثم انقر مرة أخرى.
+- **كيف أتأكد أنه مثبَّت فعلًا ويعمل؟** — ثلاثة فحوصات: ① يظهر "TankTrouble Network Optimization" في قائمة السكربتات في **Dashboard** الخاص بـ Tampermonkey، والمفتاح على **ON**؛ ② على صفحة `tanktrouble.com` تظهر شارة رقمية (**1**) على أيقونة Tampermonkey؛ ③ اضغط **F12 → Console** ويجب أن ترى سطرًا `[TT NetLab vX.Y.Z] loaded...`. إذا لم يظهر ③: أعد تحميل الصفحة أولًا بـ **Ctrl+F5**؛ فإن لم يظهر بعد ذلك فالسكربت معطّل أو مثبَّت جزئيًا (**أعد التثبيت**؛ يجب أن يبدأ الملف من السطر الأول `// ==UserScript==`، فنسخ الكود من المنتصف مثل `(function () {` لا يعمل).
+
 ## حل المشكلات
 
 - **لا يظهر شيء** — تأكد أن العنوان يطابق `*://*.tanktrouble.com/*` وأن السكربت مفعّل، ثم `Ctrl+F5`.

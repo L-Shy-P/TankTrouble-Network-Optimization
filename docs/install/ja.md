@@ -12,7 +12,7 @@
 
 [![Install](https://img.shields.io/badge/install-ja-brightgreen)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
 
-Tampermonkey を入れたら、上のバッジか下の URL を開きます。Tampermonkey のインストール画面が出るので **インストール** を押します。
+上のボタン（または下の URL）を開きます。成功すると Tampermonkey 自身のインストール画面——暗いページにスクリプト名・バージョン・**Install** ボタン——が開きます。**Install** を押して初めてインストール完了です。（`// ==UserScript==` で始まるコードが一面に表示されたり、ファイルがダウンロードされただけなら、このクリックは Tampermonkey に届いていません。下の FAQ を参照。）
 
 ```
 https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js
@@ -61,6 +61,9 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 - **ZIP やフォルダは残す必要ある？** — 不要です。スクリプトは Tampermonkey 内に入っています。ZIP は削除可。更新は Tampermonkey か raw リンク再インストールで。
 - **Tampermonkey の「ファイルからインポート」/「Add file」にアップロードする？** — いいえ、それは Tampermonkey のバックアップ `.zip` 用です。このスクリプトは Dashboard → ユーティリティ → URL からインストール、または `.user.js` 1 ファイルを Dashboard にドラッグしてください。
 - **.user.js を名前変更・編集・再解凍する必要は？** — 不要です。そのまま使ってください。ファイル自体がスクリプト本文です。`chrome://extensions` に入れたり、フォルダごとアップロードしないでください。
+- **ワンクリックインストール（方法 A）を押したけど、ちゃんとインストールされた？** — 成功すると、**Tampermonkey 自身のインストール画面**が開きます：暗いページにスクリプト名「TankTrouble Network Optimization」、バージョン、**Install** ボタンが表示され、**Install** を押して初めてインストール完了です。逆に `// ==UserScript==` から始まるコードが一面に表示されたり、ファイルがダウンロードされただけなら、このクリックは Tampermonkey に届いていません。代わりに **Dashboard → Utilities → Install from URL** を使うか（`https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js` を貼り付け）、ダウンロードした `tanktrouble-netlab.install.user.js` を **Dashboard** ページにドラッグしてください。なお、GitHub の raw リンクは数分間キャッシュされることがあります。インストール画面のバージョンが古い場合は、少し待つか `Ctrl+F5` を押してからもう一度クリックしてください。
+- **ちゃんとインストールされて動作しているか確認するには？** — 確認は 3 つです：① Tampermonkey **Dashboard** のスクリプト一覧に「TankTrouble Network Optimization」があり、スイッチが **ON**；② `tanktrouble.com` のページで Tampermonkey アイコンに数字のバッジ（**1**）が出る；③ **F12 → Console** を開くと `[TT NetLab vX.Y.Z] loaded...` の行が出る。③ が出ない場合：まず **Ctrl+F5** でページを再読み込みしてください。それでも出なければ、スクリプトが無効か一部しかインストールされていません（**再インストール**。ファイルは必ず 1 行目の `// ==UserScript==` から始まる必要があり、`(function () {` のような途中からコピーしても無効です）。
+
 ## よくある質問
 
 - **何も出ない** — URL が `*://*.tanktrouble.com/*` に一致し、スクリプトが有効か確認して `Ctrl+F5`。

@@ -12,7 +12,7 @@
 
 [![Install](https://img.shields.io/badge/install-ko-brightgreen)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
 
-Tampermonkey 설치 후 위 배지나 아래 URL을 엽니다. Tampermonkey 설치 페이지가 뜨면 **설치**를 누르세요.
+위 버튼(또는 아래 URL)을 엽니다. 성공하면 Tampermonkey 자체 설치 화면——어두운 페이지에 스크립트 이름, 버전, **Install** 버튼——이 뜹니다. **Install**을 눌러야 설치가 끝납니다. (`// ==UserScript==`로 시작하는 코드가 화면에 가득 보이거나 파일이 다운로드되기만 하면 이 클릭은 Tampermonkey에 전달되지 않은 것입니다. 아래 FAQ를 참고하세요.)
 
 ```
 https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js
@@ -61,6 +61,9 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 - **설치 후 ZIP/폴더를 남겨야 하나요?** — 아니요. 스크립트는 Tampermonkey 안에 있습니다. ZIP은 삭제해도 됩니다. 업데이트는 Tampermonkey나 raw 링크 재설치로 하세요.
 - **Tampermonkey의 '파일에서 가져오기'/'Add file'에 올려야 하나요?** — 아니요, 그 버튼은 Tampermonkey 백업 `.zip`용입니다. 이 스크립트는 Dashboard → 유틸리티 → URL에서 설치를 쓰거나 `.user.js` 파일 하나를 Dashboard로 끌어다 놓으세요.
 - **.user.js를 이름 바꾸거나 편집/재압축해야 하나요?** — 아니요, 그대로 사용하세요. 파일 자체가 스크립트입니다. `chrome://extensions`에 넣거나 폴더째 업로드하지 마세요.
+- **원클릭 설치(방법 A)를 눌렀는데 실제로 설치된 걸까요?** — 성공하면 **Tampermonkey가 자체 설치 화면을 엽니다**: 어두운 페이지에 스크립트 이름 "TankTrouble Network Optimization", 버전, **Install** 버튼이 보이고, **Install**을 눌러야 설치가 끝납니다. 반대로 `// ==UserScript==`로 시작하는 코드가 화면에 가득하거나 파일이 다운로드되기만 했다면, 이 클릭은 Tampermonkey에 전달되지 않은 것입니다. 대신 **Dashboard → Utilities → Install from URL**을 사용하거나(`https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js` 붙여넣기), 다운로드한 `tanktrouble-netlab.install.user.js`를 **Dashboard** 페이지로 끌어다 놓으세요. 참고: GitHub raw 링크는 몇 분간 캐시될 수 있습니다. 설치 화면의 버전이 오래됐다면 잠시 기다리거나 `Ctrl+F5` 후 다시 클릭하세요.
+- **정말 설치되어 실행 중인지 어떻게 확인하나요?** — 확인 세 가지: ① Tampermonkey **Dashboard**의 스크립트 목록에 "TankTrouble Network Optimization"이 보이고 스위치가 **ON**; ② `tanktrouble.com` 페이지에서 Tampermonkey 아이콘에 숫자 배지(**1**)가 표시됨; ③ **F12 → Console**을 눌러 `[TT NetLab vX.Y.Z] loaded...` 줄이 보임. ③이 없으면: 먼저 **Ctrl+F5**로 페이지를 새로고침하세요. 그래도 없으면 스크립트가 비활성화되었거나 일부만 설치된 것입니다(**재설치**). 파일은 반드시 1번째 줄 `// ==UserScript==`부터 시작해야 하며, `(function () {` 같은 중간부터 복사하면 적용되지 않습니다.
+
 ## 문제 해결
 
 - **아무것도 안 보임** — URL이 `*://*.tanktrouble.com/*`인지, 스크립트가 켜져 있는지 확인 후 `Ctrl+F5`.

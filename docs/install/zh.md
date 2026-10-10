@@ -12,7 +12,7 @@
 
 [![Install](https://img.shields.io/badge/install-zh-brightgreen)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
 
-装好油猴后，点上面的按钮（或打开下面的地址）：油猴会弹出安装页，点 **安装** 即可。
+点上面的按钮（或直接打开下面的地址）。成功的话会看到 Tampermonkey 自己的安装页——深色页面，显示脚本名、版本号和 **Install** 按钮；只有再点 **Install** 才算装好。（如果看到满屏代码（以 `// ==UserScript==` 开头），或文件只是被下载了，说明这次点击没进到 Tampermonkey——请看下面的 FAQ。）
 
 ```
 https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js
@@ -61,6 +61,9 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 - **装完还需要留着 ZIP/文件夹吗？** — 不需要。脚本已经进油猴了，ZIP 和文件夹可以删；以后在油猴里更新或重新打开 raw 链接安装即可。
 - **油猴里的“从文件导入”/“添加文件”是在那里上传吗？** — 不是。那个按钮是给 Tampermonkey 备份 `.zip` 用的。安装这个脚本请用 Dashboard → 实用工具 → 从 URL 安装，或把单个 `.user.js` 文件拖到 Dashboard。
 - **.user.js 需要改名、编辑或再解压吗？** — 不需要，原样使用即可。它本身就是脚本文本；不要放进 `chrome://extensions`，也不要上传整个文件夹。
+- **我点了一键安装（方法 A），到底装上了没有？** — 如果成功，**Tampermonkey 会打开它自己的安装页**：深色页面，显示脚本名 “TankTrouble Network Optimization”、版本号，以及一个 **Install** 按钮——点 **Install** 才算装好。如果你看到的是满屏代码（以 `// ==UserScript==` 开头）、或者文件只是被下载了，那说明这次点击没有交给 Tampermonkey。请改用：**Dashboard → Utilities → Install from URL**（粘贴 `https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js`），或把下载好的 `tanktrouble-netlab.install.user.js` 拖到 **Dashboard** 页面。另外：GitHub 的 raw 链接可能有几分钟缓存，若安装页显示的版本偏旧，等一会儿或 `Ctrl+F5` 再点一次。
+- **怎么确认它真的装上了、而且在运行？** — 三个检查：① Tampermonkey **Dashboard** 的脚本列表里能看到 “TankTrouble Network Optimization”，并且开关是 **ON**；② 在 `tanktrouble.com` 页面上，Tampermonkey 图标上会出现数字角标（**1**）；③ 按 **F12 → Console**，应看到一行 `[TT NetLab vX.Y.Z] loaded...`。如果 ③ 没有：先用 **Ctrl+F5** 重新加载页面；仍然没有就说明脚本被禁用或只装了一部分（**重装**，注意文件必须从第 1 行 `// ==UserScript==` 开始，从 `(function () {` 之类的中段开始复制是无效的）。
+
 ## 常见问题
 
 - **什么都没出现** — 确认地址匹配 `*://*.tanktrouble.com/*`、脚本是启用状态，然后 `Ctrl+F5` 强制刷新。

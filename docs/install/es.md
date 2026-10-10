@@ -12,7 +12,7 @@ Primero instala **Tampermonkey** (gestor de userscripts). No uses «Cargar exten
 
 [![Install](https://img.shields.io/badge/install-es-brightgreen)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
 
-Tras instalar Tampermonkey, pulsa el badge o abre la URL de abajo: Tampermonkey abre su página de instalación; pulsa **Instalar**.
+Pulsa el badge (o abre la URL de abajo). Si funciona, Tampermonkey abre su propia página de instalación — una página oscura con el nombre del script, la versión y un botón **Install**; solo después de pulsar **Install** queda instalado. (Si ves una página llena de código que empieza por `// ==UserScript==`, o el archivo solo se descarga, el clic no llegó a Tampermonkey — consulta la FAQ de abajo.)
 
 ```
 https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js
@@ -61,6 +61,9 @@ El botón **⚡** del panel equivale a `Ctrl+Shift+S`. El panel permite elegir e
 - **¿Tengo que guardar el ZIP/carpeta?** — No. El script ya está dentro de Tampermonkey; puedes borrar el ZIP. Actualiza desde Tampermonkey o reinstalando el enlace raw.
 - **En Tampermonkey hay «Importar desde archivo»/«Add file», ¿ahí lo subo?** — No, ese botón es para copias de seguridad `.zip` de Tampermonkey. Para instalar este script usa Panel → Utilidades → Instalar desde URL, o arrastra el único archivo `.user.js` al panel.
 - **¿Tengo que renombrar, editar o descomprimir el `.user.js`?** — No, úsalo tal cual. El archivo es el propio script; no lo pongas en `chrome://extensions` ni subas la carpeta entera.
+- **Pulsé la instalación en un clic (método A): ¿de verdad se instaló?** — Si funcionó, **Tampermonkey abre su propia página de instalación**: una página oscura con el nombre del script "TankTrouble Network Optimization", el número de versión y un botón **Install**; solo al pulsar **Install** queda instalado. Si ves una página llena de código (que empieza por `// ==UserScript==`) o el archivo solo se ha descargado, el clic no llegó a Tampermonkey. Usa en su lugar **Dashboard → Utilities → Install from URL** (pega `https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js`), o arrastra el archivo `tanktrouble-netlab.install.user.js` descargado a la página **Dashboard**. Además: los enlaces raw de GitHub pueden quedar en caché unos minutos; si la página de instalación muestra una versión antigua, espera un poco o pulsa `Ctrl+F5` y vuelve a hacer clic.
+- **¿Cómo confirmo que está realmente instalado y en ejecución?** — Tres comprobaciones: ① en la lista de scripts del **Dashboard** de Tampermonkey se ve "TankTrouble Network Optimization" y el interruptor está en **ON**; ② en una página de `tanktrouble.com`, aparece una insignia numérica (**1**) en el icono de Tampermonkey; ③ pulsa **F12 → Console** y deberías ver una línea `[TT NetLab vX.Y.Z] loaded...`. Si falta ③: recarga primero la página con **Ctrl+F5**; si sigue faltando, el script está desactivado o solo se instaló en parte (**reinstálalo**; el archivo debe empezar en la línea 1 por `// ==UserScript==`, copiar desde el medio como `(function () {` no sirve).
+
 ## Solución de problemas
 
 - **No aparece nada** — Comprueba que la URL coincide con `*://*.tanktrouble.com/*` y que el script está activado, luego `Ctrl+F5`.

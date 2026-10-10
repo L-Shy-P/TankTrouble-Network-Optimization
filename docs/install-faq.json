@@ -41,6 +41,14 @@
       [
         "Do I need to rename, edit or unzip the `.user.js` again?",
         "No, use the file exactly as it is. That file is the script text itself; do not put it into chrome://extensions and do not upload the whole folder."
+      ],
+      [
+        "I clicked the one-click install (Method A) — did it actually install?",
+        "If it worked, **Tampermonkey opens its own install page**: a dark page showing the script name \"TankTrouble Network Optimization\", the version number and an **Install** button — clicking **Install** is what installs it. If you see a full page of code (starting with `// ==UserScript==`), or the file was just downloaded, then this click did NOT reach Tampermonkey. Use **Dashboard → Utilities → Install from URL** instead (paste `https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js`), or drag the downloaded `tanktrouble-netlab.install.user.js` onto the **Dashboard** page. Also: GitHub raw links can be cached for a few minutes; if the install page shows an older version, wait a bit or press `Ctrl+F5` and click again."
+      ],
+      [
+        "How do I confirm it is really installed and running?",
+        "Three checks: ① the script list of the Tampermonkey **Dashboard** shows \"TankTrouble Network Optimization\" and its toggle is **ON**; ② on a `tanktrouble.com` page, the Tampermonkey icon shows a numbered badge (**1**); ③ press **F12 → Console** — you should see a line `[TT NetLab vX.Y.Z] loaded...`. If ③ is missing: reload the page with **Ctrl+F5** first; if it is still missing, the script is disabled or only partially installed — **reinstall**. The file must start at line 1 with `// ==UserScript==`; starting from the middle such as `(function () {` does not work."
       ]
     ]
   },
@@ -86,6 +94,14 @@
       [
         ".user.js 需要改名、编辑或再解压吗？",
         "不需要，原样使用即可。它本身就是脚本文本；不要放进 `chrome://extensions`，也不要上传整个文件夹。"
+      ],
+      [
+        "我点了一键安装（方法 A），到底装上了没有？",
+        "如果成功，**Tampermonkey 会打开它自己的安装页**：深色页面，显示脚本名 “TankTrouble Network Optimization”、版本号，以及一个 **Install** 按钮——点 **Install** 才算装好。如果你看到的是满屏代码（以 `// ==UserScript==` 开头）、或者文件只是被下载了，那说明这次点击没有交给 Tampermonkey。请改用：**Dashboard → Utilities → Install from URL**（粘贴 `https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js`），或把下载好的 `tanktrouble-netlab.install.user.js` 拖到 **Dashboard** 页面。另外：GitHub 的 raw 链接可能有几分钟缓存，若安装页显示的版本偏旧，等一会儿或 `Ctrl+F5` 再点一次。"
+      ],
+      [
+        "怎么确认它真的装上了、而且在运行？",
+        "三个检查：① Tampermonkey **Dashboard** 的脚本列表里能看到 “TankTrouble Network Optimization”，并且开关是 **ON**；② 在 `tanktrouble.com` 页面上，Tampermonkey 图标上会出现数字角标（**1**）；③ 按 **F12 → Console**，应看到一行 `[TT NetLab vX.Y.Z] loaded...`。如果 ③ 没有：先用 **Ctrl+F5** 重新加载页面；仍然没有就说明脚本被禁用或只装了一部分（**重装**，注意文件必须从第 1 行 `// ==UserScript==` 开始，从 `(function () {` 之类的中段开始复制是无效的）。"
       ]
     ]
   },
@@ -131,6 +147,14 @@
       [
         ".user.js を名前変更・編集・再解凍する必要は？",
         "不要です。そのまま使ってください。ファイル自体がスクリプト本文です。`chrome://extensions` に入れたり、フォルダごとアップロードしないでください。"
+      ],
+      [
+        "ワンクリックインストール（方法 A）を押したけど、ちゃんとインストールされた？",
+        "成功すると、**Tampermonkey 自身のインストール画面**が開きます：暗いページにスクリプト名「TankTrouble Network Optimization」、バージョン、**Install** ボタンが表示され、**Install** を押して初めてインストール完了です。逆に `// ==UserScript==` から始まるコードが一面に表示されたり、ファイルがダウンロードされただけなら、このクリックは Tampermonkey に届いていません。代わりに **Dashboard → Utilities → Install from URL** を使うか（`https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js` を貼り付け）、ダウンロードした `tanktrouble-netlab.install.user.js` を **Dashboard** ページにドラッグしてください。なお、GitHub の raw リンクは数分間キャッシュされることがあります。インストール画面のバージョンが古い場合は、少し待つか `Ctrl+F5` を押してからもう一度クリックしてください。"
+      ],
+      [
+        "ちゃんとインストールされて動作しているか確認するには？",
+        "確認は 3 つです：① Tampermonkey **Dashboard** のスクリプト一覧に「TankTrouble Network Optimization」があり、スイッチが **ON**；② `tanktrouble.com` のページで Tampermonkey アイコンに数字のバッジ（**1**）が出る；③ **F12 → Console** を開くと `[TT NetLab vX.Y.Z] loaded...` の行が出る。③ が出ない場合：まず **Ctrl+F5** でページを再読み込みしてください。それでも出なければ、スクリプトが無効か一部しかインストールされていません（**再インストール**。ファイルは必ず 1 行目の `// ==UserScript==` から始まる必要があり、`(function () {` のような途中からコピーしても無効です）。"
       ]
     ]
   },
@@ -176,6 +200,14 @@
       [
         ".user.js를 이름 바꾸거나 편집/재압축해야 하나요?",
         "아니요, 그대로 사용하세요. 파일 자체가 스크립트입니다. `chrome://extensions`에 넣거나 폴더째 업로드하지 마세요."
+      ],
+      [
+        "원클릭 설치(방법 A)를 눌렀는데 실제로 설치된 걸까요?",
+        "성공하면 **Tampermonkey가 자체 설치 화면을 엽니다**: 어두운 페이지에 스크립트 이름 \"TankTrouble Network Optimization\", 버전, **Install** 버튼이 보이고, **Install**을 눌러야 설치가 끝납니다. 반대로 `// ==UserScript==`로 시작하는 코드가 화면에 가득하거나 파일이 다운로드되기만 했다면, 이 클릭은 Tampermonkey에 전달되지 않은 것입니다. 대신 **Dashboard → Utilities → Install from URL**을 사용하거나(`https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js` 붙여넣기), 다운로드한 `tanktrouble-netlab.install.user.js`를 **Dashboard** 페이지로 끌어다 놓으세요. 참고: GitHub raw 링크는 몇 분간 캐시될 수 있습니다. 설치 화면의 버전이 오래됐다면 잠시 기다리거나 `Ctrl+F5` 후 다시 클릭하세요."
+      ],
+      [
+        "정말 설치되어 실행 중인지 어떻게 확인하나요?",
+        "확인 세 가지: ① Tampermonkey **Dashboard**의 스크립트 목록에 \"TankTrouble Network Optimization\"이 보이고 스위치가 **ON**; ② `tanktrouble.com` 페이지에서 Tampermonkey 아이콘에 숫자 배지(**1**)가 표시됨; ③ **F12 → Console**을 눌러 `[TT NetLab vX.Y.Z] loaded...` 줄이 보임. ③이 없으면: 먼저 **Ctrl+F5**로 페이지를 새로고침하세요. 그래도 없으면 스크립트가 비활성화되었거나 일부만 설치된 것입니다(**재설치**). 파일은 반드시 1번째 줄 `// ==UserScript==`부터 시작해야 하며, `(function () {` 같은 중간부터 복사하면 적용되지 않습니다."
       ]
     ]
   },
@@ -221,6 +253,14 @@
       [
         "Нужно переименовывать, редактировать или распаковывать `.user.js`?",
         "Нет, используйте файл как есть. Это и есть текст скрипта. Не кладите его в `chrome://extensions` и не загружайте целую папку."
+      ],
+      [
+        "Я нажал установку в один клик (способ A) — точно ли она установилась?",
+        "Если всё сработало, **Tampermonkey открывает свою страницу установки**: тёмная страница с названием скрипта «TankTrouble Network Optimization», номером версии и кнопкой **Install** — установка завершается только после нажатия **Install**. Если вместо этого вы видите код на весь экран (начинается с `// ==UserScript==`) или файл просто скачался, значит клик не дошёл до Tampermonkey. Используйте **Dashboard → Utilities → Install from URL** (вставьте `https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js`) или перетащите скачанный `tanktrouble-netlab.install.user.js` на страницу **Dashboard**. Ещё: raw-ссылки GitHub могут кэшироваться на несколько минут; если на странице установки старая версия, подождите немного или нажмите `Ctrl+F5` и кликните снова."
+      ],
+      [
+        "Как убедиться, что скрипт действительно установлен и работает?",
+        "Три проверки: ① в списке скриптов **Dashboard** Tampermonkey виден «TankTrouble Network Optimization», а переключатель стоит в **ON**; ② на странице `tanktrouble.com` на значке Tampermonkey появляется цифровой бейдж (**1**); ③ нажмите **F12 → Console** — должна появиться строка `[TT NetLab vX.Y.Z] loaded...`. Если пункта ③ нет: сначала перезагрузите страницу через **Ctrl+F5**; если строки всё ещё нет, скрипт отключён или установлен частично (**переустановите** его; файл должен начинаться с 1-й строки `// ==UserScript==`, копирование с середины вроде `(function () {` не работает)."
       ]
     ]
   },
@@ -266,6 +306,14 @@
       [
         "هل أغيّر الاسم أو أعدّل أو أفك ضغط `.user.js`؟",
         "لا، استخدم الملف كما هو. الملف نفسه هو نص السكربت؛ لا تضعه في `chrome://extensions` ولا ترفع المجلد كاملاً."
+      ],
+      [
+        "ضغطت على التثبيت بنقرة واحدة (الطريقة A) — هل ثبت فعلًا؟",
+        "إذا نجحت العملية، **سيفتح Tampermonkey صفحة التثبيت الخاصة به**: صفحة داكنة تعرض اسم السكربت \"TankTrouble Network Optimization\" ورقم الإصدار وزر **Install** — ولن يكتمل التثبيت إلا بالضغط على **Install**. أما إذا ظهرت لك صفحة كاملة من الكود تبدأ بـ `// ==UserScript==`، أو نُزِّل الملف فقط، فهذا يعني أن النقرة لم تصل إلى Tampermonkey. استخدم بدلًا من ذلك **Dashboard → Utilities → Install from URL** (الصق `https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js`)، أو اسحب ملف `tanktrouble-netlab.install.user.js` الذي حمّلته إلى صفحة **Dashboard**. ملاحظة: قد تكون روابط raw في GitHub مخزّنة مؤقتًا لبضع دقائق؛ إذا ظهر إصدار قديم في صفحة التثبيت، انتظر قليلًا أو اضغط `Ctrl+F5` ثم انقر مرة أخرى."
+      ],
+      [
+        "كيف أتأكد أنه مثبَّت فعلًا ويعمل؟",
+        "ثلاثة فحوصات: ① يظهر \"TankTrouble Network Optimization\" في قائمة السكربتات في **Dashboard** الخاص بـ Tampermonkey، والمفتاح على **ON**؛ ② على صفحة `tanktrouble.com` تظهر شارة رقمية (**1**) على أيقونة Tampermonkey؛ ③ اضغط **F12 → Console** ويجب أن ترى سطرًا `[TT NetLab vX.Y.Z] loaded...`. إذا لم يظهر ③: أعد تحميل الصفحة أولًا بـ **Ctrl+F5**؛ فإن لم يظهر بعد ذلك فالسكربت معطّل أو مثبَّت جزئيًا (**أعد التثبيت**؛ يجب أن يبدأ الملف من السطر الأول `// ==UserScript==`، فنسخ الكود من المنتصف مثل `(function () {` لا يعمل)."
       ]
     ]
   },
@@ -311,6 +359,14 @@
       [
         "Faut-il renommer, modifier ou décompresser le `.user.js` ?",
         "Non, utilisez-le tel quel. Ce fichier est le script lui-même ; ne le mettez pas dans `chrome://extensions` et n'envoyez pas le dossier entier."
+      ],
+      [
+        "J'ai cliqué sur l'installation en un clic (méthode A) — est-ce que c'est vraiment installé ?",
+        "Si ça a marché, **Tampermonkey ouvre sa propre page d’installation** : une page sombre affichant le nom du script « TankTrouble Network Optimization », le numéro de version et un bouton **Install** — c’est en cliquant **Install** que l’installation se termine. Si vous voyez à la place une page entière de code (commençant par `// ==UserScript==`) ou si le fichier a simplement été téléchargé, le clic n’est pas arrivé jusqu’à Tampermonkey. Utilisez plutôt **Dashboard → Utilities → Install from URL** (collez `https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js`), ou glissez le fichier `tanktrouble-netlab.install.user.js` téléchargé sur la page **Dashboard**. À noter : les liens raw de GitHub peuvent être mis en cache quelques minutes ; si la page d’installation affiche une version plus ancienne, attendez un peu ou appuyez sur `Ctrl+F5` puis recliquez."
+      ],
+      [
+        "Comment vérifier qu'il est bien installé et qu'il tourne ?",
+        "Trois vérifications : ① dans la liste des scripts du **Dashboard** Tampermonkey, on voit « TankTrouble Network Optimization » et l’interrupteur est sur **ON** ; ② sur une page `tanktrouble.com`, une pastille numérotée (**1**) apparaît sur l’icône Tampermonkey ; ③ appuyez sur **F12 → Console**, vous devez voir une ligne `[TT NetLab vX.Y.Z] loaded...`. Si le point ③ est absent : rechargez d’abord la page avec **Ctrl+F5** ; si c’est toujours absent, le script est désactivé ou seulement partiellement installé (**réinstallez-le** ; le fichier doit commencer à la ligne 1 par `// ==UserScript==`, copier à partir du milieu comme `(function () {` ne marche pas)."
       ]
     ]
   },
@@ -356,6 +412,14 @@
       [
         "¿Tengo que renombrar, editar o descomprimir el `.user.js`?",
         "No, úsalo tal cual. El archivo es el propio script; no lo pongas en `chrome://extensions` ni subas la carpeta entera."
+      ],
+      [
+        "Pulsé la instalación en un clic (método A): ¿de verdad se instaló?",
+        "Si funcionó, **Tampermonkey abre su propia página de instalación**: una página oscura con el nombre del script \"TankTrouble Network Optimization\", el número de versión y un botón **Install**; solo al pulsar **Install** queda instalado. Si ves una página llena de código (que empieza por `// ==UserScript==`) o el archivo solo se ha descargado, el clic no llegó a Tampermonkey. Usa en su lugar **Dashboard → Utilities → Install from URL** (pega `https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js`), o arrastra el archivo `tanktrouble-netlab.install.user.js` descargado a la página **Dashboard**. Además: los enlaces raw de GitHub pueden quedar en caché unos minutos; si la página de instalación muestra una versión antigua, espera un poco o pulsa `Ctrl+F5` y vuelve a hacer clic."
+      ],
+      [
+        "¿Cómo confirmo que está realmente instalado y en ejecución?",
+        "Tres comprobaciones: ① en la lista de scripts del **Dashboard** de Tampermonkey se ve \"TankTrouble Network Optimization\" y el interruptor está en **ON**; ② en una página de `tanktrouble.com`, aparece una insignia numérica (**1**) en el icono de Tampermonkey; ③ pulsa **F12 → Console** y deberías ver una línea `[TT NetLab vX.Y.Z] loaded...`. Si falta ③: recarga primero la página con **Ctrl+F5**; si sigue faltando, el script está desactivado o solo se instaló en parte (**reinstálalo**; el archivo debe empezar en la línea 1 por `// ==UserScript==`, copiar desde el medio como `(function () {` no sirve)."
       ]
     ]
   },
@@ -401,6 +465,14 @@
       [
         "Muss ich die `.user.js` umbenennen, bearbeiten oder entpacken?",
         "Nein, benutze sie unverändert. Die Datei ist der Script-Text selbst; nicht in `chrome://extensions` legen und nicht den ganzen Ordner hochladen."
+      ],
+      [
+        "Ich habe die Ein-Klick-Installation (Methode A) angeklickt — ist sie wirklich installiert?",
+        "Wenn es geklappt hat, **öffnet Tampermonkey seine eigene Installationsseite**: eine dunkle Seite mit dem Skriptnamen „TankTrouble Network Optimization“, der Versionsnummer und einem **Install**-Button — erst mit dem Klick auf **Install** ist es installiert. Wenn du stattdessen eine ganze Seite Code siehst (beginnend mit `// ==UserScript==`) oder die Datei nur heruntergeladen wurde, ist der Klick nicht bei Tampermonkey angekommen. Nutze stattdessen **Dashboard → Utilities → Install from URL** (füge `https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js` ein) oder ziehe die heruntergeladene `tanktrouble-netlab.install.user.js` auf die **Dashboard**-Seite. Hinweis: GitHub-Raw-Links können einige Minuten lang zwischengespeichert werden; wenn die Installationsseite eine ältere Version zeigt, warte kurz oder drücke `Ctrl+F5` und klicke erneut."
+      ],
+      [
+        "Wie prüfe ich, ob es wirklich installiert ist und läuft?",
+        "Drei Prüfungen: ① In der Skriptliste des Tampermonkey-**Dashboard** steht „TankTrouble Network Optimization“ und der Schalter ist auf **ON**; ② auf einer Seite von `tanktrouble.com` erscheint ein Zahlen-Badge (**1**) am Tampermonkey-Symbol; ③ drücke **F12 → Console** — dort sollte eine Zeile `[TT NetLab vX.Y.Z] loaded...` stehen. Wenn ③ fehlt: Lade die Seite zuerst mit **Ctrl+F5** neu; fehlt es weiterhin, ist das Skript deaktiviert oder nur teilweise installiert (**neu installieren**; die Datei muss in Zeile 1 mit `// ==UserScript==` beginnen — ab der Mitte wie `(function () {` zu kopieren funktioniert nicht)."
       ]
     ]
   },
@@ -446,6 +518,14 @@
       [
         "Preciso renomear, editar ou descompactar o `.user.js`?",
         "Não, use o arquivo como está. O arquivo é o próprio script; não coloque em `chrome://extensions` nem envie a pasta inteira."
+      ],
+      [
+        "Cliquei na instalação em um clique (método A) — será que instalou mesmo?",
+        "Se deu certo, **o Tampermonkey abre a própria página de instalação**: uma página escura com o nome do script “TankTrouble Network Optimization”, o número da versão e um botão **Install** — só depois de clicar em **Install** ele fica instalado. Se aparecer uma página cheia de código (começando com `// ==UserScript==`) ou o arquivo apenas for baixado, o clique não chegou ao Tampermonkey. Use **Dashboard → Utilities → Install from URL** (cole `https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js`), ou arraste o arquivo `tanktrouble-netlab.install.user.js` baixado para a página **Dashboard**. Observação: links raw do GitHub podem ficar em cache por alguns minutos; se a página de instalação mostrar uma versão antiga, espere um pouco ou pressione `Ctrl+F5` e clique de novo."
+      ],
+      [
+        "Como confirmo que ele está mesmo instalado e em execução?",
+        "Três verificações: ① na lista de scripts do **Dashboard** do Tampermonkey aparece “TankTrouble Network Optimization” e o botão está em **ON**; ② numa página `tanktrouble.com`, surge um selo numérico (**1**) no ícone do Tampermonkey; ③ pressione **F12 → Console** e deve aparecer a linha `[TT NetLab vX.Y.Z] loaded...`. Se ③ não aparecer: recarregue a página primeiro com **Ctrl+F5**; se continuar sem aparecer, o script está desativado ou foi instalado só em parte (**reinstale**; o arquivo precisa começar na linha 1 com `// ==UserScript==`, copiar a partir do meio, como `(function () {`, não funciona)."
       ]
     ]
   },
@@ -491,6 +571,14 @@
       [
         "Có cần đổi tên, sửa hoặc giải nén file `.user.js` không?",
         "Không, dùng nguyên file là được. File đó chính là nội dung script; đừng đưa vào `chrome://extensions` và đừng tải cả thư mục."
+      ],
+      [
+        "Mình đã bấm cài đặt một cú nhấp (cách A) — không biết đã cài được chưa?",
+        "Nếu thành công, **Tampermonkey sẽ mở trang cài đặt của chính nó**: trang nền tối hiển thị tên script “TankTrouble Network Optimization”, số phiên bản và nút **Install** — phải bấm **Install** thì mới cài xong. Nếu bạn thấy đầy màn hình là code (bắt đầu bằng `// ==UserScript==`), hoặc file chỉ bị tải về, thì cú nhấp đó chưa đến được Tampermonkey. Hãy dùng **Dashboard → Utilities → Install from URL** (dán `https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js`), hoặc kéo file `tanktrouble-netlab.install.user.js` đã tải về vào trang **Dashboard**. Lưu ý: link raw của GitHub có thể bị cache vài phút; nếu trang cài đặt hiển thị phiên bản cũ, hãy đợi một lát hoặc nhấn `Ctrl+F5` rồi bấm lại."
+      ],
+      [
+        "Làm sao xác nhận nó thật sự được cài và đang chạy?",
+        "Ba bước kiểm tra: ① trong danh sách script của **Dashboard** Tampermonkey có “TankTrouble Network Optimization” và công tắc đang **ON**; ② trên trang `tanktrouble.com`, biểu tượng Tampermonkey hiện huy hiệu số (**1**); ③ nhấn **F12 → Console**, phải thấy dòng `[TT NetLab vX.Y.Z] loaded...`. Nếu thiếu ③: trước tiên nhấn **Ctrl+F5** để tải lại trang; nếu vẫn không có thì script đã bị tắt hoặc chỉ cài được một phần (**cài lại**; file phải bắt đầu từ dòng 1 với `// ==UserScript==`, sao chép từ giữa như `(function () {` là không có tác dụng)."
       ]
     ]
   }
