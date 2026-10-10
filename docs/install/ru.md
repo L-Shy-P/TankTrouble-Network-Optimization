@@ -4,33 +4,39 @@
 
 <p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · <b>🇷🇺 Русский</b> · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · [🇻🇳 Tiếng Việt](vi.md)</sub></p>
 
-## Установка в один клик
+## ⚠️ Это userscript, а не расширение браузера
+
+Сначала установите менеджер userscript'ов **Tampermonkey**. Не используйте «Загрузить распакованное расширение»/страницу расширений Chrome — файлом `.user.js` управляет Tampermonkey.
+
+## Способ A — установка в один клик (рекомендуется)
 
 [![Install](https://img.shields.io/badge/install-ru-brightgreen)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
 
-Нажмите кнопку (или откройте ссылку ниже) → Tampermonkey откроет страницу установки → нажмите **Установить**:
+После установки Tampermonkey нажмите бейдж или откройте URL ниже: Tampermonkey откроет страницу установки, нажмите **Установить**.
 
 ```
 https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js
 ```
 
-## Шаги
+## Способ B — установка из скачанного ZIP
 
-1. **Установите Tampermonkey**
+1. **Скачайте ZIP**
 
-   Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). «Добавить в браузер» → «Добавить расширение».
+   На [странице GitHub](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) нажмите **Code → Download ZIP**.
+2. **Распакуйте**
 
-2. **Включите режим разработчика (Chrome/Edge)**
+   Распакуйте ZIP в обычную папку.
+3. **Установите Tampermonkey**
 
-   Откройте `chrome://extensions` (или `edge://extensions`) и включите **Режим разработчика** справа вверху.
+   Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) → Добавить в Chrome; затем откройте `chrome://extensions` и включите **Режим разработчика**. Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) → Добавить в Firefox.
+4. **Загрузите userscript**
 
-3. **Установите скрипт**
+   Нажмите значок Tampermonkey на панели → **Панель управления**. Перетащите `tanktrouble-netlab.install.user.js` из папки на страницу панели и нажмите **Установить**.
+5. **Обновите страницу игры**
 
-   Нажмите **Установить скрипт** ниже и подтвердите **Установить**.
+   Откройте <https://tanktrouble.com/game> (обновите, если уже открыто). Слева вверху появится шар; нажмите на него, чтобы раскрыть, и пользуйтесь.
 
-4. **Откройте игру**
-
-   Зайдите на <https://tanktrouble.com/game> и в бой: в левом верхнем углу появится шар, и можно сразу пользоваться.
+Если перетаскивание не сработало: используйте ссылку в один клик выше или импортируйте файл через «Утилиты» в панели Tampermonkey. `tanktrouble-netlab.user.js` — то же содержимое; `install.user.js` — копия с BOM для перетаскивания.
 
 ## Горячие клавиши
 
@@ -41,7 +47,7 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 | `Ctrl+Shift+E` | экспорт диагностического отчёта (и в буфер обмена) |
 | `Ctrl+Shift+P` | протестировать 7 регионов и построить рейтинг |
 
-Кнопка **⚡** в панели делает то же, что `Ctrl+Shift+S`. В панели можно выбрать один из **10 языков**; язык, переключатель и позиция шара хранятся в `localStorage`.
+Кнопка **⚡** в панели делает то же, что `Ctrl+Shift+S`. В панели можно выбрать один из **11 языков**; язык, переключатель и позиция шара хранятся в `localStorage`.
 
 ## Если что-то не работает
 

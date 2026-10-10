@@ -4,33 +4,39 @@
 
 <p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · <b>🇯🇵 日本語</b> · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · [🇻🇳 Tiếng Việt](vi.md)</sub></p>
 
-## ワンクリックインストール
+## ⚠️ これはブラウザ拡張ではなくユーザースクリプトです
+
+先にユーザースクリプト管理ツール **Tampermonkey** を入れてください。Chrome の「パッケージ化されていない拡張機能を読み込む」/拡張機能ページではインストールできません。`.user.js` は Tampermonkey が管理します。
+
+## 方法 A — ワンクリックインストール（推奨）
 
 [![Install](https://img.shields.io/badge/install-ja-brightgreen)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
 
-上のボタン（または下の URL）を開く → Tampermonkey のインストール画面が開く → **インストール**：
+Tampermonkey を入れたら、上のバッジか下の URL を開きます。Tampermonkey のインストール画面が出るので **インストール** を押します。
 
 ```
 https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js
 ```
 
-## 手順
+## 方法 B — ダウンロードした ZIP からインストール
 
-1. **Tampermonkey を入れる**
+1. **ZIP をダウンロード**
 
-   Chrome/Edge は [Chrome ウェブストア](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)、Firefox は [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) を開き、「ブラウザに追加」→「拡張機能を追加」。
+   [GitHub リポジトリ](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) で **Code → Download ZIP** をクリック。
+2. **解凍する**
 
-2. **開発者モードを有効化（Chrome/Edge のみ）**
+   ZIP を普通のフォルダに解凍します。
+3. **Tampermonkey をインストール**
 
-   `chrome://extensions`（または `edge://extensions`）を開き、右上の**開発者モード**をオンにします。
+   Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) → Chrome に追加。その後 `chrome://extensions` を開き**デベロッパーモード**をオン。Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) → Firefox に追加。
+4. **スクリプトを読み込む**
 
-3. **スクリプトをインストール**
+   ツールバーの Tampermonkey アイコン → **ダッシュボード**。解凍した `tanktrouble-netlab.install.user.js` をダッシュボードにドラッグし、表示された画面で **インストール** を押す。
+5. **ゲームページを更新**
 
-   下の**スクリプトをインストール**をクリック → Tampermonkey の画面で**インストール**。
+   <https://tanktrouble.com/game> を開く（開いていたら更新）。左上にボールが表示されたら、クリックして展開すれば使い始められます。
 
-4. **ゲームを開く**
-
-   <https://tanktrouble.com/game> で対戦に入ると、左上にボールが表示され、そのまま使い始められます。
+ドラッグできない場合：上のワンクリック URL を使うか、Tampermonkey ダッシュボードのユーティリティからファイルを読み込んでください。`tanktrouble-netlab.user.js` も同内容、`install.user.js` はドラッグ用の BOM 付きコピーです。
 
 ## ショートカット
 
@@ -41,7 +47,7 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 | `Ctrl+Shift+E` | 診断レポートを出力（クリップボードにもコピー） |
 | `Ctrl+Shift+P` | 7 つの地域サーバーを測定して順位付け |
 
-パネルの **⚡** は `Ctrl+Shift+S` と同じです。パネルでは **10 言語**から選べ、言語・最適化スイッチ・ボール位置は `localStorage` に保存されます。
+パネルの **⚡** は `Ctrl+Shift+S` と同じです。パネルでは **11 言語**から選べ、言語・最適化スイッチ・ボール位置は `localStorage` に保存されます。
 
 ## よくある質問
 

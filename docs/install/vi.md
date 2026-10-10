@@ -4,30 +4,39 @@
 
 <p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · <b>🇻🇳 Tiếng Việt</b></sub></p>
 
-## Cài đặt một cú nhấp
+## ⚠️ Đây là userscript — không phải tiện ích trình duyệt
+
+Hãy cài **Tampermonkey** (trình quản lý userscript) trước. Đừng dùng *Load unpacked* / trang tiện ích của Chrome — file `.user.js` do Tampermonkey quản lý, không phải extension.
+
+## Cách A — cài một cú nhấp (khuyến nghị)
 
 [![Install](https://img.shields.io/badge/install-vi-brightgreen)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
 
-Nhấp vào badge (hoặc mở URL bên dưới) → Tampermonkey mở trang cài đặt → nhấn **Cài đặt**:
+Sau khi cài Tampermonkey, nhấp badge hoặc mở URL bên dưới: Tampermonkey mở trang cài đặt, nhấn **Cài đặt**.
 
 ```
 https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js
 ```
 
-## Các bước
+## Cách B — cài từ file ZIP đã tải
 
-1. **Cài Tampermonkey**
+1. **Tải file ZIP**
 
-   Chrome/Edge: mở [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). Nhấn *Thêm vào trình duyệt* → *Thêm tiện ích*.
-2. **Bật chế độ nhà phát triển (chỉ Chrome/Edge)**
+   Trên [trang GitHub](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) nhấn **Code → Download ZIP**.
+2. **Giải nén**
 
-   Mở `chrome://extensions` (hoặc `edge://extensions`) và bật **Chế độ nhà phát triển** ở góc trên bên phải. Chrome gần đây yêu cầu bật để cài userscript.
-3. **Cài script**
+   Giải nén ZIP ra một thư mục bình thường.
+3. **Cài Tampermonkey**
 
-   Nhấn **Cài đặt script** bên dưới — Tampermonkey mở trang cài đặt. Nhấn **Cài đặt**.
-4. **Mở game**
+   Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) → Thêm vào Chrome; sau đó mở `chrome://extensions` và bật **Chế độ nhà phát triển**. Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) → Thêm vào Firefox.
+4. **Nạp userscript**
 
-   Vào <https://tanktrouble.com/game> và tham gia một ván: bóng nổi xuất hiện ở góc trên bên trái và bạn có thể dùng ngay.
+   Mở Tampermonkey trên thanh công cụ → **Dashboard**. Kéo `tanktrouble-netlab.install.user.js` từ thư mục vào trang Dashboard, rồi nhấn **Cài đặt**.
+5. **Tải lại trang game**
+
+   Mở <https://tanktrouble.com/game> (tải lại nếu đang mở). Bóng nổi xuất hiện ở góc trên bên trái; nhấp vào để mở rộng và dùng ngay.
+
+Nếu kéo thả không được: dùng URL cài một cú nhấp ở trên, hoặc vào Tampermonkey Dashboard → Utilities để nhập file. `tanktrouble-netlab.user.js` là cùng nội dung; `install.user.js` chỉ là bản có BOM để kéo thả.
 
 ## Phím tắt
 

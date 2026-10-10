@@ -4,33 +4,39 @@
 
 <p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · <b>🇰🇷 한국어</b> · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · [🇻🇳 Tiếng Việt](vi.md)</sub></p>
 
-## 원클릭 설치
+## ⚠️ 브라우저 확장 프로그램이 아니라 유저스크립트입니다
+
+먼저 유저스크립트 관리 도구 **Tampermonkey**를 설치하세요. Chrome의 “압축해제된 확장 프로그램 로드”/확장 프로그램 페이지로는 설치할 수 없습니다. `.user.js`는 Tampermonkey가 관리합니다.
+
+## 방법 A — 원클릭 설치 (권장)
 
 [![Install](https://img.shields.io/badge/install-ko-brightgreen)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
 
-위 버튼(또는 아래 URL)을 열면 → Tampermonkey 설치 화면이 뜹니다 → **설치**를 누르세요:
+Tampermonkey 설치 후 위 배지나 아래 URL을 엽니다. Tampermonkey 설치 페이지가 뜨면 **설치**를 누르세요.
 
 ```
 https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js
 ```
 
-## 단계
+## 방법 B — 다운로드한 ZIP으로 설치
 
-1. **Tampermonkey 설치**
+1. **ZIP 다운로드**
 
-   Chrome/Edge는 [Chrome 웹스토어](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo), Firefox는 [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/)에서 "브라우저에 추가" → "확장 프로그램 추가".
+   [GitHub 저장소](https://github.com/L-Shy-P/TankTrouble-Network-Optimization)에서 **Code → Download ZIP** 클릭.
+2. **압축 해제**
 
-2. **개발자 모드 켜기 (Chrome/Edge)**
+   ZIP을 일반 폴더에 압축 해제합니다.
+3. **Tampermonkey 설치**
 
-   `chrome://extensions`(또는 `edge://extensions`)에서 우측 상단 **개발자 모드**를 켭니다.
+   Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) → Chrome에 추가. 이후 `chrome://extensions`에서 **개발자 모드**를 켭니다. Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) → Firefox에 추가.
+4. **스크립트 불러오기**
 
-3. **스크립트 설치**
+   툴바의 Tampermonkey 아이콘 → **대시보드**. 압축을 푼 `tanktrouble-netlab.install.user.js`를 대시보드로 끌어다 놓고, 나타난 화면에서 **설치** 클릭.
+5. **게임 페이지 새로고침**
 
-   아래 **스크립트 설치**를 누르고 Tampermonkey 화면에서 **설치**.
+   <https://tanktrouble.com/game>을 엽니다(이미 열려 있으면 새로고침). 좌측 상단에 공이 나타나면 클릭해 펼치고 바로 사용할 수 있습니다.
 
-4. **게임 열기**
-
-   <https://tanktrouble.com/game>에서 경기에 들어가면 좌측 상단에 공이 나타나고 바로 사용할 수 있습니다.
+드래그가 안 되면: 위 원클릭 URL을 사용하거나 Tampermonkey 대시보드의 유틸리티에서 파일을 가져오세요. `tanktrouble-netlab.user.js`도 같은 내용이며 `install.user.js`는 드래그용 BOM 복사본입니다.
 
 ## 단축키
 
@@ -41,7 +47,7 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 | `Ctrl+Shift+E` | 진단 보고서 내보내기(클립보드에도 복사) |
 | `Ctrl+Shift+P` | 7개 지역 서버를 측정해 순위 표시 |
 
-패널의 **⚡** 버튼은 `Ctrl+Shift+S`와 같습니다. 패널에서 **10개 언어**를 고를 수 있고, 언어·최적화 스위치·공 위치는 `localStorage`에 저장됩니다.
+패널의 **⚡** 버튼은 `Ctrl+Shift+S`와 같습니다. 패널에서 **11개 언어**를 고를 수 있고, 언어·최적화 스위치·공 위치는 `localStorage`에 저장됩니다.
 
 ## 문제 해결
 

@@ -29,20 +29,24 @@
     ],
     "steps": [
       [
+        "Download the ZIP",
+        "On the [GitHub repository](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) click **Code → Download ZIP**."
+      ],
+      [
+        "Unzip it",
+        "Extract the ZIP to a normal folder (Windows: right-click → Extract All)."
+      ],
+      [
         "Install Tampermonkey",
-        "Chrome/Edge: open the [Chrome Web Store page](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). Click *Add to browser* → *Add extension*."
+        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) → Add to Chrome; then open `chrome://extensions` and turn on **Developer mode**. Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) → Add to Firefox."
       ],
       [
-        "Enable developer mode (Chrome/Edge only)",
-        "Open `chrome://extensions` (or `edge://extensions`) and turn on **Developer mode** in the top-right corner. Recent Chrome requires it for userscripts."
+        "Load the userscript",
+        "Open Tampermonkey from the browser toolbar → **Dashboard**. Drag `tanktrouble-netlab.install.user.js` from the unzipped folder onto the Dashboard page, then click **Install** on the page that appears."
       ],
       [
-        "Install this script",
-        "Click **Install the script** below — Tampermonkey opens an install page. Press **Install**."
-      ],
-      [
-        "Open the game",
-        "Go to <https://tanktrouble.com/game> and join a match: the floating ball appears in the top-left corner, and you can start using it right away."
+        "Refresh the game",
+        "Open <https://tanktrouble.com/game> (refresh if it was already open). The floating ball appears in the top-left; click it to expand and start using."
       ]
     ],
     "trouble": [
@@ -90,20 +94,24 @@
     ],
     "steps": [
       [
-        "安装油猴（Tampermonkey）",
-        "Chrome/Edge 打开 [Chrome 应用商店页](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)；Firefox 打开 [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/)。点「添加到浏览器」→「添加扩展程序」。"
+        "下载源码 ZIP",
+        "在 [GitHub 仓库页](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) 点 **Code → Download ZIP**。"
       ],
       [
-        "打开开发者模式（仅 Chrome/Edge 需要）",
-        "进入 `chrome://extensions`（或 `edge://extensions`），打开右上角的**开发者模式**。新版 Chrome 需要它才能跑用户脚本。"
+        "解压",
+        "把 ZIP 解压到普通文件夹（Windows：右键 → 全部解压缩）。"
       ],
       [
-        "安装本脚本",
-        "点下面的**安装脚本**，油猴会弹安装页，点**安装**。"
+        "安装油猴",
+        "Chrome/Edge：打开 [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) 添加到 Chrome；然后进 `chrome://extensions` 打开**开发者模式**。Firefox：打开 [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) 添加到 Firefox。"
       ],
       [
-        "打开游戏",
-        "访问 <https://tanktrouble.com/game> 并进一局，左上角会出现悬浮球，直接就能开始使用。"
+        "加载脚本",
+        "点浏览器工具栏的油猴图标 → **管理面板**。把解压目录里的 `tanktrouble-netlab.install.user.js` 拖到管理页面；出现安装页后点 **安装**。"
+      ],
+      [
+        "刷新游戏网页",
+        "打开 <https://tanktrouble.com/game>（已打开就刷新）。左上角会出现悬浮球，点一下展开就能开始使用。"
       ]
     ],
     "trouble": [
@@ -151,20 +159,24 @@
     ],
     "steps": [
       [
-        "Tampermonkey を入れる",
-        "Chrome/Edge は [Chrome ウェブストア](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)、Firefox は [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) を開き、「ブラウザに追加」→「拡張機能を追加」。"
+        "ZIP をダウンロード",
+        "[GitHub リポジトリ](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) で **Code → Download ZIP** をクリック。"
       ],
       [
-        "開発者モードを有効化（Chrome/Edge のみ）",
-        "`chrome://extensions`（または `edge://extensions`）を開き、右上の**開発者モード**をオンにします。"
+        "解凍する",
+        "ZIP を普通のフォルダに解凍します。"
       ],
       [
-        "スクリプトをインストール",
-        "下の**スクリプトをインストール**をクリック → Tampermonkey の画面で**インストール**。"
+        "Tampermonkey をインストール",
+        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) → Chrome に追加。その後 `chrome://extensions` を開き**デベロッパーモード**をオン。Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) → Firefox に追加。"
       ],
       [
-        "ゲームを開く",
-        "<https://tanktrouble.com/game> で対戦に入ると、左上にボールが表示され、そのまま使い始められます。"
+        "スクリプトを読み込む",
+        "ツールバーの Tampermonkey アイコン → **ダッシュボード**。解凍した `tanktrouble-netlab.install.user.js` をダッシュボードにドラッグし、表示された画面で **インストール** を押す。"
+      ],
+      [
+        "ゲームページを更新",
+        "<https://tanktrouble.com/game> を開く（開いていたら更新）。左上にボールが表示されたら、クリックして展開すれば使い始められます。"
       ]
     ],
     "trouble": [
@@ -212,20 +224,24 @@
     ],
     "steps": [
       [
+        "ZIP 다운로드",
+        "[GitHub 저장소](https://github.com/L-Shy-P/TankTrouble-Network-Optimization)에서 **Code → Download ZIP** 클릭."
+      ],
+      [
+        "압축 해제",
+        "ZIP을 일반 폴더에 압축 해제합니다."
+      ],
+      [
         "Tampermonkey 설치",
-        "Chrome/Edge는 [Chrome 웹스토어](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo), Firefox는 [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/)에서 \"브라우저에 추가\" → \"확장 프로그램 추가\"."
+        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) → Chrome에 추가. 이후 `chrome://extensions`에서 **개발자 모드**를 켭니다. Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) → Firefox에 추가."
       ],
       [
-        "개발자 모드 켜기 (Chrome/Edge)",
-        "`chrome://extensions`(또는 `edge://extensions`)에서 우측 상단 **개발자 모드**를 켭니다."
+        "스크립트 불러오기",
+        "툴바의 Tampermonkey 아이콘 → **대시보드**. 압축을 푼 `tanktrouble-netlab.install.user.js`를 대시보드로 끌어다 놓고, 나타난 화면에서 **설치** 클릭."
       ],
       [
-        "스크립트 설치",
-        "아래 **스크립트 설치**를 누르고 Tampermonkey 화면에서 **설치**."
-      ],
-      [
-        "게임 열기",
-        "<https://tanktrouble.com/game>에서 경기에 들어가면 좌측 상단에 공이 나타나고 바로 사용할 수 있습니다."
+        "게임 페이지 새로고침",
+        "<https://tanktrouble.com/game>을 엽니다(이미 열려 있으면 새로고침). 좌측 상단에 공이 나타나면 클릭해 펼치고 바로 사용할 수 있습니다."
       ]
     ],
     "trouble": [
@@ -273,20 +289,24 @@
     ],
     "steps": [
       [
+        "Скачайте ZIP",
+        "На [странице GitHub](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) нажмите **Code → Download ZIP**."
+      ],
+      [
+        "Распакуйте",
+        "Распакуйте ZIP в обычную папку."
+      ],
+      [
         "Установите Tampermonkey",
-        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). «Добавить в браузер» → «Добавить расширение»."
+        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) → Добавить в Chrome; затем откройте `chrome://extensions` и включите **Режим разработчика**. Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) → Добавить в Firefox."
       ],
       [
-        "Включите режим разработчика (Chrome/Edge)",
-        "Откройте `chrome://extensions` (или `edge://extensions`) и включите **Режим разработчика** справа вверху."
+        "Загрузите userscript",
+        "Нажмите значок Tampermonkey на панели → **Панель управления**. Перетащите `tanktrouble-netlab.install.user.js` из папки на страницу панели и нажмите **Установить**."
       ],
       [
-        "Установите скрипт",
-        "Нажмите **Установить скрипт** ниже и подтвердите **Установить**."
-      ],
-      [
-        "Откройте игру",
-        "Зайдите на <https://tanktrouble.com/game> и в бой: в левом верхнем углу появится шар, и можно сразу пользоваться."
+        "Обновите страницу игры",
+        "Откройте <https://tanktrouble.com/game> (обновите, если уже открыто). Слева вверху появится шар; нажмите на него, чтобы раскрыть, и пользуйтесь."
       ]
     ],
     "trouble": [
@@ -334,20 +354,24 @@
     ],
     "steps": [
       [
+        "نزّل ملف ZIP",
+        "في [صفحة GitHub](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) اضغط **Code → Download ZIP**."
+      ],
+      [
+        "فك الضغط",
+        "فُك ضغط ZIP إلى مجلد عادي."
+      ],
+      [
         "ثبّت Tampermonkey",
-        "كروم/إيدج: [متجر كروم](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). فايرفوكس: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). ثم «إضافة إلى المتصفح»."
+        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) → إضافة إلى Chrome؛ ثم افتح `chrome://extensions` وفعّل **وضع المطوّر**. Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) → إضافة إلى Firefox."
       ],
       [
-        "فعّل وضع المطور (كروم/إيدج فقط)",
-        "افتح `chrome://extensions` وفعّل **وضع المطوّر** في الأعلى."
+        "حمّل السكربت",
+        "افتح Tampermonkey من شريط الأدوات → **لوحة التحكم**. اسحب `tanktrouble-netlab.install.user.js` من المجلد إلى صفحة اللوحة، ثم اضغط **تثبيت**."
       ],
       [
-        "ثبّت السكربت",
-        "اضغط **تثبيت السكربت** بالأسفل ثم **تثبيت**."
-      ],
-      [
-        "افتح اللعبة",
-        "اذهب إلى <https://tanktrouble.com/game> وادخل مباراة: ستظهر الكرة أعلى اليسار ويمكنك البدء بالاستخدام مباشرة."
+        "حدّث صفحة اللعبة",
+        "افتح <https://tanktrouble.com/game> (حدّث الصفحة إن كانت مفتوحة). ستظهر الكرة في الأعلى يساراً؛ اضغط عليها للفتح وابدأ الاستخدام."
       ]
     ],
     "trouble": [
@@ -395,20 +419,24 @@
     ],
     "steps": [
       [
-        "Installer Tampermonkey",
-        "Chrome/Edge : [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). Firefox : [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). « Ajouter au navigateur » → « Ajouter l'extension »."
+        "Téléchargez le ZIP",
+        "Sur la [page GitHub](https://github.com/L-Shy-P/TankTrouble-Network-Optimization), cliquez **Code → Download ZIP**."
       ],
       [
-        "Activer le mode développeur (Chrome/Edge)",
-        "Ouvrez `chrome://extensions` (ou `edge://extensions`) et activez **Mode développeur** en haut à droite."
+        "Décompressez",
+        "Extrayez le ZIP dans un dossier normal."
       ],
       [
-        "Installer le script",
-        "Cliquez sur **Installer le script** ci-dessous puis **Installer**."
+        "Installez Tampermonkey",
+        "Chrome/Edge : [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) → Ajouter à Chrome ; puis ouvrez `chrome://extensions` et activez **Mode développeur**. Firefox : [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) → Ajouter à Firefox."
       ],
       [
-        "Ouvrir le jeu",
-        "Allez sur <https://tanktrouble.com/game> et entrez en partie : le ballon apparaît en haut à gauche et vous pouvez commencer tout de suite."
+        "Chargez le userscript",
+        "Cliquez l'icône Tampermonkey dans la barre d'outils → **Tableau de bord**. Glissez `tanktrouble-netlab.install.user.js` du dossier vers la page, puis cliquez **Installer**."
+      ],
+      [
+        "Rafraîchissez la page du jeu",
+        "Ouvrez <https://tanktrouble.com/game> (rafraîchissez si déjà ouvert). Le ballon apparaît en haut à gauche ; cliquez dessus pour l'ouvrir et commencez."
       ]
     ],
     "trouble": [
@@ -456,20 +484,24 @@
     ],
     "steps": [
       [
+        "Descarga el ZIP",
+        "En la [página de GitHub](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) pulsa **Code → Download ZIP**."
+      ],
+      [
+        "Descomprime",
+        "Extrae el ZIP en una carpeta normal."
+      ],
+      [
         "Instala Tampermonkey",
-        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). «Añadir al navegador» → «Añadir extensión»."
+        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) → Añadir a Chrome; luego abre `chrome://extensions` y activa **Modo de desarrollador**. Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) → Añadir a Firefox."
       ],
       [
-        "Activa el modo desarrollador (Chrome/Edge)",
-        "Abre `chrome://extensions` (o `edge://extensions`) y activa **Modo de desarrollador** arriba a la derecha."
+        "Carga el userscript",
+        "Pulsa el icono de Tampermonkey en la barra → **Panel de control**. Arrastra `tanktrouble-netlab.install.user.js` desde la carpeta a la página y pulsa **Instalar**."
       ],
       [
-        "Instala el script",
-        "Pulsa **Instalar el script** abajo y luego **Instalar**."
-      ],
-      [
-        "Abre el juego",
-        "Ve a <https://tanktrouble.com/game> y entra en partida: la bola aparece arriba a la izquierda y puedes empezar a usarla al instante."
+        "Recarga la página del juego",
+        "Abre <https://tanktrouble.com/game> (recarga si ya estaba abierta). La bola aparece arriba a la izquierda; púlsala para expandir y empieza a usarla."
       ]
     ],
     "trouble": [
@@ -517,20 +549,24 @@
     ],
     "steps": [
       [
+        "ZIP herunterladen",
+        "Auf der [GitHub-Seite](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) auf **Code → Download ZIP** klicken."
+      ],
+      [
+        "Entpacken",
+        "ZIP in einen normalen Ordner entpacken."
+      ],
+      [
         "Tampermonkey installieren",
-        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). „Zum Browser hinzufügen“ → „Erweiterung hinzufügen“."
+        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) → Zu Chrome hinzufügen; dann `chrome://extensions` öffnen und **Entwicklermodus** aktivieren. Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) → Zu Firefox hinzufügen."
       ],
       [
-        "Entwicklermodus aktivieren (nur Chrome/Edge)",
-        "Öffne `chrome://extensions` (oder `edge://extensions`) und aktiviere **Entwicklermodus** oben rechts."
+        "Userscript laden",
+        "Tampermonkey-Symbol in der Symbolleiste → **Dashboard**. `tanktrouble-netlab.install.user.js` aus dem Ordner auf die Seite ziehen und **Installieren** klicken."
       ],
       [
-        "Skript installieren",
-        "Klicke unten auf **Skript installieren** und dann **Installieren**."
-      ],
-      [
-        "Spiel öffnen",
-        "Gehe auf <https://tanktrouble.com/game> und starte eine Runde: Die Kugel erscheint oben links, und du kannst sofort loslegen."
+        "Spielseite neu laden",
+        "<https://tanktrouble.com/game> öffnen (neu laden, falls schon offen). Oben links erscheint die Kugel; anklicken, aufklappen und loslegen."
       ]
     ],
     "trouble": [
@@ -578,20 +614,24 @@
     ],
     "steps": [
       [
+        "Baixe o ZIP",
+        "Na [página do GitHub](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) clique em **Code → Download ZIP**."
+      ],
+      [
+        "Descompacte",
+        "Extraia o ZIP para uma pasta normal."
+      ],
+      [
         "Instale o Tampermonkey",
-        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). “Adicionar ao navegador” → “Adicionar extensão”."
+        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) → Adicionar ao Chrome; depois abra `chrome://extensions` e ative o **Modo do desenvolvedor**. Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) → Adicionar ao Firefox."
       ],
       [
-        "Ative o modo desenvolvedor (Chrome/Edge)",
-        "Abra `chrome://extensions` (ou `edge://extensions`) e ative **Modo do desenvolvedor** no canto superior direito."
+        "Carregue o userscript",
+        "Clique no ícone do Tampermonkey na barra → **Painel**. Arraste `tanktrouble-netlab.install.user.js` da pasta para a página e clique em **Instalar**."
       ],
       [
-        "Instale o script",
-        "Clique em **Instalar o script** abaixo e depois **Instalar**."
-      ],
-      [
-        "Abra o jogo",
-        "Vá para <https://tanktrouble.com/game> e entre em uma partida: a bola aparece no canto superior esquerdo e você já pode começar a usar."
+        "Atualize a página do jogo",
+        "Abra <https://tanktrouble.com/game> (atualize se já estiver aberta). A bola aparece no canto superior esquerdo; clique nela para expandir e comece a usar."
       ]
     ],
     "trouble": [
@@ -639,20 +679,24 @@
     ],
     "steps": [
       [
+        "Tải file ZIP",
+        "Trên [trang GitHub](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) nhấn **Code → Download ZIP**."
+      ],
+      [
+        "Giải nén",
+        "Giải nén ZIP ra một thư mục bình thường."
+      ],
+      [
         "Cài Tampermonkey",
-        "Chrome/Edge: mở [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/). Nhấn *Thêm vào trình duyệt* → *Thêm tiện ích*."
+        "Chrome/Edge: [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) → Thêm vào Chrome; sau đó mở `chrome://extensions` và bật **Chế độ nhà phát triển**. Firefox: [addons.mozilla.org](https://addons.mozilla.org/firefox/addon/tampermonkey/) → Thêm vào Firefox."
       ],
       [
-        "Bật chế độ nhà phát triển (chỉ Chrome/Edge)",
-        "Mở `chrome://extensions` (hoặc `edge://extensions`) và bật **Chế độ nhà phát triển** ở góc trên bên phải. Chrome gần đây yêu cầu bật để cài userscript."
+        "Nạp userscript",
+        "Mở Tampermonkey trên thanh công cụ → **Dashboard**. Kéo `tanktrouble-netlab.install.user.js` từ thư mục vào trang Dashboard, rồi nhấn **Cài đặt**."
       ],
       [
-        "Cài script",
-        "Nhấn **Cài đặt script** bên dưới — Tampermonkey mở trang cài đặt. Nhấn **Cài đặt**."
-      ],
-      [
-        "Mở game",
-        "Vào <https://tanktrouble.com/game> và tham gia một ván: bóng nổi xuất hiện ở góc trên bên trái và bạn có thể dùng ngay."
+        "Tải lại trang game",
+        "Mở <https://tanktrouble.com/game> (tải lại nếu đang mở). Bóng nổi xuất hiện ở góc trên bên trái; nhấp vào để mở rộng và dùng ngay."
       ]
     ],
     "trouble": [
