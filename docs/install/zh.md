@@ -59,7 +59,8 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 - **把文件拖进去没反应？** — 要拖到油猴管理面板页面上（不是 chrome://extensions，也不是普通网页）。拖拽被拦时用一键链接，或管理面板 → 实用工具 → 从 URL 安装。
 - **装完游戏里没看到东西？** — 用 Ctrl+F5 强制刷新游戏页；确认油猴管理面板里脚本开关是开启的；按 Ctrl+Shift+L 显示 HUD。安装前就打开的页面必须刷新。
 - **装完还需要留着 ZIP/文件夹吗？** — 不需要。脚本已经进油猴了，ZIP 和文件夹可以删；以后在油猴里更新或重新打开 raw 链接安装即可。
-
+- **油猴里的“从文件导入”/“添加文件”是在那里上传吗？** — 不是。那个按钮是给 Tampermonkey 备份 `.zip` 用的。安装这个脚本请用 Dashboard → 实用工具 → 从 URL 安装，或把单个 `.user.js` 文件拖到 Dashboard。
+- **.user.js 需要改名、编辑或再解压吗？** — 不需要，原样使用即可。它本身就是脚本文本；不要放进 `chrome://extensions`，也不要上传整个文件夹。
 ## 常见问题
 
 - **什么都没出现** — 确认地址匹配 `*://*.tanktrouble.com/*`、脚本是启用状态，然后 `Ctrl+F5` 强制刷新。

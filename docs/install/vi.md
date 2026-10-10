@@ -59,7 +59,8 @@ Nút **⚡** trong bảng tương đương `Ctrl+Shift+S`. Bảng cho chọn m�
 - **Kéo file vào mà không có gì xảy ra?** — Phải thả vào trang Dashboard Tampermonkey (không phải chrome://extensions hay trang web thường). Nếu bị chặn, dùng link một cú nhấp hoặc Dashboard → Utilities → Install from URL.
 - **Cài rồi mà vào game không thấy gì?** — Nhấn Ctrl+F5 để tải lại trang game; kiểm tra script đang bật trong Dashboard Tampermonkey; nhấn Ctrl+Shift+L để hiện HUD. Trang mở trước khi cài phải được tải lại.
 - **Sau khi cài có cần giữ ZIP/thư mục không?** — Không. Script đã nằm trong Tampermonkey; có thể xóa ZIP và thư mục. Sau này cập nhật trong Tampermonkey hoặc mở lại link raw để cài lại.
-
+- **Trong Tampermonkey có mục 'Import from file' / 'Add file' — có phải tải file lên đó không?** — Không. Mục đó dành cho file backup `.zip` của Tampermonkey. Muốn cài script này hãy dùng Dashboard → Utilities → Install from URL, hoặc kéo đúng file `.user.js` vào Dashboard.
+- **Có cần đổi tên, sửa hoặc giải nén file `.user.js` không?** — Không, dùng nguyên file là được. File đó chính là nội dung script; đừng đưa vào `chrome://extensions` và đừng tải cả thư mục.
 ## Khắc phục sự cố
 
 - **Không thấy gì xuất hiện** — Kiểm tra URL khớp `*://*.tanktrouble.com/*` và script đang bật, sau đó nhấn `Ctrl+F5`.

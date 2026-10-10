@@ -59,7 +59,8 @@ El botón **⚡** del panel equivale a `Ctrl+Shift+S`. El panel permite elegir e
 - **Arrastro el archivo y no pasa nada.** — Suéltalo en la página del panel de Tampermonkey (no en chrome://extensions ni en una web normal). Si se bloquea, usa el enlace de un clic o «Instalar desde URL».
 - **Lo instalé pero no veo nada en el juego.** — Recarga la página del juego con Ctrl+F5, comprueba que el script está activado en Tampermonkey y pulsa Ctrl+Shift+L para mostrar el HUD. La página abierta antes de instalar debe recargarse.
 - **¿Tengo que guardar el ZIP/carpeta?** — No. El script ya está dentro de Tampermonkey; puedes borrar el ZIP. Actualiza desde Tampermonkey o reinstalando el enlace raw.
-
+- **En Tampermonkey hay «Importar desde archivo»/«Add file», ¿ahí lo subo?** — No, ese botón es para copias de seguridad `.zip` de Tampermonkey. Para instalar este script usa Panel → Utilidades → Instalar desde URL, o arrastra el único archivo `.user.js` al panel.
+- **¿Tengo que renombrar, editar o descomprimir el `.user.js`?** — No, úsalo tal cual. El archivo es el propio script; no lo pongas en `chrome://extensions` ni subas la carpeta entera.
 ## Solución de problemas
 
 - **No aparece nada** — Comprueba que la URL coincide con `*://*.tanktrouble.com/*` y que el script está activado, luego `Ctrl+F5`.

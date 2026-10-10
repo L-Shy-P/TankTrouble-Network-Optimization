@@ -59,7 +59,8 @@ The **⚡** button in the panel does the same as `Ctrl+Shift+S`. The panel also 
 - **I dragged the file but nothing happens.** — Drop it on the Tampermonkey Dashboard page (not chrome://extensions or a normal web page). If drag-and-drop is blocked, use the one-click link or Dashboard → Utilities → Install from URL.
 - **I installed it, but I don't see anything in the game.** — Refresh the game page with Ctrl+F5, check that the script toggle is ON in the Tampermonkey Dashboard, and press Ctrl+Shift+L to show the HUD. A page opened before installing must be refreshed.
 - **Do I still need the ZIP/folder after installation?** — No. The script now lives inside Tampermonkey; you can delete the ZIP and folder. Update later from Tampermonkey or by reinstalling the raw link.
-
+- **Tampermonkey has an "Import from file" / "Add file" button — is that where I upload it?** — No. That button is for Tampermonkey backup `.zip` files. To install this script use Dashboard → Utilities → Install from URL, or drag the single `.user.js` file onto the Dashboard.
+- **Do I need to rename, edit or unzip the `.user.js` again?** — No, use the file exactly as it is. That file is the script text itself; do not put it into chrome://extensions and do not upload the whole folder.
 ## Troubleshooting
 
 - **Nothing appears** — Check that the URL matches `*://*.tanktrouble.com/*` and the script is enabled, then `Ctrl+F5`.

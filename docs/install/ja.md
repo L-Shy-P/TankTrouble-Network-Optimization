@@ -59,7 +59,8 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 - **ドラッグしても何も起きない。** — Tampermonkey ダッシュボードのページにドロップしてください（chrome://extensions や通常ページ不可）。ブロックされる場合はワンクリックリンクか「URL からインストール」を使います。
 - **入れたのにゲームに何も出ない。** — ゲームページで Ctrl+F5。ダッシュボードでスクリプトが有効か確認。Ctrl+Shift+L で HUD 表示。インストール前に開いていたページは再読み込みが必要です。
 - **ZIP やフォルダは残す必要ある？** — 不要です。スクリプトは Tampermonkey 内に入っています。ZIP は削除可。更新は Tampermonkey か raw リンク再インストールで。
-
+- **Tampermonkey の「ファイルからインポート」/「Add file」にアップロードする？** — いいえ、それは Tampermonkey のバックアップ `.zip` 用です。このスクリプトは Dashboard → ユーティリティ → URL からインストール、または `.user.js` 1 ファイルを Dashboard にドラッグしてください。
+- **.user.js を名前変更・編集・再解凍する必要は？** — 不要です。そのまま使ってください。ファイル自体がスクリプト本文です。`chrome://extensions` に入れたり、フォルダごとアップロードしないでください。
 ## よくある質問
 
 - **何も出ない** — URL が `*://*.tanktrouble.com/*` に一致し、スクリプトが有効か確認して `Ctrl+F5`。

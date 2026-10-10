@@ -1,112 +1,497 @@
 {
-  "en": {"title":"Newbie FAQ (read this if you are confused)","qa":[
-    ["Is this a Chrome extension? Should I add it on chrome://extensions?","No. It is a userscript. Install Tampermonkey first; the script is installed inside Tampermonkey — never via \"Load unpacked\"."],
-    ["What is Tampermonkey? It looks like a shady app.","Tampermonkey is the standard userscript manager for Chrome/Edge/Firefox, available from the official stores (tampermonkey.net). This project is open source on GitHub and needs no server, VPN or network settings."],
-    ["I downloaded the ZIP. Do I drag the whole unzipped folder in?","No — drag only the single file `tanktrouble-netlab.install.user.js` into the Tampermonkey Dashboard. A whole folder is not a script and will not install."],
-    ["How do I open the Tampermonkey Dashboard?","Click the Tampermonkey icon in the browser toolbar → Dashboard. If you don't see the icon, click the puzzle-piece/extensions button and pin Tampermonkey."],
-    ["The raw link shows code / Chrome says it cannot install from this site.","With Tampermonkey installed, open the raw link — Tampermonkey shows its own install page. If not, copy the URL and use Tampermonkey Dashboard → Utilities → Install from URL."],
-    ["I dragged the file but nothing happens.","Drop it on the Tampermonkey Dashboard page (not chrome://extensions or a normal web page). If drag-and-drop is blocked, use the one-click link or Dashboard → Utilities → Install from URL."],
-    ["I installed it, but I don't see anything in the game.","Refresh the game page with Ctrl+F5, check that the script toggle is ON in the Tampermonkey Dashboard, and press Ctrl+Shift+L to show the HUD. A page opened before installing must be refreshed."],
-    ["Do I still need the ZIP/folder after installation?","No. The script now lives inside Tampermonkey; you can delete the ZIP and folder. Update later from Tampermonkey or by reinstalling the raw link."]
-  ]},
-  "zh": {"title":"新手常见疑问（看不懂先看这里）","qa":[
-    ["这是浏览器扩展吗？要加到 chrome://extensions 吗？","不是。它是油猴脚本；先装 Tampermonkey（油猴），脚本是在油猴里安装，不要用“加载已解压的扩展程序”。"],
-    ["Tampermonkey 看着像可疑软件？","Tampermonkey 是 Chrome/Edge/Firefox 上最常用的用户脚本管理器，只在官方商店安装（tampermonkey.net）；本项目开源在 GitHub，不用服务器、VPN 或改网络设置。"],
-    ["ZIP 解压后要把整个文件夹拖进去吗？","不用。只把单个文件 `tanktrouble-netlab.install.user.js` 拖进油猴管理面板；整个文件夹不是脚本，装不上。"],
-    ["油猴管理面板怎么打开？","点浏览器工具栏的油猴图标 → 管理面板；看不到图标就点拼图（扩展）按钮，把 Tampermonkey 固定出来。"],
-    ["打开 raw 链接只看到代码 / Chrome 提示不能从此网站安装。","装好油猴后再打开 raw 链接，油猴会弹出自己的安装页；如果没有，复制链接，用油猴管理面板 → 实用工具 → 从 URL 安装。"],
-    ["把文件拖进去没反应？","要拖到油猴管理面板页面上（不是 chrome://extensions，也不是普通网页）。拖拽被拦时用一键链接，或管理面板 → 实用工具 → 从 URL 安装。"],
-    ["装完游戏里没看到东西？","用 Ctrl+F5 强制刷新游戏页；确认油猴管理面板里脚本开关是开启的；按 Ctrl+Shift+L 显示 HUD。安装前就打开的页面必须刷新。"],
-    ["装完还需要留着 ZIP/文件夹吗？","不需要。脚本已经进油猴了，ZIP 和文件夹可以删；以后在油猴里更新或重新打开 raw 链接安装即可。"]
-  ]},
-  "ja": {"title":"初心者向け FAQ（わからない人はここ）","qa":[
-    ["これは Chrome 拡張ですか？chrome://extensions に入れますか？","いいえ、ユーザースクリプトです。先に Tampermonkey を入れ、その中にインストールします。「パッケージ化されていない拡張機能を読み込む」は使いません。"],
-    ["Tampermonkey は怪しいアプリ？","Chrome/Edge/Firefox で最も使われているユーザースクリプト管理ツールで、公式ストア（tampermonkey.net）から入れます。このプロジェクトは GitHub で公開、サーバー/VPN/ネットワーク設定は不要です。"],
-    ["ZIP を解凍したらフォルダごと入れますか？","いいえ。`tanktrouble-netlab.install.user.js` という 1 ファイルだけを Tampermonkey ダッシュボードにドラッグします。フォルダごとではインストールできません。"],
-    ["Tampermonkey のダッシュボードは？","ツールバーの Tampermonkey アイコン → ダッシュボード。見えない場合はパズル/拡張ボタンから Tampermonkey をピン留めします。"],
-    ["raw リンクがコードになる / このサイトからは追加できませんと出る。","Tampermonkey 導入済みで raw リンクを開くと Tampermonkey のインストール画面が出ます。出ない場合は URL をコピーし、ダッシュボード → ユーティリティ → URL からインストール。"],
-    ["ドラッグしても何も起きない。","Tampermonkey ダッシュボードのページにドロップしてください（chrome://extensions や通常ページ不可）。ブロックされる場合はワンクリックリンクか「URL からインストール」を使います。"],
-    ["入れたのにゲームに何も出ない。","ゲームページで Ctrl+F5。ダッシュボードでスクリプトが有効か確認。Ctrl+Shift+L で HUD 表示。インストール前に開いていたページは再読み込みが必要です。"],
-    ["ZIP やフォルダは残す必要ある？","不要です。スクリプトは Tampermonkey 内に入っています。ZIP は削除可。更新は Tampermonkey か raw リンク再インストールで。"]
-  ]},
-  "ko": {"title":"초보자 FAQ (헷갈리면 여기부터)","qa":[
-    ["이거 크롬 확장인가요? chrome://extensions에 넣나요?","아니요, 유저스크립트입니다. 먼저 Tampermonkey를 설치하고 그 안에 스크립트를 설치하세요. '압축해제된 확장 프로그램 로드'는 사용하지 않습니다."],
-    ["Tampermonkey가 수상해 보여요.","Chrome/Edge/Firefox에서 가장 많이 쓰는 유저스크립트 관리 도구이며 공식 스토어(tampermonkey.net)에서 설치합니다. 이 프로젝트는 GitHub 오픈소스이고 서버/VPN/네트워크 설정이 필요 없습니다."],
-    ["ZIP을 풀면 폴더째 넣어야 하나요?","아니요. `tanktrouble-netlab.install.user.js` 파일 하나만 Tampermonkey 대시보드에 끌어다 놓으세요. 폴더째로는 설치되지 않습니다."],
-    ["Tampermonkey 대시보드는 어떻게 열어요?","툴바의 Tampermonkey 아이콘 → 대시보드. 아이콘이 안 보이면 퍼즐/확장 버튼에서 Tampermonkey를 고정하세요."],
-    ["raw 링크가 코드로 보여요 / 이 사이트에서는 추가할 수 없다고 해요.","Tampermonkey 설치 후 raw 링크를 열면 Tampermonkey 설치 화면이 뜹니다. 안 뜨면 URL을 복사해 대시보드 → 유틸리티 → URL에서 설치를 사용하세요."],
-    ["파일을 끌어도 반응이 없어요.","Tampermonkey 대시보드 페이지에 놓아야 합니다(chrome://extensions나 일반 웹페이지 아님). 막히면 원클릭 링크나 'URL에서 설치'를 쓰세요."],
-    ["설치했는데 게임에 아무것도 안 보여요.","게임 페이지에서 Ctrl+F5로 새로고침하세요. 대시보드에서 스크립트가 켜져 있는지 확인하고 Ctrl+Shift+L로 HUD를 표시하세요. 설치 전에 열어둔 페이지는 새로고침해야 합니다."],
-    ["설치 후 ZIP/폴더를 남겨야 하나요?","아니요. 스크립트는 Tampermonkey 안에 있습니다. ZIP은 삭제해도 됩니다. 업데이트는 Tampermonkey나 raw 링크 재설치로 하세요."]
-  ]},
-  "ru": {"title":"FAQ для новичков (если запутались — сюда)","qa":[
-    ["Это расширение Chrome? Добавлять в chrome://extensions?","Нет, это userscript. Сначала установите Tampermonkey, а скрипт ставьте внутри него. «Загрузить распакованное расширение» не используется."],
-    ["Tampermonkey выглядит подозрительно.","Это самый популярный менеджер userscript'ов для Chrome/Edge/Firefox, ставится из официальных магазинов (tampermonkey.net). Проект открыт на GitHub, сервер/VPN/настройка сети не нужны."],
-    ["Скачал ZIP — перетаскивать всю папку?","Нет. Перетащите только файл `tanktrouble-netlab.install.user.js` в панель Tampermonkey. Целая папка не является скриптом и не установится."],
-    ["Как открыть панель Tampermonkey?","Нажмите значок Tampermonkey на панели браузера → Панель управления. Если значка нет — кнопка пазла/расширений, закрепите Tampermonkey."],
-    ["По raw-ссылке открывается код / Chrome пишет, что нельзя установить с этого сайта.","С установленным Tampermonkey откройте raw-ссылку — Tampermonkey покажет свою страницу установки. Если нет — скопируйте URL и используйте Панель → Утилиты → Установить из URL."],
-    ["Перетаскиваю файл, ничего не происходит.","Бросать нужно на страницу панели Tampermonkey (не chrome://extensions и не обычную страницу). Если блокируется — ссылка в один клик или «Установить из URL»."],
-    ["Установил, но в игре ничего нет.","Обновите страницу игры Ctrl+F5, проверьте, что скрипт включён в панели, нажмите Ctrl+Shift+L для HUD. Страницу, открытую до установки, нужно обновить."],
-    ["Оставлять ZIP/папку после установки?","Нет. Скрипт уже в Tampermonkey; ZIP можно удалить. Обновление — через Tampermonkey или повторную установку raw-ссылки."]
-  ]},
-  "ar": {"title":"أسئلة المبتدئين الشائعة (إذا لم تفهم، ابدأ من هنا)","qa":[
-    ["هل هذه إضافة Chrome؟ هل أضيفها في chrome://extensions؟","لا، هذا سكربت مستخدم. ثبّت Tampermonkey أولاً ثم ثبّت السكربت داخله. لا تستخدم «تحميل إضافة غير مضغوطة»."],
-    ["Tampermonkey يبدو مشبوهاً.","هو أشهر مدير سكربتات مستخدم في Chrome/Edge/Firefox ويُثبّت من المتاجر الرسمية (tampermonkey.net). المشروع مفتوح المصدر على GitHub ولا يحتاج خادماً أو VPN أو إعداد شبكة."],
-    ["حمّلت ZIP؛ هل أدخل المجلد كاملاً؟","لا. اسحب ملف `tanktrouble-netlab.install.user.js` وحده إلى لوحة Tampermonkey. المجلد كاملاً ليس سكربتاً ولن يُثبّت."],
-    ["كيف أفتح لوحة Tampermonkey؟","اضغط أيقونة Tampermonkey في شريط المتصفح → لوحة التحكم. إن لم تظهر، اضغط زر الإضافات/القطع وثبّت Tampermonkey."],
-    ["رابط raw يعرض الكود / Chrome يقول لا يمكن التثبيت من هذا الموقع.","بعد تثبيت Tampermonkey افتح رابط raw وستظهر صفحة تثبيته. إن لم تظهر، انسخ الرابط واستخدم لوحة التحكم → الأدوات → التثبيت من URL."],
-    ["أسحب الملف ولا يحدث شيء.","أسقطه على صفحة لوحة Tampermonkey (وليس chrome://extensions أو صفحة عادية). إن كان السحب محظوراً استخدم رابط النقرة الواحدة أو «التثبيت من URL»."],
-    ["ثبّتته ولا أرى شيئاً في اللعبة.","حدّث صفحة اللعبة بـ Ctrl+F5، وتأكد أن السكربت مفعّل في اللوحة، واضغط Ctrl+Shift+L لإظهار الواجهة. أي صفحة كانت مفتوحة قبل التثبيت يجب تحديثها."],
-    ["هل أبقي ZIP/المجلد بعد التثبيت؟","لا. السكربت أصبح داخل Tampermonkey؛ يمكنك حذف ZIP. التحديث من Tampermonkey أو بإعادة تثبيت رابط raw."]
-  ]},
-  "fr": {"title":"FAQ débutants (si vous êtes perdu, lisez ceci)","qa":[
-    ["Est-ce une extension Chrome ? Faut-il l'ajouter dans chrome://extensions ?","Non, c'est un userscript. Installez d'abord Tampermonkey, puis installez le script dedans. N'utilisez pas « Charger l'extension non empaquetée »."],
-    ["Tampermonkey a l'air louche.","C'est le gestionnaire de userscripts le plus courant pour Chrome/Edge/Firefox, disponible dans les stores officiels (tampermonkey.net). Ce projet est open source sur GitHub ; aucun serveur, VPN ou réglage réseau n'est nécessaire."],
-    ["J'ai téléchargé le ZIP : je glisse tout le dossier ?","Non. Glissez uniquement le fichier `tanktrouble-netlab.install.user.js` dans le tableau de bord Tampermonkey. Un dossier n'est pas un script et ne s'installera pas."],
-    ["Comment ouvrir le tableau de bord Tampermonkey ?","Cliquez l'icône Tampermonkey dans la barre d'outils → Tableau de bord. Si elle est cachée, cliquez sur le bouton puzzle/extensions et épinglez Tampermonkey."],
-    ["Le lien raw affiche du code / Chrome dit qu'on ne peut pas installer depuis ce site.","Avec Tampermonkey installé, ouvrez le lien raw : Tampermonkey affiche sa page d'installation. Sinon, copiez l'URL et utilisez Tableau de bord → Utilitaires → Installer depuis une URL."],
-    ["Je glisse le fichier, rien ne se passe.","Déposez-le sur la page du tableau de bord Tampermonkey (pas chrome://extensions ni une page web normale). Si le glisser-déposer est bloqué, utilisez le lien en un clic ou « Installer depuis une URL »."],
-    ["Installé, mais rien dans le jeu.","Rechargez la page du jeu avec Ctrl+F5, vérifiez que le script est activé dans Tampermonkey et appuyez sur Ctrl+Shift+L pour afficher le HUD. Une page ouverte avant l'installation doit être rechargée."],
-    ["Faut-il garder le ZIP/dossier ?","Non. Le script est dans Tampermonkey ; vous pouvez supprimer le ZIP. Mettez à jour via Tampermonkey ou en réinstallant le lien raw."]
-  ]},
-  "es": {"title":"FAQ para principiantes (si te pierdes, empieza aquí)","qa":[
-    ["¿Es una extensión de Chrome? ¿Se añade en chrome://extensions?","No, es un userscript. Instala primero Tampermonkey y luego instala el script dentro de él. No uses «Cargar extensión descomprimida»."],
-    ["Tampermonkey parece sospechoso.","Es el gestor de userscripts más usado en Chrome/Edge/Firefox y se instala desde las tiendas oficiales (tampermonkey.net). El proyecto es open source en GitHub; no necesita servidor, VPN ni configuración de red."],
-    ["Descargué el ZIP, ¿arrastro la carpeta entera?","No. Arrastra solo el archivo `tanktrouble-netlab.install.user.js` al panel de Tampermonkey. Una carpeta no es un script y no se instalará."],
-    ["¿Cómo abro el panel de Tampermonkey?","Pulsa el icono de Tampermonkey en la barra de herramientas → Panel de control. Si no lo ves, pulsa el botón de rompecabezas/extensiones y fija Tampermonkey."],
-    ["El enlace raw muestra código / Chrome dice que no se puede instalar desde este sitio.","Con Tampermonkey instalado, abre el enlace raw y Tampermonkey mostrará su página de instalación. Si no, copia la URL y usa Panel → Utilidades → Instalar desde URL."],
-    ["Arrastro el archivo y no pasa nada.","Suéltalo en la página del panel de Tampermonkey (no en chrome://extensions ni en una web normal). Si se bloquea, usa el enlace de un clic o «Instalar desde URL»."],
-    ["Lo instalé pero no veo nada en el juego.","Recarga la página del juego con Ctrl+F5, comprueba que el script está activado en Tampermonkey y pulsa Ctrl+Shift+L para mostrar el HUD. La página abierta antes de instalar debe recargarse."],
-    ["¿Tengo que guardar el ZIP/carpeta?","No. El script ya está dentro de Tampermonkey; puedes borrar el ZIP. Actualiza desde Tampermonkey o reinstalando el enlace raw."]
-  ]},
-  "de": {"title":"Einsteiger-FAQ (wenn du verwirrt bist, lies das)","qa":[
-    ["Ist das eine Chrome-Erweiterung? Muss ich sie in chrome://extensions hinzufügen?","Nein, es ist ein Userscript. Installiere zuerst Tampermonkey und dann das Script darin. „Entpackte Erweiterung laden“ wird nicht benutzt."],
-    ["Tampermonkey sieht unseriös aus.","Tampermonkey ist der verbreitetste Userscript-Manager für Chrome/Edge/Firefox und kommt aus den offiziellen Stores (tampermonkey.net). Das Projekt ist Open Source auf GitHub; Server, VPN oder Netzwerkeinstellungen sind nicht nötig."],
-    ["Ich habe die ZIP geladen — soll ich den ganzen Ordner hineinziehen?","Nein. Ziehe nur die Datei `tanktrouble-netlab.install.user.js` in das Tampermonkey-Dashboard. Ein Ordner ist kein Script und wird nicht installiert."],
-    ["Wie öffne ich das Tampermonkey-Dashboard?","Auf das Tampermonkey-Symbol in der Symbolleiste klicken → Dashboard. Wenn du es nicht siehst, klicke auf die Puzzle-/Erweiterungen-Schaltfläche und pinne Tampermonkey an."],
-    ["Der Raw-Link zeigt Code / Chrome sagt, von dieser Seite kann nicht installiert werden.","Mit Tampermonkey geöffnet zeigt der Raw-Link dessen Installationsseite. Falls nicht, URL kopieren und Dashboard → Dienstprogramme → Von URL installieren verwenden."],
-    ["Ich ziehe die Datei hinein, nichts passiert.","Sie muss auf die Tampermonkey-Dashboard-Seite gezogen werden (nicht chrome://extensions oder eine normale Webseite). Wenn Drag-and-drop blockiert ist, Ein-Klick-Link oder „Von URL installieren“ nutzen."],
-    ["Installiert, aber im Spiel erscheint nichts.","Spielseite mit Ctrl+F5 neu laden, im Dashboard prüfen, ob das Script aktiv ist, und Ctrl+Shift+L für das HUD drücken. Eine vor der Installation offene Seite muss neu geladen werden."],
-    ["ZIP/Ordner nach der Installation behalten?","Nein. Das Script liegt jetzt in Tampermonkey; die ZIP kann gelöscht werden. Updates über Tampermonkey oder erneutes Installieren des Raw-Links."]
-  ]},
-  "pt": {"title":"FAQ para iniciantes (se estiver perdido, comece aqui)","qa":[
-    ["Isso é uma extensão do Chrome? Adiciono em chrome://extensions?","Não, é um userscript. Instale primeiro o Tampermonkey e depois instale o script dentro dele. Não use “Carregar extensão descompactada”."],
-    ["O Tampermonkey parece suspeito.","É o gerenciador de userscripts mais usado no Chrome/Edge/Firefox e vem das lojas oficiais (tampermonkey.net). O projeto é open source no GitHub; não precisa de servidor, VPN ou configuração de rede."],
-    ["Baixei o ZIP — arrasto a pasta inteira?","Não. Arraste apenas o arquivo `tanktrouble-netlab.install.user.js` para o painel do Tampermonkey. Uma pasta não é um script e não será instalada."],
-    ["Como abro o painel do Tampermonkey?","Clique no ícone do Tampermonkey na barra de ferramentas → Painel. Se não aparecer, clique no botão de quebra-cabeça/extensões e fixe o Tampermonkey."],
-    ["O link raw mostra código / o Chrome diz que não pode instalar deste site.","Com o Tampermonkey instalado, abra o link raw: ele mostra a própria página de instalação. Se não, copie a URL e use Painel → Utilitários → Instalar de URL."],
-    ["Arrasto o arquivo e nada acontece.","Solte na página do painel do Tampermonkey (não em chrome://extensions nem numa página normal). Se o arrastar for bloqueado, use o link de um clique ou “Instalar de URL”."],
-    ["Instalei, mas não vejo nada no jogo.","Atualize a página do jogo com Ctrl+F5, confirme que o script está ativado no Tampermonkey e pressione Ctrl+Shift+L para mostrar o HUD. A página aberta antes de instalar precisa ser atualizada."],
-    ["Preciso guardar o ZIP/pasta?","Não. O script já está dentro do Tampermonkey; pode apagar o ZIP. Atualize pelo Tampermonkey ou reinstalando o link raw."]
-  ]},
-  "vi": {"title":"Câu hỏi thường gặp cho người mới (nếu rối, đọc mục này trước)","qa":[
-    ["Đây có phải tiện ích Chrome không? Có cần thêm vào chrome://extensions không?","Không. Đây là userscript: hãy cài Tampermonkey trước, rồi cài script bên trong Tampermonkey — đừng dùng 'Load unpacked'."],
-    ["Tampermonkey trông có vẻ lạ, có an toàn không?","Tampermonkey là trình quản lý userscript phổ biến nhất cho Chrome/Edge/Firefox, chỉ tải từ store chính thức (tampermonkey.net). Dự án này mã nguồn mở trên GitHub, không cần server, VPN hay cấu hình mạng."],
-    ["Mình tải ZIP về, có kéo cả thư mục đã giải nén vào không?","Không. Chỉ kéo duy nhất file `tanktrouble-netlab.install.user.js` vào Dashboard Tampermonkey; cả thư mục không phải script nên không cài được."],
-    ["Mở Dashboard Tampermonkey ở đâu?","Nhấp biểu tượng Tampermonkey trên thanh công cụ → Dashboard. Nếu không thấy, nhấp nút mảnh ghép/tiện ích rồi ghim Tampermonkey."],
-    ["Mở link raw chỉ thấy code / Chrome báo không cài được từ trang này.","Khi đã cài Tampermonkey, mở link raw thì Tampermonkey sẽ hiện trang cài đặt của nó. Nếu không, sao chép URL rồi vào Dashboard → Utilities → Install from URL."],
-    ["Kéo file vào mà không có gì xảy ra?","Phải thả vào trang Dashboard Tampermonkey (không phải chrome://extensions hay trang web thường). Nếu bị chặn, dùng link một cú nhấp hoặc Dashboard → Utilities → Install from URL."],
-    ["Cài rồi mà vào game không thấy gì?","Nhấn Ctrl+F5 để tải lại trang game; kiểm tra script đang bật trong Dashboard Tampermonkey; nhấn Ctrl+Shift+L để hiện HUD. Trang mở trước khi cài phải được tải lại."],
-    ["Sau khi cài có cần giữ ZIP/thư mục không?","Không. Script đã nằm trong Tampermonkey; có thể xóa ZIP và thư mục. Sau này cập nhật trong Tampermonkey hoặc mở lại link raw để cài lại."]
-  ]}
+  "en": {
+    "title": "Newbie FAQ (read this if you are confused)",
+    "qa": [
+      [
+        "Is this a Chrome extension? Should I add it on chrome://extensions?",
+        "No. It is a userscript. Install Tampermonkey first; the script is installed inside Tampermonkey — never via \"Load unpacked\"."
+      ],
+      [
+        "What is Tampermonkey? It looks like a shady app.",
+        "Tampermonkey is the standard userscript manager for Chrome/Edge/Firefox, available from the official stores (tampermonkey.net). This project is open source on GitHub and needs no server, VPN or network settings."
+      ],
+      [
+        "I downloaded the ZIP. Do I drag the whole unzipped folder in?",
+        "No — drag only the single file `tanktrouble-netlab.install.user.js` into the Tampermonkey Dashboard. A whole folder is not a script and will not install."
+      ],
+      [
+        "How do I open the Tampermonkey Dashboard?",
+        "Click the Tampermonkey icon in the browser toolbar → Dashboard. If you don't see the icon, click the puzzle-piece/extensions button and pin Tampermonkey."
+      ],
+      [
+        "The raw link shows code / Chrome says it cannot install from this site.",
+        "With Tampermonkey installed, open the raw link — Tampermonkey shows its own install page. If not, copy the URL and use Tampermonkey Dashboard → Utilities → Install from URL."
+      ],
+      [
+        "I dragged the file but nothing happens.",
+        "Drop it on the Tampermonkey Dashboard page (not chrome://extensions or a normal web page). If drag-and-drop is blocked, use the one-click link or Dashboard → Utilities → Install from URL."
+      ],
+      [
+        "I installed it, but I don't see anything in the game.",
+        "Refresh the game page with Ctrl+F5, check that the script toggle is ON in the Tampermonkey Dashboard, and press Ctrl+Shift+L to show the HUD. A page opened before installing must be refreshed."
+      ],
+      [
+        "Do I still need the ZIP/folder after installation?",
+        "No. The script now lives inside Tampermonkey; you can delete the ZIP and folder. Update later from Tampermonkey or by reinstalling the raw link."
+      ],
+      [
+        "Tampermonkey has an \"Import from file\" / \"Add file\" button — is that where I upload it?",
+        "No. That button is for Tampermonkey backup `.zip` files. To install this script use Dashboard → Utilities → Install from URL, or drag the single `.user.js` file onto the Dashboard."
+      ],
+      [
+        "Do I need to rename, edit or unzip the `.user.js` again?",
+        "No, use the file exactly as it is. That file is the script text itself; do not put it into chrome://extensions and do not upload the whole folder."
+      ]
+    ]
+  },
+  "zh": {
+    "title": "新手常见疑问（看不懂先看这里）",
+    "qa": [
+      [
+        "这是浏览器扩展吗？要加到 chrome://extensions 吗？",
+        "不是。它是油猴脚本；先装 Tampermonkey（油猴），脚本是在油猴里安装，不要用“加载已解压的扩展程序”。"
+      ],
+      [
+        "Tampermonkey 看着像可疑软件？",
+        "Tampermonkey 是 Chrome/Edge/Firefox 上最常用的用户脚本管理器，只在官方商店安装（tampermonkey.net）；本项目开源在 GitHub，不用服务器、VPN 或改网络设置。"
+      ],
+      [
+        "ZIP 解压后要把整个文件夹拖进去吗？",
+        "不用。只把单个文件 `tanktrouble-netlab.install.user.js` 拖进油猴管理面板；整个文件夹不是脚本，装不上。"
+      ],
+      [
+        "油猴管理面板怎么打开？",
+        "点浏览器工具栏的油猴图标 → 管理面板；看不到图标就点拼图（扩展）按钮，把 Tampermonkey 固定出来。"
+      ],
+      [
+        "打开 raw 链接只看到代码 / Chrome 提示不能从此网站安装。",
+        "装好油猴后再打开 raw 链接，油猴会弹出自己的安装页；如果没有，复制链接，用油猴管理面板 → 实用工具 → 从 URL 安装。"
+      ],
+      [
+        "把文件拖进去没反应？",
+        "要拖到油猴管理面板页面上（不是 chrome://extensions，也不是普通网页）。拖拽被拦时用一键链接，或管理面板 → 实用工具 → 从 URL 安装。"
+      ],
+      [
+        "装完游戏里没看到东西？",
+        "用 Ctrl+F5 强制刷新游戏页；确认油猴管理面板里脚本开关是开启的；按 Ctrl+Shift+L 显示 HUD。安装前就打开的页面必须刷新。"
+      ],
+      [
+        "装完还需要留着 ZIP/文件夹吗？",
+        "不需要。脚本已经进油猴了，ZIP 和文件夹可以删；以后在油猴里更新或重新打开 raw 链接安装即可。"
+      ],
+      [
+        "油猴里的“从文件导入”/“添加文件”是在那里上传吗？",
+        "不是。那个按钮是给 Tampermonkey 备份 `.zip` 用的。安装这个脚本请用 Dashboard → 实用工具 → 从 URL 安装，或把单个 `.user.js` 文件拖到 Dashboard。"
+      ],
+      [
+        ".user.js 需要改名、编辑或再解压吗？",
+        "不需要，原样使用即可。它本身就是脚本文本；不要放进 `chrome://extensions`，也不要上传整个文件夹。"
+      ]
+    ]
+  },
+  "ja": {
+    "title": "初心者向け FAQ（わからない人はここ）",
+    "qa": [
+      [
+        "これは Chrome 拡張ですか？chrome://extensions に入れますか？",
+        "いいえ、ユーザースクリプトです。先に Tampermonkey を入れ、その中にインストールします。「パッケージ化されていない拡張機能を読み込む」は使いません。"
+      ],
+      [
+        "Tampermonkey は怪しいアプリ？",
+        "Chrome/Edge/Firefox で最も使われているユーザースクリプト管理ツールで、公式ストア（tampermonkey.net）から入れます。このプロジェクトは GitHub で公開、サーバー/VPN/ネットワーク設定は不要です。"
+      ],
+      [
+        "ZIP を解凍したらフォルダごと入れますか？",
+        "いいえ。`tanktrouble-netlab.install.user.js` という 1 ファイルだけを Tampermonkey ダッシュボードにドラッグします。フォルダごとではインストールできません。"
+      ],
+      [
+        "Tampermonkey のダッシュボードは？",
+        "ツールバーの Tampermonkey アイコン → ダッシュボード。見えない場合はパズル/拡張ボタンから Tampermonkey をピン留めします。"
+      ],
+      [
+        "raw リンクがコードになる / このサイトからは追加できませんと出る。",
+        "Tampermonkey 導入済みで raw リンクを開くと Tampermonkey のインストール画面が出ます。出ない場合は URL をコピーし、ダッシュボード → ユーティリティ → URL からインストール。"
+      ],
+      [
+        "ドラッグしても何も起きない。",
+        "Tampermonkey ダッシュボードのページにドロップしてください（chrome://extensions や通常ページ不可）。ブロックされる場合はワンクリックリンクか「URL からインストール」を使います。"
+      ],
+      [
+        "入れたのにゲームに何も出ない。",
+        "ゲームページで Ctrl+F5。ダッシュボードでスクリプトが有効か確認。Ctrl+Shift+L で HUD 表示。インストール前に開いていたページは再読み込みが必要です。"
+      ],
+      [
+        "ZIP やフォルダは残す必要ある？",
+        "不要です。スクリプトは Tampermonkey 内に入っています。ZIP は削除可。更新は Tampermonkey か raw リンク再インストールで。"
+      ],
+      [
+        "Tampermonkey の「ファイルからインポート」/「Add file」にアップロードする？",
+        "いいえ、それは Tampermonkey のバックアップ `.zip` 用です。このスクリプトは Dashboard → ユーティリティ → URL からインストール、または `.user.js` 1 ファイルを Dashboard にドラッグしてください。"
+      ],
+      [
+        ".user.js を名前変更・編集・再解凍する必要は？",
+        "不要です。そのまま使ってください。ファイル自体がスクリプト本文です。`chrome://extensions` に入れたり、フォルダごとアップロードしないでください。"
+      ]
+    ]
+  },
+  "ko": {
+    "title": "초보자 FAQ (헷갈리면 여기부터)",
+    "qa": [
+      [
+        "이거 크롬 확장인가요? chrome://extensions에 넣나요?",
+        "아니요, 유저스크립트입니다. 먼저 Tampermonkey를 설치하고 그 안에 스크립트를 설치하세요. '압축해제된 확장 프로그램 로드'는 사용하지 않습니다."
+      ],
+      [
+        "Tampermonkey가 수상해 보여요.",
+        "Chrome/Edge/Firefox에서 가장 많이 쓰는 유저스크립트 관리 도구이며 공식 스토어(tampermonkey.net)에서 설치합니다. 이 프로젝트는 GitHub 오픈소스이고 서버/VPN/네트워크 설정이 필요 없습니다."
+      ],
+      [
+        "ZIP을 풀면 폴더째 넣어야 하나요?",
+        "아니요. `tanktrouble-netlab.install.user.js` 파일 하나만 Tampermonkey 대시보드에 끌어다 놓으세요. 폴더째로는 설치되지 않습니다."
+      ],
+      [
+        "Tampermonkey 대시보드는 어떻게 열어요?",
+        "툴바의 Tampermonkey 아이콘 → 대시보드. 아이콘이 안 보이면 퍼즐/확장 버튼에서 Tampermonkey를 고정하세요."
+      ],
+      [
+        "raw 링크가 코드로 보여요 / 이 사이트에서는 추가할 수 없다고 해요.",
+        "Tampermonkey 설치 후 raw 링크를 열면 Tampermonkey 설치 화면이 뜹니다. 안 뜨면 URL을 복사해 대시보드 → 유틸리티 → URL에서 설치를 사용하세요."
+      ],
+      [
+        "파일을 끌어도 반응이 없어요.",
+        "Tampermonkey 대시보드 페이지에 놓아야 합니다(chrome://extensions나 일반 웹페이지 아님). 막히면 원클릭 링크나 'URL에서 설치'를 쓰세요."
+      ],
+      [
+        "설치했는데 게임에 아무것도 안 보여요.",
+        "게임 페이지에서 Ctrl+F5로 새로고침하세요. 대시보드에서 스크립트가 켜져 있는지 확인하고 Ctrl+Shift+L로 HUD를 표시하세요. 설치 전에 열어둔 페이지는 새로고침해야 합니다."
+      ],
+      [
+        "설치 후 ZIP/폴더를 남겨야 하나요?",
+        "아니요. 스크립트는 Tampermonkey 안에 있습니다. ZIP은 삭제해도 됩니다. 업데이트는 Tampermonkey나 raw 링크 재설치로 하세요."
+      ],
+      [
+        "Tampermonkey의 '파일에서 가져오기'/'Add file'에 올려야 하나요?",
+        "아니요, 그 버튼은 Tampermonkey 백업 `.zip`용입니다. 이 스크립트는 Dashboard → 유틸리티 → URL에서 설치를 쓰거나 `.user.js` 파일 하나를 Dashboard로 끌어다 놓으세요."
+      ],
+      [
+        ".user.js를 이름 바꾸거나 편집/재압축해야 하나요?",
+        "아니요, 그대로 사용하세요. 파일 자체가 스크립트입니다. `chrome://extensions`에 넣거나 폴더째 업로드하지 마세요."
+      ]
+    ]
+  },
+  "ru": {
+    "title": "FAQ для новичков (если запутались — сюда)",
+    "qa": [
+      [
+        "Это расширение Chrome? Добавлять в chrome://extensions?",
+        "Нет, это userscript. Сначала установите Tampermonkey, а скрипт ставьте внутри него. «Загрузить распакованное расширение» не используется."
+      ],
+      [
+        "Tampermonkey выглядит подозрительно.",
+        "Это самый популярный менеджер userscript'ов для Chrome/Edge/Firefox, ставится из официальных магазинов (tampermonkey.net). Проект открыт на GitHub, сервер/VPN/настройка сети не нужны."
+      ],
+      [
+        "Скачал ZIP — перетаскивать всю папку?",
+        "Нет. Перетащите только файл `tanktrouble-netlab.install.user.js` в панель Tampermonkey. Целая папка не является скриптом и не установится."
+      ],
+      [
+        "Как открыть панель Tampermonkey?",
+        "Нажмите значок Tampermonkey на панели браузера → Панель управления. Если значка нет — кнопка пазла/расширений, закрепите Tampermonkey."
+      ],
+      [
+        "По raw-ссылке открывается код / Chrome пишет, что нельзя установить с этого сайта.",
+        "С установленным Tampermonkey откройте raw-ссылку — Tampermonkey покажет свою страницу установки. Если нет — скопируйте URL и используйте Панель → Утилиты → Установить из URL."
+      ],
+      [
+        "Перетаскиваю файл, ничего не происходит.",
+        "Бросать нужно на страницу панели Tampermonkey (не chrome://extensions и не обычную страницу). Если блокируется — ссылка в один клик или «Установить из URL»."
+      ],
+      [
+        "Установил, но в игре ничего нет.",
+        "Обновите страницу игры Ctrl+F5, проверьте, что скрипт включён в панели, нажмите Ctrl+Shift+L для HUD. Страницу, открытую до установки, нужно обновить."
+      ],
+      [
+        "Оставлять ZIP/папку после установки?",
+        "Нет. Скрипт уже в Tampermonkey; ZIP можно удалить. Обновление — через Tampermonkey или повторную установку raw-ссылки."
+      ],
+      [
+        "В Tampermonkey есть «Импорт из файла»/«Add file» — туда загружать?",
+        "Нет, эта кнопка для резервных `.zip` Tampermonkey. Для установки скрипта используйте Панель → Утилиты → Установить из URL или перетащите один файл `.user.js` в панель."
+      ],
+      [
+        "Нужно переименовывать, редактировать или распаковывать `.user.js`?",
+        "Нет, используйте файл как есть. Это и есть текст скрипта. Не кладите его в `chrome://extensions` и не загружайте целую папку."
+      ]
+    ]
+  },
+  "ar": {
+    "title": "أسئلة المبتدئين الشائعة (إذا لم تفهم، ابدأ من هنا)",
+    "qa": [
+      [
+        "هل هذه إضافة Chrome؟ هل أضيفها في chrome://extensions؟",
+        "لا، هذا سكربت مستخدم. ثبّت Tampermonkey أولاً ثم ثبّت السكربت داخله. لا تستخدم «تحميل إضافة غير مضغوطة»."
+      ],
+      [
+        "Tampermonkey يبدو مشبوهاً.",
+        "هو أشهر مدير سكربتات مستخدم في Chrome/Edge/Firefox ويُثبّت من المتاجر الرسمية (tampermonkey.net). المشروع مفتوح المصدر على GitHub ولا يحتاج خادماً أو VPN أو إعداد شبكة."
+      ],
+      [
+        "حمّلت ZIP؛ هل أدخل المجلد كاملاً؟",
+        "لا. اسحب ملف `tanktrouble-netlab.install.user.js` وحده إلى لوحة Tampermonkey. المجلد كاملاً ليس سكربتاً ولن يُثبّت."
+      ],
+      [
+        "كيف أفتح لوحة Tampermonkey؟",
+        "اضغط أيقونة Tampermonkey في شريط المتصفح → لوحة التحكم. إن لم تظهر، اضغط زر الإضافات/القطع وثبّت Tampermonkey."
+      ],
+      [
+        "رابط raw يعرض الكود / Chrome يقول لا يمكن التثبيت من هذا الموقع.",
+        "بعد تثبيت Tampermonkey افتح رابط raw وستظهر صفحة تثبيته. إن لم تظهر، انسخ الرابط واستخدم لوحة التحكم → الأدوات → التثبيت من URL."
+      ],
+      [
+        "أسحب الملف ولا يحدث شيء.",
+        "أسقطه على صفحة لوحة Tampermonkey (وليس chrome://extensions أو صفحة عادية). إن كان السحب محظوراً استخدم رابط النقرة الواحدة أو «التثبيت من URL»."
+      ],
+      [
+        "ثبّتته ولا أرى شيئاً في اللعبة.",
+        "حدّث صفحة اللعبة بـ Ctrl+F5، وتأكد أن السكربت مفعّل في اللوحة، واضغط Ctrl+Shift+L لإظهار الواجهة. أي صفحة كانت مفتوحة قبل التثبيت يجب تحديثها."
+      ],
+      [
+        "هل أبقي ZIP/المجلد بعد التثبيت؟",
+        "لا. السكربت أصبح داخل Tampermonkey؛ يمكنك حذف ZIP. التحديث من Tampermonkey أو بإعادة تثبيت رابط raw."
+      ],
+      [
+        "في Tampermonkey يوجد «استيراد من ملف»/«Add file» — هل أرفع الملف هناك؟",
+        "لا، هذا الزر لملفات النسخ الاحتياطي `.zip` الخاصة بـ Tampermonkey. لتثبيت هذا السكربت استخدم لوحة التحكم → الأدوات → التثبيت من URL، أو اسحب ملف `.user.js` الواحد إلى اللوحة."
+      ],
+      [
+        "هل أغيّر الاسم أو أعدّل أو أفك ضغط `.user.js`؟",
+        "لا، استخدم الملف كما هو. الملف نفسه هو نص السكربت؛ لا تضعه في `chrome://extensions` ولا ترفع المجلد كاملاً."
+      ]
+    ]
+  },
+  "fr": {
+    "title": "FAQ débutants (si vous êtes perdu, lisez ceci)",
+    "qa": [
+      [
+        "Est-ce une extension Chrome ? Faut-il l'ajouter dans chrome://extensions ?",
+        "Non, c'est un userscript. Installez d'abord Tampermonkey, puis installez le script dedans. N'utilisez pas « Charger l'extension non empaquetée »."
+      ],
+      [
+        "Tampermonkey a l'air louche.",
+        "C'est le gestionnaire de userscripts le plus courant pour Chrome/Edge/Firefox, disponible dans les stores officiels (tampermonkey.net). Ce projet est open source sur GitHub ; aucun serveur, VPN ou réglage réseau n'est nécessaire."
+      ],
+      [
+        "J'ai téléchargé le ZIP : je glisse tout le dossier ?",
+        "Non. Glissez uniquement le fichier `tanktrouble-netlab.install.user.js` dans le tableau de bord Tampermonkey. Un dossier n'est pas un script et ne s'installera pas."
+      ],
+      [
+        "Comment ouvrir le tableau de bord Tampermonkey ?",
+        "Cliquez l'icône Tampermonkey dans la barre d'outils → Tableau de bord. Si elle est cachée, cliquez sur le bouton puzzle/extensions et épinglez Tampermonkey."
+      ],
+      [
+        "Le lien raw affiche du code / Chrome dit qu'on ne peut pas installer depuis ce site.",
+        "Avec Tampermonkey installé, ouvrez le lien raw : Tampermonkey affiche sa page d'installation. Sinon, copiez l'URL et utilisez Tableau de bord → Utilitaires → Installer depuis une URL."
+      ],
+      [
+        "Je glisse le fichier, rien ne se passe.",
+        "Déposez-le sur la page du tableau de bord Tampermonkey (pas chrome://extensions ni une page web normale). Si le glisser-déposer est bloqué, utilisez le lien en un clic ou « Installer depuis une URL »."
+      ],
+      [
+        "Installé, mais rien dans le jeu.",
+        "Rechargez la page du jeu avec Ctrl+F5, vérifiez que le script est activé dans Tampermonkey et appuyez sur Ctrl+Shift+L pour afficher le HUD. Une page ouverte avant l'installation doit être rechargée."
+      ],
+      [
+        "Faut-il garder le ZIP/dossier ?",
+        "Non. Le script est dans Tampermonkey ; vous pouvez supprimer le ZIP. Mettez à jour via Tampermonkey ou en réinstallant le lien raw."
+      ],
+      [
+        "Dans Tampermonkey, « Importer depuis un fichier »/« Add file » : c'est là qu'on envoie le fichier ?",
+        "Non, ce bouton sert aux sauvegardes `.zip` de Tampermonkey. Pour installer ce script : Tableau de bord → Utilitaires → Installer depuis une URL, ou glissez l'unique fichier `.user.js` sur le tableau de bord."
+      ],
+      [
+        "Faut-il renommer, modifier ou décompresser le `.user.js` ?",
+        "Non, utilisez-le tel quel. Ce fichier est le script lui-même ; ne le mettez pas dans `chrome://extensions` et n'envoyez pas le dossier entier."
+      ]
+    ]
+  },
+  "es": {
+    "title": "FAQ para principiantes (si te pierdes, empieza aquí)",
+    "qa": [
+      [
+        "¿Es una extensión de Chrome? ¿Se añade en chrome://extensions?",
+        "No, es un userscript. Instala primero Tampermonkey y luego instala el script dentro de él. No uses «Cargar extensión descomprimida»."
+      ],
+      [
+        "Tampermonkey parece sospechoso.",
+        "Es el gestor de userscripts más usado en Chrome/Edge/Firefox y se instala desde las tiendas oficiales (tampermonkey.net). El proyecto es open source en GitHub; no necesita servidor, VPN ni configuración de red."
+      ],
+      [
+        "Descargué el ZIP, ¿arrastro la carpeta entera?",
+        "No. Arrastra solo el archivo `tanktrouble-netlab.install.user.js` al panel de Tampermonkey. Una carpeta no es un script y no se instalará."
+      ],
+      [
+        "¿Cómo abro el panel de Tampermonkey?",
+        "Pulsa el icono de Tampermonkey en la barra de herramientas → Panel de control. Si no lo ves, pulsa el botón de rompecabezas/extensiones y fija Tampermonkey."
+      ],
+      [
+        "El enlace raw muestra código / Chrome dice que no se puede instalar desde este sitio.",
+        "Con Tampermonkey instalado, abre el enlace raw y Tampermonkey mostrará su página de instalación. Si no, copia la URL y usa Panel → Utilidades → Instalar desde URL."
+      ],
+      [
+        "Arrastro el archivo y no pasa nada.",
+        "Suéltalo en la página del panel de Tampermonkey (no en chrome://extensions ni en una web normal). Si se bloquea, usa el enlace de un clic o «Instalar desde URL»."
+      ],
+      [
+        "Lo instalé pero no veo nada en el juego.",
+        "Recarga la página del juego con Ctrl+F5, comprueba que el script está activado en Tampermonkey y pulsa Ctrl+Shift+L para mostrar el HUD. La página abierta antes de instalar debe recargarse."
+      ],
+      [
+        "¿Tengo que guardar el ZIP/carpeta?",
+        "No. El script ya está dentro de Tampermonkey; puedes borrar el ZIP. Actualiza desde Tampermonkey o reinstalando el enlace raw."
+      ],
+      [
+        "En Tampermonkey hay «Importar desde archivo»/«Add file», ¿ahí lo subo?",
+        "No, ese botón es para copias de seguridad `.zip` de Tampermonkey. Para instalar este script usa Panel → Utilidades → Instalar desde URL, o arrastra el único archivo `.user.js` al panel."
+      ],
+      [
+        "¿Tengo que renombrar, editar o descomprimir el `.user.js`?",
+        "No, úsalo tal cual. El archivo es el propio script; no lo pongas en `chrome://extensions` ni subas la carpeta entera."
+      ]
+    ]
+  },
+  "de": {
+    "title": "Einsteiger-FAQ (wenn du verwirrt bist, lies das)",
+    "qa": [
+      [
+        "Ist das eine Chrome-Erweiterung? Muss ich sie in chrome://extensions hinzufügen?",
+        "Nein, es ist ein Userscript. Installiere zuerst Tampermonkey und dann das Script darin. „Entpackte Erweiterung laden“ wird nicht benutzt."
+      ],
+      [
+        "Tampermonkey sieht unseriös aus.",
+        "Tampermonkey ist der verbreitetste Userscript-Manager für Chrome/Edge/Firefox und kommt aus den offiziellen Stores (tampermonkey.net). Das Projekt ist Open Source auf GitHub; Server, VPN oder Netzwerkeinstellungen sind nicht nötig."
+      ],
+      [
+        "Ich habe die ZIP geladen — soll ich den ganzen Ordner hineinziehen?",
+        "Nein. Ziehe nur die Datei `tanktrouble-netlab.install.user.js` in das Tampermonkey-Dashboard. Ein Ordner ist kein Script und wird nicht installiert."
+      ],
+      [
+        "Wie öffne ich das Tampermonkey-Dashboard?",
+        "Auf das Tampermonkey-Symbol in der Symbolleiste klicken → Dashboard. Wenn du es nicht siehst, klicke auf die Puzzle-/Erweiterungen-Schaltfläche und pinne Tampermonkey an."
+      ],
+      [
+        "Der Raw-Link zeigt Code / Chrome sagt, von dieser Seite kann nicht installiert werden.",
+        "Mit Tampermonkey geöffnet zeigt der Raw-Link dessen Installationsseite. Falls nicht, URL kopieren und Dashboard → Dienstprogramme → Von URL installieren verwenden."
+      ],
+      [
+        "Ich ziehe die Datei hinein, nichts passiert.",
+        "Sie muss auf die Tampermonkey-Dashboard-Seite gezogen werden (nicht chrome://extensions oder eine normale Webseite). Wenn Drag-and-drop blockiert ist, Ein-Klick-Link oder „Von URL installieren“ nutzen."
+      ],
+      [
+        "Installiert, aber im Spiel erscheint nichts.",
+        "Spielseite mit Ctrl+F5 neu laden, im Dashboard prüfen, ob das Script aktiv ist, und Ctrl+Shift+L für das HUD drücken. Eine vor der Installation offene Seite muss neu geladen werden."
+      ],
+      [
+        "ZIP/Ordner nach der Installation behalten?",
+        "Nein. Das Script liegt jetzt in Tampermonkey; die ZIP kann gelöscht werden. Updates über Tampermonkey oder erneutes Installieren des Raw-Links."
+      ],
+      [
+        "In Tampermonkey gibt es „Aus Datei importieren“/„Add file“ — soll ich es dort hochladen?",
+        "Nein, dieser Button ist für Tampermonkey-Backup-`.zip`-Dateien. Zum Installieren: Dashboard → Dienstprogramme → Von URL installieren, oder die einzelne `.user.js`-Datei aufs Dashboard ziehen."
+      ],
+      [
+        "Muss ich die `.user.js` umbenennen, bearbeiten oder entpacken?",
+        "Nein, benutze sie unverändert. Die Datei ist der Script-Text selbst; nicht in `chrome://extensions` legen und nicht den ganzen Ordner hochladen."
+      ]
+    ]
+  },
+  "pt": {
+    "title": "FAQ para iniciantes (se estiver perdido, comece aqui)",
+    "qa": [
+      [
+        "Isso é uma extensão do Chrome? Adiciono em chrome://extensions?",
+        "Não, é um userscript. Instale primeiro o Tampermonkey e depois instale o script dentro dele. Não use “Carregar extensão descompactada”."
+      ],
+      [
+        "O Tampermonkey parece suspeito.",
+        "É o gerenciador de userscripts mais usado no Chrome/Edge/Firefox e vem das lojas oficiais (tampermonkey.net). O projeto é open source no GitHub; não precisa de servidor, VPN ou configuração de rede."
+      ],
+      [
+        "Baixei o ZIP — arrasto a pasta inteira?",
+        "Não. Arraste apenas o arquivo `tanktrouble-netlab.install.user.js` para o painel do Tampermonkey. Uma pasta não é um script e não será instalada."
+      ],
+      [
+        "Como abro o painel do Tampermonkey?",
+        "Clique no ícone do Tampermonkey na barra de ferramentas → Painel. Se não aparecer, clique no botão de quebra-cabeça/extensões e fixe o Tampermonkey."
+      ],
+      [
+        "O link raw mostra código / o Chrome diz que não pode instalar deste site.",
+        "Com o Tampermonkey instalado, abra o link raw: ele mostra a própria página de instalação. Se não, copie a URL e use Painel → Utilitários → Instalar de URL."
+      ],
+      [
+        "Arrasto o arquivo e nada acontece.",
+        "Solte na página do painel do Tampermonkey (não em chrome://extensions nem numa página normal). Se o arrastar for bloqueado, use o link de um clique ou “Instalar de URL”."
+      ],
+      [
+        "Instalei, mas não vejo nada no jogo.",
+        "Atualize a página do jogo com Ctrl+F5, confirme que o script está ativado no Tampermonkey e pressione Ctrl+Shift+L para mostrar o HUD. A página aberta antes de instalar precisa ser atualizada."
+      ],
+      [
+        "Preciso guardar o ZIP/pasta?",
+        "Não. O script já está dentro do Tampermonkey; pode apagar o ZIP. Atualize pelo Tampermonkey ou reinstalando o link raw."
+      ],
+      [
+        "No Tampermonkey existe «Importar de arquivo»/«Add file» — é aí que envio o arquivo?",
+        "Não, esse botão é para backups `.zip` do Tampermonkey. Para instalar este script use Painel → Utilitários → Instalar de URL, ou arraste o único arquivo `.user.js` para o painel."
+      ],
+      [
+        "Preciso renomear, editar ou descompactar o `.user.js`?",
+        "Não, use o arquivo como está. O arquivo é o próprio script; não coloque em `chrome://extensions` nem envie a pasta inteira."
+      ]
+    ]
+  },
+  "vi": {
+    "title": "Câu hỏi thường gặp cho người mới (nếu rối, đọc mục này trước)",
+    "qa": [
+      [
+        "Đây có phải tiện ích Chrome không? Có cần thêm vào chrome://extensions không?",
+        "Không. Đây là userscript: hãy cài Tampermonkey trước, rồi cài script bên trong Tampermonkey — đừng dùng 'Load unpacked'."
+      ],
+      [
+        "Tampermonkey trông có vẻ lạ, có an toàn không?",
+        "Tampermonkey là trình quản lý userscript phổ biến nhất cho Chrome/Edge/Firefox, chỉ tải từ store chính thức (tampermonkey.net). Dự án này mã nguồn mở trên GitHub, không cần server, VPN hay cấu hình mạng."
+      ],
+      [
+        "Mình tải ZIP về, có kéo cả thư mục đã giải nén vào không?",
+        "Không. Chỉ kéo duy nhất file `tanktrouble-netlab.install.user.js` vào Dashboard Tampermonkey; cả thư mục không phải script nên không cài được."
+      ],
+      [
+        "Mở Dashboard Tampermonkey ở đâu?",
+        "Nhấp biểu tượng Tampermonkey trên thanh công cụ → Dashboard. Nếu không thấy, nhấp nút mảnh ghép/tiện ích rồi ghim Tampermonkey."
+      ],
+      [
+        "Mở link raw chỉ thấy code / Chrome báo không cài được từ trang này.",
+        "Khi đã cài Tampermonkey, mở link raw thì Tampermonkey sẽ hiện trang cài đặt của nó. Nếu không, sao chép URL rồi vào Dashboard → Utilities → Install from URL."
+      ],
+      [
+        "Kéo file vào mà không có gì xảy ra?",
+        "Phải thả vào trang Dashboard Tampermonkey (không phải chrome://extensions hay trang web thường). Nếu bị chặn, dùng link một cú nhấp hoặc Dashboard → Utilities → Install from URL."
+      ],
+      [
+        "Cài rồi mà vào game không thấy gì?",
+        "Nhấn Ctrl+F5 để tải lại trang game; kiểm tra script đang bật trong Dashboard Tampermonkey; nhấn Ctrl+Shift+L để hiện HUD. Trang mở trước khi cài phải được tải lại."
+      ],
+      [
+        "Sau khi cài có cần giữ ZIP/thư mục không?",
+        "Không. Script đã nằm trong Tampermonkey; có thể xóa ZIP và thư mục. Sau này cập nhật trong Tampermonkey hoặc mở lại link raw để cài lại."
+      ],
+      [
+        "Trong Tampermonkey có mục 'Import from file' / 'Add file' — có phải tải file lên đó không?",
+        "Không. Mục đó dành cho file backup `.zip` của Tampermonkey. Muốn cài script này hãy dùng Dashboard → Utilities → Install from URL, hoặc kéo đúng file `.user.js` vào Dashboard."
+      ],
+      [
+        "Có cần đổi tên, sửa hoặc giải nén file `.user.js` không?",
+        "Không, dùng nguyên file là được. File đó chính là nội dung script; đừng đưa vào `chrome://extensions` và đừng tải cả thư mục."
+      ]
+    ]
+  }
 }
