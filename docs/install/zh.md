@@ -49,6 +49,17 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 
 面板里的 **⚡** 按钮和 `Ctrl+Shift+S` 等价。面板里还能选 **11 国语言**，语言 / 优化开关 / 悬浮球位置都会缓存在 `localStorage`。
 
+## 新手常见疑问（看不懂先看这里）
+
+- **这是浏览器扩展吗？要加到 chrome://extensions 吗？** — 不是。它是油猴脚本；先装 Tampermonkey（油猴），脚本是在油猴里安装，不要用“加载已解压的扩展程序”。
+- **Tampermonkey 看着像可疑软件？** — Tampermonkey 是 Chrome/Edge/Firefox 上最常用的用户脚本管理器，只在官方商店安装（tampermonkey.net）；本项目开源在 GitHub，不用服务器、VPN 或改网络设置。
+- **ZIP 解压后要把整个文件夹拖进去吗？** — 不用。只把单个文件 `tanktrouble-netlab.install.user.js` 拖进油猴管理面板；整个文件夹不是脚本，装不上。
+- **油猴管理面板怎么打开？** — 点浏览器工具栏的油猴图标 → 管理面板；看不到图标就点拼图（扩展）按钮，把 Tampermonkey 固定出来。
+- **打开 raw 链接只看到代码 / Chrome 提示不能从此网站安装。** — 装好油猴后再打开 raw 链接，油猴会弹出自己的安装页；如果没有，复制链接，用油猴管理面板 → 实用工具 → 从 URL 安装。
+- **把文件拖进去没反应？** — 要拖到油猴管理面板页面上（不是 chrome://extensions，也不是普通网页）。拖拽被拦时用一键链接，或管理面板 → 实用工具 → 从 URL 安装。
+- **装完游戏里没看到东西？** — 用 Ctrl+F5 强制刷新游戏页；确认油猴管理面板里脚本开关是开启的；按 Ctrl+Shift+L 显示 HUD。安装前就打开的页面必须刷新。
+- **装完还需要留着 ZIP/文件夹吗？** — 不需要。脚本已经进油猴了，ZIP 和文件夹可以删；以后在油猴里更新或重新打开 raw 链接安装即可。
+
 ## 常见问题
 
 - **什么都没出现** — 确认地址匹配 `*://*.tanktrouble.com/*`、脚本是启用状态，然后 `Ctrl+F5` 强制刷新。

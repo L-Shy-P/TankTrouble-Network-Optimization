@@ -49,6 +49,17 @@ Si le glisser-déposer ne marche pas : utilisez le lien en un clic ci-dessus, ou
 
 Le bouton **⚡** du panneau équivaut à `Ctrl+Shift+S`. Le panneau propose **11 langues** ; langue, interrupteur et position du ballon sont mémorisés dans `localStorage`.
 
+## FAQ débutants (si vous êtes perdu, lisez ceci)
+
+- **Est-ce une extension Chrome ? Faut-il l'ajouter dans chrome://extensions ?** — Non, c'est un userscript. Installez d'abord Tampermonkey, puis installez le script dedans. N'utilisez pas « Charger l'extension non empaquetée ».
+- **Tampermonkey a l'air louche.** — C'est le gestionnaire de userscripts le plus courant pour Chrome/Edge/Firefox, disponible dans les stores officiels (tampermonkey.net). Ce projet est open source sur GitHub ; aucun serveur, VPN ou réglage réseau n'est nécessaire.
+- **J'ai téléchargé le ZIP : je glisse tout le dossier ?** — Non. Glissez uniquement le fichier `tanktrouble-netlab.install.user.js` dans le tableau de bord Tampermonkey. Un dossier n'est pas un script et ne s'installera pas.
+- **Comment ouvrir le tableau de bord Tampermonkey ?** — Cliquez l'icône Tampermonkey dans la barre d'outils → Tableau de bord. Si elle est cachée, cliquez sur le bouton puzzle/extensions et épinglez Tampermonkey.
+- **Le lien raw affiche du code / Chrome dit qu'on ne peut pas installer depuis ce site.** — Avec Tampermonkey installé, ouvrez le lien raw : Tampermonkey affiche sa page d'installation. Sinon, copiez l'URL et utilisez Tableau de bord → Utilitaires → Installer depuis une URL.
+- **Je glisse le fichier, rien ne se passe.** — Déposez-le sur la page du tableau de bord Tampermonkey (pas chrome://extensions ni une page web normale). Si le glisser-déposer est bloqué, utilisez le lien en un clic ou « Installer depuis une URL ».
+- **Installé, mais rien dans le jeu.** — Rechargez la page du jeu avec Ctrl+F5, vérifiez que le script est activé dans Tampermonkey et appuyez sur Ctrl+Shift+L pour afficher le HUD. Une page ouverte avant l'installation doit être rechargée.
+- **Faut-il garder le ZIP/dossier ?** — Non. Le script est dans Tampermonkey ; vous pouvez supprimer le ZIP. Mettez à jour via Tampermonkey ou en réinstallant le lien raw.
+
 ## Dépannage
 
 - **Rien n'apparaît** — Vérifiez que l'URL correspond à `*://*.tanktrouble.com/*` et que le script est activé, puis `Ctrl+F5`.

@@ -49,6 +49,17 @@ Se arrastar não funcionar: use o link de um clique acima ou importe o arquivo e
 
 O botão **⚡** do painel equivale a `Ctrl+Shift+S`. O painel permite escolher entre **11 idiomas**; idioma, chave e posição da bola ficam no `localStorage`.
 
+## FAQ para iniciantes (se estiver perdido, comece aqui)
+
+- **Isso é uma extensão do Chrome? Adiciono em chrome://extensions?** — Não, é um userscript. Instale primeiro o Tampermonkey e depois instale o script dentro dele. Não use “Carregar extensão descompactada”.
+- **O Tampermonkey parece suspeito.** — É o gerenciador de userscripts mais usado no Chrome/Edge/Firefox e vem das lojas oficiais (tampermonkey.net). O projeto é open source no GitHub; não precisa de servidor, VPN ou configuração de rede.
+- **Baixei o ZIP — arrasto a pasta inteira?** — Não. Arraste apenas o arquivo `tanktrouble-netlab.install.user.js` para o painel do Tampermonkey. Uma pasta não é um script e não será instalada.
+- **Como abro o painel do Tampermonkey?** — Clique no ícone do Tampermonkey na barra de ferramentas → Painel. Se não aparecer, clique no botão de quebra-cabeça/extensões e fixe o Tampermonkey.
+- **O link raw mostra código / o Chrome diz que não pode instalar deste site.** — Com o Tampermonkey instalado, abra o link raw: ele mostra a própria página de instalação. Se não, copie a URL e use Painel → Utilitários → Instalar de URL.
+- **Arrasto o arquivo e nada acontece.** — Solte na página do painel do Tampermonkey (não em chrome://extensions nem numa página normal). Se o arrastar for bloqueado, use o link de um clique ou “Instalar de URL”.
+- **Instalei, mas não vejo nada no jogo.** — Atualize a página do jogo com Ctrl+F5, confirme que o script está ativado no Tampermonkey e pressione Ctrl+Shift+L para mostrar o HUD. A página aberta antes de instalar precisa ser atualizada.
+- **Preciso guardar o ZIP/pasta?** — Não. O script já está dentro do Tampermonkey; pode apagar o ZIP. Atualize pelo Tampermonkey ou reinstalando o link raw.
+
 ## Solução de problemas
 
 - **Nada aparece** — Confirme que a URL corresponde a `*://*.tanktrouble.com/*` e que o script está ativo, depois `Ctrl+F5`.

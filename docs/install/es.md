@@ -49,6 +49,17 @@ Si arrastrar no funciona: usa el enlace de un clic de arriba o importa el archiv
 
 El botón **⚡** del panel equivale a `Ctrl+Shift+S`. El panel permite elegir entre **11 idiomas**; idioma, interruptor y posición de la bola se guardan en `localStorage`.
 
+## FAQ para principiantes (si te pierdes, empieza aquí)
+
+- **¿Es una extensión de Chrome? ¿Se añade en chrome://extensions?** — No, es un userscript. Instala primero Tampermonkey y luego instala el script dentro de él. No uses «Cargar extensión descomprimida».
+- **Tampermonkey parece sospechoso.** — Es el gestor de userscripts más usado en Chrome/Edge/Firefox y se instala desde las tiendas oficiales (tampermonkey.net). El proyecto es open source en GitHub; no necesita servidor, VPN ni configuración de red.
+- **Descargué el ZIP, ¿arrastro la carpeta entera?** — No. Arrastra solo el archivo `tanktrouble-netlab.install.user.js` al panel de Tampermonkey. Una carpeta no es un script y no se instalará.
+- **¿Cómo abro el panel de Tampermonkey?** — Pulsa el icono de Tampermonkey en la barra de herramientas → Panel de control. Si no lo ves, pulsa el botón de rompecabezas/extensiones y fija Tampermonkey.
+- **El enlace raw muestra código / Chrome dice que no se puede instalar desde este sitio.** — Con Tampermonkey instalado, abre el enlace raw y Tampermonkey mostrará su página de instalación. Si no, copia la URL y usa Panel → Utilidades → Instalar desde URL.
+- **Arrastro el archivo y no pasa nada.** — Suéltalo en la página del panel de Tampermonkey (no en chrome://extensions ni en una web normal). Si se bloquea, usa el enlace de un clic o «Instalar desde URL».
+- **Lo instalé pero no veo nada en el juego.** — Recarga la página del juego con Ctrl+F5, comprueba que el script está activado en Tampermonkey y pulsa Ctrl+Shift+L para mostrar el HUD. La página abierta antes de instalar debe recargarse.
+- **¿Tengo que guardar el ZIP/carpeta?** — No. El script ya está dentro de Tampermonkey; puedes borrar el ZIP. Actualiza desde Tampermonkey o reinstalando el enlace raw.
+
 ## Solución de problemas
 
 - **No aparece nada** — Comprueba que la URL coincide con `*://*.tanktrouble.com/*` y que el script está activado, luego `Ctrl+F5`.

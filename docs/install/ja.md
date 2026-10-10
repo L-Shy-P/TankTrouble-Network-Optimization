@@ -49,6 +49,17 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 
 パネルの **⚡** は `Ctrl+Shift+S` と同じです。パネルでは **11 言語**から選べ、言語・最適化スイッチ・ボール位置は `localStorage` に保存されます。
 
+## 初心者向け FAQ（わからない人はここ）
+
+- **これは Chrome 拡張ですか？chrome://extensions に入れますか？** — いいえ、ユーザースクリプトです。先に Tampermonkey を入れ、その中にインストールします。「パッケージ化されていない拡張機能を読み込む」は使いません。
+- **Tampermonkey は怪しいアプリ？** — Chrome/Edge/Firefox で最も使われているユーザースクリプト管理ツールで、公式ストア（tampermonkey.net）から入れます。このプロジェクトは GitHub で公開、サーバー/VPN/ネットワーク設定は不要です。
+- **ZIP を解凍したらフォルダごと入れますか？** — いいえ。`tanktrouble-netlab.install.user.js` という 1 ファイルだけを Tampermonkey ダッシュボードにドラッグします。フォルダごとではインストールできません。
+- **Tampermonkey のダッシュボードは？** — ツールバーの Tampermonkey アイコン → ダッシュボード。見えない場合はパズル/拡張ボタンから Tampermonkey をピン留めします。
+- **raw リンクがコードになる / このサイトからは追加できませんと出る。** — Tampermonkey 導入済みで raw リンクを開くと Tampermonkey のインストール画面が出ます。出ない場合は URL をコピーし、ダッシュボード → ユーティリティ → URL からインストール。
+- **ドラッグしても何も起きない。** — Tampermonkey ダッシュボードのページにドロップしてください（chrome://extensions や通常ページ不可）。ブロックされる場合はワンクリックリンクか「URL からインストール」を使います。
+- **入れたのにゲームに何も出ない。** — ゲームページで Ctrl+F5。ダッシュボードでスクリプトが有効か確認。Ctrl+Shift+L で HUD 表示。インストール前に開いていたページは再読み込みが必要です。
+- **ZIP やフォルダは残す必要ある？** — 不要です。スクリプトは Tampermonkey 内に入っています。ZIP は削除可。更新は Tampermonkey か raw リンク再インストールで。
+
 ## よくある質問
 
 - **何も出ない** — URL が `*://*.tanktrouble.com/*` に一致し、スクリプトが有効か確認して `Ctrl+F5`。

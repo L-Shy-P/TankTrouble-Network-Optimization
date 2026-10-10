@@ -49,6 +49,17 @@ Nếu kéo thả không được: dùng URL cài một cú nhấp ở trên, ho�
 
 Nút **⚡** trong bảng tương đương `Ctrl+Shift+S`. Bảng cho chọn một trong **11 ngôn ngữ**; ngôn ngữ, công tắc tối ưu và vị trí bóng được lưu trong `localStorage`.
 
+## Câu hỏi thường gặp cho người mới (nếu rối, đọc mục này trước)
+
+- **Đây có phải tiện ích Chrome không? Có cần thêm vào chrome://extensions không?** — Không. Đây là userscript: hãy cài Tampermonkey trước, rồi cài script bên trong Tampermonkey — đừng dùng 'Load unpacked'.
+- **Tampermonkey trông có vẻ lạ, có an toàn không?** — Tampermonkey là trình quản lý userscript phổ biến nhất cho Chrome/Edge/Firefox, chỉ tải từ store chính thức (tampermonkey.net). Dự án này mã nguồn mở trên GitHub, không cần server, VPN hay cấu hình mạng.
+- **Mình tải ZIP về, có kéo cả thư mục đã giải nén vào không?** — Không. Chỉ kéo duy nhất file `tanktrouble-netlab.install.user.js` vào Dashboard Tampermonkey; cả thư mục không phải script nên không cài được.
+- **Mở Dashboard Tampermonkey ở đâu?** — Nhấp biểu tượng Tampermonkey trên thanh công cụ → Dashboard. Nếu không thấy, nhấp nút mảnh ghép/tiện ích rồi ghim Tampermonkey.
+- **Mở link raw chỉ thấy code / Chrome báo không cài được từ trang này.** — Khi đã cài Tampermonkey, mở link raw thì Tampermonkey sẽ hiện trang cài đặt của nó. Nếu không, sao chép URL rồi vào Dashboard → Utilities → Install from URL.
+- **Kéo file vào mà không có gì xảy ra?** — Phải thả vào trang Dashboard Tampermonkey (không phải chrome://extensions hay trang web thường). Nếu bị chặn, dùng link một cú nhấp hoặc Dashboard → Utilities → Install from URL.
+- **Cài rồi mà vào game không thấy gì?** — Nhấn Ctrl+F5 để tải lại trang game; kiểm tra script đang bật trong Dashboard Tampermonkey; nhấn Ctrl+Shift+L để hiện HUD. Trang mở trước khi cài phải được tải lại.
+- **Sau khi cài có cần giữ ZIP/thư mục không?** — Không. Script đã nằm trong Tampermonkey; có thể xóa ZIP và thư mục. Sau này cập nhật trong Tampermonkey hoặc mở lại link raw để cài lại.
+
 ## Khắc phục sự cố
 
 - **Không thấy gì xuất hiện** — Kiểm tra URL khớp `*://*.tanktrouble.com/*` và script đang bật, sau đó nhấn `Ctrl+F5`.

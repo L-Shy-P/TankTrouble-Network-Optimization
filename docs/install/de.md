@@ -49,6 +49,17 @@ Wenn Ziehen nicht geht: den Ein-Klick-Link oben nutzen oder die Datei im Tamperm
 
 Der **⚡**-Button im Panel entspricht `Ctrl+Shift+S`. Im Panel gibt es **11 Sprachen**; Sprache, Schalter und Kugelposition werden in `localStorage` gespeichert.
 
+## Einsteiger-FAQ (wenn du verwirrt bist, lies das)
+
+- **Ist das eine Chrome-Erweiterung? Muss ich sie in chrome://extensions hinzufügen?** — Nein, es ist ein Userscript. Installiere zuerst Tampermonkey und dann das Script darin. „Entpackte Erweiterung laden“ wird nicht benutzt.
+- **Tampermonkey sieht unseriös aus.** — Tampermonkey ist der verbreitetste Userscript-Manager für Chrome/Edge/Firefox und kommt aus den offiziellen Stores (tampermonkey.net). Das Projekt ist Open Source auf GitHub; Server, VPN oder Netzwerkeinstellungen sind nicht nötig.
+- **Ich habe die ZIP geladen — soll ich den ganzen Ordner hineinziehen?** — Nein. Ziehe nur die Datei `tanktrouble-netlab.install.user.js` in das Tampermonkey-Dashboard. Ein Ordner ist kein Script und wird nicht installiert.
+- **Wie öffne ich das Tampermonkey-Dashboard?** — Auf das Tampermonkey-Symbol in der Symbolleiste klicken → Dashboard. Wenn du es nicht siehst, klicke auf die Puzzle-/Erweiterungen-Schaltfläche und pinne Tampermonkey an.
+- **Der Raw-Link zeigt Code / Chrome sagt, von dieser Seite kann nicht installiert werden.** — Mit Tampermonkey geöffnet zeigt der Raw-Link dessen Installationsseite. Falls nicht, URL kopieren und Dashboard → Dienstprogramme → Von URL installieren verwenden.
+- **Ich ziehe die Datei hinein, nichts passiert.** — Sie muss auf die Tampermonkey-Dashboard-Seite gezogen werden (nicht chrome://extensions oder eine normale Webseite). Wenn Drag-and-drop blockiert ist, Ein-Klick-Link oder „Von URL installieren“ nutzen.
+- **Installiert, aber im Spiel erscheint nichts.** — Spielseite mit Ctrl+F5 neu laden, im Dashboard prüfen, ob das Script aktiv ist, und Ctrl+Shift+L für das HUD drücken. Eine vor der Installation offene Seite muss neu geladen werden.
+- **ZIP/Ordner nach der Installation behalten?** — Nein. Das Script liegt jetzt in Tampermonkey; die ZIP kann gelöscht werden. Updates über Tampermonkey oder erneutes Installieren des Raw-Links.
+
 ## Fehlerbehebung
 
 - **Nichts erscheint** — Prüfe, ob die URL zu `*://*.tanktrouble.com/*` passt und das Skript aktiv ist, dann `Ctrl+F5`.

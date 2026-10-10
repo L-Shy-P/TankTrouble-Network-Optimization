@@ -49,6 +49,17 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 
 패널의 **⚡** 버튼은 `Ctrl+Shift+S`와 같습니다. 패널에서 **11개 언어**를 고를 수 있고, 언어·최적화 스위치·공 위치는 `localStorage`에 저장됩니다.
 
+## 초보자 FAQ (헷갈리면 여기부터)
+
+- **이거 크롬 확장인가요? chrome://extensions에 넣나요?** — 아니요, 유저스크립트입니다. 먼저 Tampermonkey를 설치하고 그 안에 스크립트를 설치하세요. '압축해제된 확장 프로그램 로드'는 사용하지 않습니다.
+- **Tampermonkey가 수상해 보여요.** — Chrome/Edge/Firefox에서 가장 많이 쓰는 유저스크립트 관리 도구이며 공식 스토어(tampermonkey.net)에서 설치합니다. 이 프로젝트는 GitHub 오픈소스이고 서버/VPN/네트워크 설정이 필요 없습니다.
+- **ZIP을 풀면 폴더째 넣어야 하나요?** — 아니요. `tanktrouble-netlab.install.user.js` 파일 하나만 Tampermonkey 대시보드에 끌어다 놓으세요. 폴더째로는 설치되지 않습니다.
+- **Tampermonkey 대시보드는 어떻게 열어요?** — 툴바의 Tampermonkey 아이콘 → 대시보드. 아이콘이 안 보이면 퍼즐/확장 버튼에서 Tampermonkey를 고정하세요.
+- **raw 링크가 코드로 보여요 / 이 사이트에서는 추가할 수 없다고 해요.** — Tampermonkey 설치 후 raw 링크를 열면 Tampermonkey 설치 화면이 뜹니다. 안 뜨면 URL을 복사해 대시보드 → 유틸리티 → URL에서 설치를 사용하세요.
+- **파일을 끌어도 반응이 없어요.** — Tampermonkey 대시보드 페이지에 놓아야 합니다(chrome://extensions나 일반 웹페이지 아님). 막히면 원클릭 링크나 'URL에서 설치'를 쓰세요.
+- **설치했는데 게임에 아무것도 안 보여요.** — 게임 페이지에서 Ctrl+F5로 새로고침하세요. 대시보드에서 스크립트가 켜져 있는지 확인하고 Ctrl+Shift+L로 HUD를 표시하세요. 설치 전에 열어둔 페이지는 새로고침해야 합니다.
+- **설치 후 ZIP/폴더를 남겨야 하나요?** — 아니요. 스크립트는 Tampermonkey 안에 있습니다. ZIP은 삭제해도 됩니다. 업데이트는 Tampermonkey나 raw 링크 재설치로 하세요.
+
 ## 문제 해결
 
 - **아무것도 안 보임** — URL이 `*://*.tanktrouble.com/*`인지, 스크립트가 켜져 있는지 확인 후 `Ctrl+F5`.
