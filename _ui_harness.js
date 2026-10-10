@@ -866,16 +866,43 @@ step(function () {
 	ck('dot-hidden-until-handoff', dot.style.opacity === '0',
 		'交接前圆点必须隐藏（不许它自己从 0 长大）: dot=' + dot.style.opacity);
 
+	/* 反向收起（展开到一半直接变回球）：球正可见/半途，绝不能为了"清上一轮冻结"
+	 * 把它的阴影内联当场清掉 —— 那一下就是"变大的终点光晕突变"的另一条路径。 */
+	(function () {
+		var beforeComputed = getComputedStyle(ball).boxShadow;
+		T._hudAnimate(true);                       // 展开到一半 → 直接反向收起
+		window.__MORPHREV__ = {
+			inlineAfter: String(ball.style.boxShadow || ''),
+			computedAfter: getComputedStyle(ball).boxShadow,
+			animating: T.isHudAnimating()
+		};
+		function shape(s) {
+			return String(s || '').replace(/rgba?\([^)]*\)/g, 'C').replace(/\s+/g, ' ').trim();
+		}
+		ck('reverse-morph-keeps-ball-glow',
+			window.__MORPHREV__.inlineAfter !== '' &&
+			shape(window.__MORPHREV__.computedAfter) === shape(beforeComputed) &&
+			window.__MORPHREV__.animating === true,
+			'反向收起时必须保留球当前的阴影内联值（清冻结会当场改变光影 = 光晕突变）: ' +
+			JSON.stringify(window.__MORPHREV__));
+	})();
+
 	/* 动画途中"按下"（拖动的开始）→ 必须立刻落终态 */
 	q('ttn-head').dispatchEvent(new PointerEvent('pointerdown',
 		{ bubbles: true, cancelable: true, clientX: 340, clientY: 340, pointerId: 77 }));
-	window.__MORPH2__ = {
-		animating: T.isHudAnimating(), dotOpacity: dot.style.opacity,
-		ballTransform: String(ball.style.transform), morphClass: ball.classList.contains('morph')
-	};
+	window.__MORPH2__ = { pressedAnimating: T.isHudAnimating(), pressedDotOpacity: dot.style.opacity };
+	/* 只是"按一下"不能立刻落终态：那会把插值到一半的颜色/阴影硬切到终点，
+	 * 表现就是用户报的"终点闪一下、什么颜色都有"。真拖动（超过 4px）才落终态。 */
+	ck('press-during-morph-does-not-snap', window.__MORPH2__.pressedAnimating === true,
+		'变形途中按一下必须保持动画（否则点击反向会硬切）: ' + JSON.stringify(window.__MORPH2__));
+	q('ttn-head').dispatchEvent(new PointerEvent('pointermove',
+		{ bubbles: true, cancelable: true, clientX: 400, clientY: 400, pointerId: 77 }));
+	window.__MORPH2__.animating = T.isHudAnimating();
+	window.__MORPH2__.dotOpacity = dot.style.opacity;
+	window.__MORPH2__.ballTransform = String(ball.style.transform);
+	window.__MORPH2__.morphClass = ball.classList.contains('morph');
 	ck('drag-during-morph-finishes-it', window.__MORPH2__.animating === false && dot.style.opacity === '',
-		'变形途中一按下就落终态（否则拖动改锚点会错位），且圆点归位与球最后一帧重合: ' +
-		JSON.stringify(window.__MORPH2__));
+		'真拖动（超过阈值）必须落终态，保证锚点不错位: ' + JSON.stringify(window.__MORPH2__));
 
 	/* 收起方向 */
 	T.hudState.ball = false; T.setHud(true); T._finishHudAnim();
@@ -1107,10 +1134,10 @@ step(function () {
 		function bright(d) { var m = /brightness\(([\d.]+)\)/.exec(d || ''); return m ? parseFloat(m[1]) : 0; }
 		var onB = bright(bodyAfter('#ttn-ball.on'));
 		var offB = bright(bodyAfter('#ttn-ball:not(.on)'));
-		var onH = bright(bodyAfter('#ttn-ball.on:hover,#ttn-dot.on:hover'));
-		var offH = bright(bodyAfter('#ttn-ball:not(.on):hover,#ttn-dot:not(.on):hover'));
-		var onHBody = bodyAfter('#ttn-ball.on:hover,#ttn-dot.on:hover');
-		var offHBody = bodyAfter('#ttn-ball:not(.on):hover,#ttn-dot:not(.on):hover');
+		var onH = bright(bodyAfter('#ttn-ball.on:hover,#ttn-ball.on.ttn-hover,#ttn-dot.on:hover,#ttn-dot.on.ttn-hover'));
+		var offH = bright(bodyAfter('#ttn-ball:not(.on):hover,#ttn-ball:not(.on).ttn-hover,#ttn-dot:not(.on):hover,#ttn-dot:not(.on).ttn-hover'));
+		var onHBody = bodyAfter('#ttn-ball.on:hover,#ttn-ball.on.ttn-hover,#ttn-dot.on:hover,#ttn-dot.on.ttn-hover');
+		var offHBody = bodyAfter('#ttn-ball:not(.on):hover,#ttn-ball:not(.on).ttn-hover,#ttn-dot:not(.on):hover,#ttn-dot:not(.on).ttn-hover');
 		var hasInsetRim = /inset/.test(onHBody) && /inset/.test(offHBody);
 		var hasOuterGlow = /0 0 \d+px -\d+px currentColor/.test(onHBody) &&
 			/0 0 \d+px -\d+px currentColor/.test(offHBody);
@@ -1357,7 +1384,9 @@ step(function () {
 					if (st.textContent && st.textContent.indexOf('#ttn-ball') >= 0) css += st.textContent;
 				});
 				var id = el.id === 'ttn-dot' ? '#ttn-dot' : '#ttn-ball';
-				return css.indexOf(id + ' .hover-glow{') >= 0 && css.indexOf(id + ':hover .hover-glow{') >= 0;
+				/* 现在 hover 配方和 .ttn-hover（交接继承）写在同一条规则里，用正则匹配。 */
+				return new RegExp(id + '\\s*\\.hover-glow\\s*[,{]').test(css) &&
+					new RegExp(id + '(:hover|\\.ttn-hover)[^{}]*\\.hover-glow\\s*[,{]').test(css);
 			})()
 	};
 	}
@@ -1391,8 +1420,8 @@ step(function () {
 		document.querySelectorAll('style').forEach(function (st) {
 			if (st.textContent && st.textContent.indexOf('#ttn-ball') >= 0) css += st.textContent;
 		});
-		var sharedOn = /#ttn-ball\.on:hover,#ttn-dot\.on:hover\{/.test(css);
-		var sharedOff = /#ttn-ball:not\(\.on\):hover,#ttn-dot:not\(\.on\):hover\{/.test(css);
+		var sharedOn = /#ttn-ball\.on:hover[^{}]*#ttn-ball\.on\.ttn-hover[^{}]*#ttn-dot\.on:hover[^{}]*#ttn-dot\.on\.ttn-hover[^{}]*\{/.test(css);
+		var sharedOff = /#ttn-ball:not\(\.on\):hover[^{}]*#ttn-ball:not\(\.on\)\.ttn-hover[^{}]*#ttn-dot:not\(\.on\):hover[^{}]*#ttn-dot:not\(\.on\)\.ttn-hover[^{}]*\{/.test(css);
 		window.__HOVERSHARE__ = { sharedOn: sharedOn, sharedOff: sharedOff };
 		if (!sharedOn || !sharedOff) diffs.push('hover 配方没有共用: ' + JSON.stringify(window.__HOVERSHARE__));
 	})();
@@ -2250,6 +2279,166 @@ step(function () {
 		JSON.stringify(window.__HALOHANDOFF__));
 	T.hudState.ball = false; T.setHud(true); T._finishHudAnim(); T.setSmoothing(true);
 });
+
+step(function () {
+	/* 用户复现："变小的终点有时候会闪，什么颜色都有（有时黑、有时接近本色）"。
+	 * 根因：变形 300ms 里 refreshHud 仍每 250ms 更新分级色，而 WAAPI 关键帧终点
+	 * 取的是动画开始那一刻的 tint —— 两端各走各的，交接那一帧就闪。
+	 * 回归：变形期间颜色必须钉在 hudAnim.tint；交接时球/圆点必须同色；落终态后下一拍恢复更新。 */
+	var T = window.__TTN__, ball = q('ttn-ball'), dot = q('ttn-dot');
+	function norm(v) { return String(v == null ? '' : v).replace(/\s+/g, '').toLowerCase(); }
+	function bgOf(el) { return getComputedStyle(el).backgroundColor; }
+	T.hudState.hidden = false;
+	T.hudState.ball = false; T.setHud(true); T._finishHudAnim(); T.setSmoothing(true);
+	var t0 = Date.now();
+	T.ping.samples.length = 0;
+	for (var i = 0; i < 40; i++) T.ping.samples.push({ t: t0 - (39 - i) * 200, rtt: 70, src: 'probe' });
+	T.setHud(true);
+	T.hudState.ball = true; T.setHud(true); T._finishHudAnim();   // 先收起
+	var tint = bgOf(dot);
+	T.hudState.ball = false; T._hudAnimate(false);                 // 展开 = 球变小
+	var frozen = T._hudAnim.tint;
+	/* 动画途中分级色变差：refreshHud 不能把两端颜色改走 */
+	T.ping.samples.length = 0;
+	for (i = 0; i < 40; i++) T.ping.samples.push({ t: t0 - (39 - i) * 200, rtt: 300, src: 'probe' });
+	T.setHud(true);
+	var dotAfter = dot.style.background, ballBorder = ball.style.borderColor;
+	var bgAnim = (ball.getAnimations ? ball.getAnimations() : []).filter(function (a) {
+		try { var k = a.effect.getKeyframes(); return k.some(function (f) { return f.backgroundColor; }); } catch (e) { return false; }
+	})[0];
+	var keyEnd = bgAnim ? ((bgAnim.effect.getKeyframes()[1] || {}).backgroundColor) : null;
+	window.__COLORFREEZE__ = { frozen: frozen, tintNow: T._hudAnim.tint, dotAfter: dotAfter, ballBorder: ballBorder, keyEnd: keyEnd,
+		dotMorphClass: dot.classList.contains('ttn-morphing'), dotTrans: getComputedStyle(dot).transitionProperty };
+	ck('morph-color-frozen-during-refresh',
+		!!frozen && norm(dotAfter) === norm(frozen) && norm(T._hudAnim.tint) === norm(frozen) &&
+		norm(ballBorder) === norm(frozen) && norm(keyEnd) === norm(frozen) &&
+		window.__COLORFREEZE__.dotMorphClass === true &&
+		/none|^$/.test(String(window.__COLORFREEZE__.dotTrans || '')),
+		'变形期间颜色必须钉在 tint 且圆点的 background 过渡被压住；关键帧终点/圆点/球边色必须同色: ' +
+		JSON.stringify(window.__COLORFREEZE__));
+	T._finishHudAnim();
+	var ballBg = bgOf(ball), dotBg = bgOf(dot);
+	window.__COLORFREEZE__.dotMorphAfter = dot.classList.contains('ttn-morphing');
+	window.__COLORFREEZE__.dotTransAfter = getComputedStyle(dot).transitionProperty;
+	ck('morph-swap-same-tint',
+		norm(ballBg) === norm(dotBg) && norm(dotBg) === norm(frozen) &&
+		window.__COLORFREEZE__.dotMorphAfter === false && /background/.test(window.__COLORFREEZE__.dotTransAfter || ''),
+		'交接那一帧球/圆点背景必须是同一个 tint，且圆点过渡恢复: ' +
+		JSON.stringify({ ballBg: ballBg, dotBg: dotBg, frozen: frozen, after: window.__COLORFREEZE__ }));
+	T.setHud(true);   // 落终态后的下一拍：恢复正常更新
+	window.__COLORFREEZE__.dotNow = dot.style.background;
+	ck('morph-color-resumes-after-handoff', norm(dot.style.background) !== norm(frozen),
+		'落终态后的下一拍必须恢复更新到新分级色: ' + JSON.stringify(window.__COLORFREEZE__));
+	T.ping.samples.length = 0;
+	T.hudState.ball = false; T.setHud(true); T._finishHudAnim(); T.setSmoothing(true);
+});
+
+step(function () {
+	/* 用户复现："变大的终点有时候光晕会突变"。收起方向球从头到尾可见，终点不该再"接过"
+	 * 任何内联；旧实现在 .ttn-morphing（box-shadow 过渡被压住）还没撤时就清内联阴影，
+	 * CSS 目标瞬间顶上 = 突变。回归：hover 态先继承；终点阴影钉成动画终点值；
+	 * 清内联排在 cancelMorph 之后；清的时候 box-shadow 过渡已经恢复。 */
+	var T = window.__TTN__, ball = q('ttn-ball'), dot = q('ttn-dot');
+	function shape(s) {
+		return String(s == null ? '' : s).replace(/rgba?\([^)]*\)/g, 'C')
+			.replace(/currentcolor/gi, 'C').replace(/\s+/g, ' ').trim();
+	}
+	T.hudState.hidden = false;
+	T.hudState.ball = false; T.setHud(true); T._finishHudAnim(); T.setSmoothing(true);
+	/* 模拟"鼠标悬在圆点上"：pointerenter 会把 .ttn-hover 同步给 ball/dot（跨交接继承）。 */
+	dot.dispatchEvent(new PointerEvent('pointerenter', { bubbles: false, pointerId: 88 }));
+	ball.style.boxShadow = '';                       // 清掉上一轮残留，量 CSS 目标
+	var target = getComputedStyle(ball).boxShadow;
+	var loopBefore = ball.__haloLoop;
+	window.__COLLAPSEGLOW__ = {
+		target: target, hoverDot: dot.classList.contains('ttn-hover'),
+		hoverBall: ball.classList.contains('ttn-hover')
+	};
+	T.hudState.ball = true; T._hudAnimate(true);
+	/* 变形中途刷新一次（模拟 metrics 刷新落在 300ms 内），呼吸循环不能被重建。 */
+	var t1 = Date.now();
+	T.ping.samples.length = 0;
+	for (var i = 0; i < 40; i++) T.ping.samples.push({ t: t1 - (39 - i) * 200, rtt: 300, src: 'probe' });
+	T.setHud(true);
+	window.__COLLAPSEGLOW__.loopSame = (ball.__haloLoop === loopBefore);
+	window.__COLLAPSEGLOW__.inlineDuring = ball.style.boxShadow;
+	T._finishHudAnim();
+	window.__COLLAPSEGLOW__.endShadow = ball.style.boxShadow;
+	window.__COLLAPSEGLOW__.endComputed = getComputedStyle(ball).boxShadow;
+	window.__COLLAPSEGLOW__.trans = getComputedStyle(ball).transitionProperty;
+	window.__COLLAPSEGLOW__.hoverAfter = ball.classList.contains('ttn-hover');
+	ck('halo-loop-not-rebuilt-during-morph', window.__COLLAPSEGLOW__.loopSame === true,
+		'变形期间刷新不能重建呼吸循环（否则光晕相位/明暗在终点突变）: ' + JSON.stringify(window.__COLLAPSEGLOW__));
+	ck('collapse-glow-endpoint-stable',
+		!!window.__COLLAPSEGLOW__.endShadow &&
+		shape(window.__COLLAPSEGLOW__.endComputed) === shape(target) &&
+		window.__COLLAPSEGLOW__.hoverAfter === true &&
+		/box-shadow/.test(window.__COLLAPSEGLOW__.trans),
+		'收起终点：阴影=动画终点/CSS 目标、hover class 已继承、清内联时 box-shadow 过渡已恢复: ' +
+		JSON.stringify(window.__COLLAPSEGLOW__));
+});
+
+step(function () {
+	/* 上一步 220ms 的冻结清理由定时器执行完（step 间隔 380ms），这里量"清完目标不变"。 */
+	var T = window.__TTN__, ball = q('ttn-ball'), dot = q('ttn-dot');
+	function shape(s) {
+		return String(s == null ? '' : s).replace(/rgba?\([^)]*\)/g, 'C')
+			.replace(/currentcolor/gi, 'C').replace(/\s+/g, ' ').trim();
+	}
+	var G = window.__COLLAPSEGLOW__ || {};
+	window.__COLLAPSEGLOW__.cleared = (ball.style.boxShadow === '');
+	window.__COLLAPSEGLOW__.afterClear = getComputedStyle(ball).boxShadow;
+	ck('collapse-glow-clear-keeps-target',
+		window.__COLLAPSEGLOW__.cleared === true &&
+		shape(window.__COLLAPSEGLOW__.afterClear) === shape(G.endComputed),
+		'冻结内联清掉后阴影目标不变（box-shadow 过渡兜住任何微小差异，不再瞬变）: ' +
+		JSON.stringify(window.__COLLAPSEGLOW__));
+	/* 指针离开：.ttn-hover 必须能清掉，否则 hover 观感永久卡住 */
+	ball.dispatchEvent(new PointerEvent('pointerleave', { pointerId: 88 }));
+	window.__COLLAPSEGLOW__.hoverCleared = !ball.classList.contains('ttn-hover') && !dot.classList.contains('ttn-hover');
+	ck('hover-class-clears-on-leave', window.__COLLAPSEGLOW__.hoverCleared === true,
+		'指针离开后 .ttn-hover 必须清掉（否则 hover 观感会永久卡住）: ' + JSON.stringify(window.__COLLAPSEGLOW__));
+	T.hudState.ball = false; T.setHud(true); T._finishHudAnim(); T.setSmoothing(true);
+	T.ping.samples.length = 0;
+});
+step(function () {
+	/* 呼吸循环因延迟变化被重建时，必须从旧循环的当前相位接着走，不能回到起始亮度
+	 * （这也是用户看到的"光晕突变"的一种）。 */
+	var T = window.__TTN__, ball = q('ttn-ball');
+	function phaseOf(a) {
+		var t = a.effect.getTiming(), d = Math.max(1, parseFloat(t.duration) || 1);
+		var delay = Math.max(0, parseFloat(t.delay) || 0);
+		var cur = typeof a.currentTime === 'number' ? a.currentTime : ((a.currentTime && a.currentTime.value) || 0);
+		return ((((cur - delay) % d) + d) % d) / d;
+	}
+	T.hudState.hidden = false; T.hudState.ball = true; T.setHud(true); T.setSmoothing(true); T._finishHudAnim();
+	var t0 = Date.now();
+	T.ping.samples.length = 0;
+	for (var i = 0; i < 40; i++) T.ping.samples.push({ t: t0 - (39 - i) * 200, rtt: 70, src: 'probe' });
+	T.setSmoothing(true);
+	var loop1 = ball.__haloLoop;
+	var timing1 = loop1 ? loop1.effect.getTiming() : null;
+	var dur1 = timing1 ? parseFloat(timing1.duration) : 0;
+	if (loop1) loop1.currentTime = Math.max(0, parseFloat(timing1.delay) || 0) + 0.73 * dur1;
+	var phaseBefore = loop1 ? phaseOf(loop1) : null;    // 必须在重建/取消之前读
+	T.ping.samples.length = 0;
+	for (i = 0; i < 40; i++) T.ping.samples.push({ t: t0 - (39 - i) * 200, rtt: 300, src: 'probe' });
+	T.setSmoothing(true);
+	var loop2 = ball.__haloLoop, timing2 = loop2 ? loop2.effect.getTiming() : null;
+	window.__LOOPRECREATE__ = {
+		dur1: dur1, dur2: timing2 ? parseFloat(timing2.duration) : 0,
+		phaseBefore: phaseBefore, phaseAfter: loop2 ? phaseOf(loop2) : null,
+		same: loop1 === loop2
+	};
+	ck('halo-rebuild-keeps-phase',
+		!!loop1 && !!loop2 && loop1 !== loop2 && window.__LOOPRECREATE__.dur2 > window.__LOOPRECREATE__.dur1 &&
+		Math.abs(window.__LOOPRECREATE__.phaseAfter - window.__LOOPRECREATE__.phaseBefore) < 0.05,
+		'呼吸循环因延迟变化重建时必须保持当前相位（否则重建那一帧就是光晕突变）: ' +
+		JSON.stringify(window.__LOOPRECREATE__));
+	T.hudState.ball = false; T.setHud(true); T._finishHudAnim(); T.setSmoothing(true);
+	T.ping.samples.length = 0;
+});
+
 
 
 step(function () {

@@ -137,7 +137,7 @@ node ui-check-build.js      # 生成 _ui_check.html
 # 用无头浏览器跑（Chrome；Edge 也可以）：
 chrome --headless=new --disable-gpu --no-sandbox --disable-extensions \
   --window-size=1280,800 --user-data-dir=_tmp --virtual-time-budget=90000 \
-  --dump-dom file:///<绝对路径>/_ui_check.html        # 结果在 <title> 里，180 项
+  --dump-dom file:///<绝对路径>/_ui_check.html        # 结果在 <title> 里，190 项
 ```
 
 测试纪律（这个项目一直在用）：

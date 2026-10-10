@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.5.0
+// @version      0.5.1
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,13 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.5.0';
+	const VERSION = '0.5.1';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.5.1', '修"变小的终点有时候会闪，闪过黑/接近本色/各种中间色 + 变大的终点光晕会突变"（用户实测，属多条 bug 叠加）—— 真因：① 动画没结束前**一按下就 finishHudAnim()**，把插值到一半的颜色/阴影硬切到终点（中间色被当成"随机闪一下"）；② 变形 300ms 里 refreshHud 仍每 250ms 更新分级色，而 WAAPI 关键帧终点是动画开始那一刻的 tint，两端异色 → 交接闪；③ 圆点的 background/color 自己带 .4s 过渡，可能带着上一拍的中间值去交接；④ 收起方向在 .ttn-morphing（box-shadow 过渡被压住）还没撤时就清内联阴影，CSS 目标瞬间顶上 → 光晕突变；⑤ hover 态没有跟 display 切换一起交接，入场元素的亮度/阴影和外发光和出场元素不一致；⑥ 刷新恰好落在变形里时 applyGlow 会重建呼吸循环，相位/明暗被顶掉。',
+			'修法：① 变形中按一下不再立即落终态，只有真拖动（>4px）才落终态 —— "点击反向"从当前插值继续，不再硬切；② 整个变形期间把两端颜色钉在 hudAnim.tint（refreshHud 只更新文字、不动颜色），交接帧球/圆点同色，落终态后的下一拍才恢复更新；③ 变形期间给 #ttn-dot 也加 .ttn-morphing（压住 background/color 过渡），入场时圆点就是精确的 tint；④ 先 cancelMorph() 恢复过渡、再安排清冻结内联，且收起终点先把动画终点的阴影钉住，清的时候 box-shadow 过渡已经可用；⑤ 新增 .ttn-hover：pointerenter/leave 同步 ball/dot 的悬浮态，CSS 配方与 :hover 完全共用，交接瞬间按指针/出场元素继承，终点光晕不突变；⑥ 变形期间跳过 applyGlow 的循环重建，变形结束后下一拍用原有淡入平滑生效；⑦ 呼吸循环因延迟变化必须重建时，按旧循环的当前相位接着播（不能从 0 重来）。',
+			'反向/边界：反向收起时球正可见，不再清它可能残留的内联 filter/box-shadow（只有当前不可见的入场元素才清），否则清冻结本身就是一次光影突变；冻结内联的 220ms 定时器在 cancelMorph 之后才排程，避免被"新变形"提前清掉。',
+			'新增回归：morph-color-frozen-during-refresh（变形期间颜色不被 refreshHud 改走）、morph-swap-same-tint（交接球/圆点同 tint）、morph-color-resumes-after-handoff、collapse-glow-endpoint-stable / collapse-glow-clear-keeps-target（收起终点阴影=动画终点且清内联后目标不变）、halo-loop-not-rebuilt-during-morph、hover-class-clears-on-leave、press-during-morph-does-not-snap（按一下不硬切）、reverse-morph-keeps-ball-glow、halo-rebuild-keeps-phase（延迟档位变化重建循环时保持当前相位）；三处主要真因都做了"撤回 → 对应回归变红"的反例验证。'],
 		['0.5.0', '修"终点前还有极细微瞬变 + 标题栏瞬间变灰 + 收起时大球灰一下"（用户实测）—— 三个真因：① **CSS 过渡的层叠优先级高于 WAAPI**：变形时写内联起止值会派生 CSSTransition，和 WAAPI 抢同一个 transform/opacity/box-shadow，播到一半交还给动画就"跳一下"；② 标题栏 hover 换整条 `linear-gradient`，渐变之间不可插值（规范按离散处理）→ 必然瞬变；③ 元素刚从 display:none 变可见时 WAAPI 首帧不一定生效，会露一帧基础样式（灰/全尺寸）。',
 			'修法：① 变形期间用 `.ttn-morphing` class 先压掉 transform/opacity/box-shadow 的 CSS 过渡（filter/border/color 的 hover 过渡保留，绝不用内联 transition）；② 标题栏改成**同形状内阴影**过渡（`inset 0 0 0 0` → `inset 0 0 0 999px`，只有长度和 alpha 在插值）；③ 写动画前先把**完整起始姿态**写成内联值：面板 transform/opacity、球 transform（显式 scale）+ backgroundColor（=圆点实时色）+ boxShadow，元素从 display:none 出现的第一帧就是正确姿态。',
 			'交接细节：呼吸相位改成按"循环内进度比例"对齐，并确保取的是 iterations:Infinity 的循环动画（以前 `getAnimations()[0]` 会取到带 fill:forwards、永远卡在列表第一位的淡入 → 设错对象）；发光冻结的 220ms 定时器在连点/反向时先清掉，避免旧定时器提前清掉新内联值；圆点/hudTint 在**收起成球期间**也持续同步最新分级色（以前只在面板态更新，下次展开会从旧色起步）。',
@@ -2125,7 +2129,7 @@
 		 * 规范里过渡的优先级高于动画：两边同动一个属性时过渡会赢，播到一半再交还给
 		 * 动画 = 终点前"轻微一跳"（用户这次报的极细微瞬变，真因就在这里）。
 		 * 依旧用 class（绝不用内联 transition，内联漏掉会永久卡死 hover）。 */
-		'#ttn-root.ttn-morphing{transition:none}',
+		'#ttn-root.ttn-morphing,#ttn-dot.ttn-morphing{transition:none}',
 		/* 球只压制 WAAPI 正在动的属性；filter/border/color 的 hover 过渡必须保留
 		 * （否则拖动结束后的 hover 检查会看到 transition:none = 实际 hover 又瞬变）。 */
 		'#ttn-ball.ttn-morphing{transition:filter .3s ease,border-color .4s ease,color .4s ease}',
@@ -2143,11 +2147,13 @@
 		 *  · 内部发光用一层 .hover-glow 子元素（CSS opacity 过渡，能和状态规则叠加，不会互相覆盖）；
 		 *  · 亮度只加一点点，且分状态给 —— 关的时候也要"比关亮一点"，但绝不该亮到开启态。
 		 *  · 不要白环、不要大改阴影：那都是"额外的可见物体"（用户明确不要）。 */
-		'#ttn-ball:hover .hover-glow{opacity:.62}',
+		/* `.ttn-hover` = 交接时把"当前悬停态"从一个元素继承到另一个元素（浏览器不保证
+		 * display 切换后 :hover 立刻生效，靠它才能让终点光晕不突变）。两套选择器同一份配方。 */
+		'#ttn-ball:hover .hover-glow,#ttn-ball.ttn-hover .hover-glow{opacity:.62}',
 		/* 边缘更亮（inset 描边）+ 外发光（柔和光晕，不是白环那种"额外物体"）+ 只加一点点整体亮度 */
-		'#ttn-ball.on:hover,#ttn-dot.on:hover{filter:saturate(1) brightness(1.26);',
+		'#ttn-ball.on:hover,#ttn-ball.on.ttn-hover,#ttn-dot.on:hover,#ttn-dot.on.ttn-hover{filter:saturate(1) brightness(1.26);',
 		'box-shadow:0 6px 18px rgba(0,0,0,.42),0 0 20px -3px currentColor,inset 0 0 0 1px rgba(255,255,255,.34)}',
-		'#ttn-ball:not(.on):hover,#ttn-dot:not(.on):hover{filter:saturate(.95) brightness(1.0);',
+		'#ttn-ball:not(.on):hover,#ttn-ball:not(.on).ttn-hover,#ttn-dot:not(.on):hover,#ttn-dot:not(.on).ttn-hover{filter:saturate(.95) brightness(1.0);',
 		'box-shadow:0 7px 20px rgba(0,0,0,.5),0 0 18px -4px currentColor,inset 0 0 0 1px rgba(255,255,255,.26)}',
 		/* 按下**不做**任何状态：点击不是一种观感（用户明确要求），
 		 * 而且它还会和 hover 抢层叠、和变形抢尺寸。拖动本身有指针跟随就够了。 */
@@ -2155,7 +2161,7 @@
 		'#ttn-dot .hover-glow{position:absolute;left:-1px;top:-1px;right:-1px;bottom:-1px;border-radius:50%;',
 		'pointer-events:none;opacity:0;transition:opacity .18s ease;',
 		'background:radial-gradient(circle,rgba(255,255,255,.10) 0%,rgba(255,255,255,.06) 52%,rgba(255,255,255,.34) 88%,rgba(255,255,255,.5) 100%)}',
-		'#ttn-dot:hover .hover-glow{opacity:.62}',
+		'#ttn-dot:hover .hover-glow,#ttn-dot.ttn-hover .hover-glow{opacity:.62}',
 
 		'#ttn-dot .halo{position:absolute;left:-1px;top:-1px;right:-1px;bottom:-1px;border-radius:50%;',
 		'pointer-events:none;opacity:0;',
@@ -2870,6 +2876,14 @@
 
 		document.documentElement.appendChild(hud);
 		document.documentElement.appendChild(hudBall);
+		/* 悬浮态跨交接：pointerenter/leave 维护 .ttn-hover；ball 和 dot 同心，
+		 * 只同步 class、不改样式（配方在 CSS 里和 :hover 共用）。 */
+		[hudBall, hud.querySelector('#ttn-dot')].forEach(function (el) {
+			if (!el) return;
+			el.addEventListener('pointerenter', function () { setHudHover(true); });
+			el.addEventListener('pointerleave', function () { setHudHover(false); });
+		});
+
 
 		applyHudVisibility();
 		clampHud();
@@ -2950,7 +2964,7 @@
 	}
 
 	function installHudDrag(el, isPanel) {
-		let dragging = false, moved = false, sx = 0, sy = 0, ox = 0, oy = 0;
+		let dragging = false, moved = false, pendingMorphFinish = false, sx = 0, sy = 0, ox = 0, oy = 0;
 		const track = [];          // 最近几次"球的位置 + 时刻"：用来算松手速度
 
 		/** 记一次"球自己"的位置（必须在夹取之后调用） */
@@ -2965,9 +2979,11 @@
 			// 圆点上的收起监听就永远不会触发（这就是"根本无法收起"的原因）。
 			if (ev.target && ev.target.classList.contains &&
 				(ev.target.classList.contains('ttn-btn') || ev.target.id === 'ttn-dot')) return;
-			/* 动画还没结束时碰它：先把变形落终态再做拖动。
-			 * 否则拖动会改锚点，而变形是按锚点算的 —— 球和圆点就会错位。 */
-			if (hudAnimating) finishHudAnim();
+
+
+			/* 按一下多半是想反向/连点：立刻落终态会把插值到一半的颜色/阴影硬切到
+			 * 终点（用户看到的"有时黑、有时接近本色的闪"）。真拖动超过阈值时再落终态。 */
+			pendingMorphFinish = hudAnimating;
 			dragging = true; moved = false;
 			closeLangMenu();
 			hideTip();
@@ -2988,7 +3004,11 @@
 		el.addEventListener('pointermove', function (ev) {
 			if (!dragging) return;
 			const dx = ev.clientX - sx, dy = ev.clientY - sy;
-			if (!moved && Math.abs(dx) + Math.abs(dy) > 4) moved = true;
+			if (!moved && Math.abs(dx) + Math.abs(dy) > 4) {
+				moved = true;
+				/* 真开始拖了才落终态：锚点接着按 pointer 走，不会错位。 */
+				if (pendingMorphFinish && hudAnimating) { pendingMorphFinish = false; finishHudAnim(); }
+			}
 			if (!moved) return;
 			hudState.x = ox + dx; hudState.y = oy + dy;
 			clampHud(true);                // 拖动中必须跟手，不走回弹
@@ -3002,6 +3022,7 @@
 		const end = function (ev) {
 			if (!dragging) return;
 			dragging = false;
+			pendingMorphFinish = false;
 			el.__ttnDragging = false;
 			el.classList.remove('ttn-drag');
 			if (activeDrag && activeDrag.el === el) activeDrag = null;
@@ -3161,6 +3182,20 @@
 			} catch (e) {}
 		}
 		if (!on) { if (el.__haloLoop) { el.__haloLoop.cancel(); el.__haloLoop = null; } return; }
+		/* 周期/强度变化要重建循环：从旧循环的**当前相位**接着走，不能从 0 重来 ——
+		 * "呼吸了一下突然跳回起始亮度"就是用户看到的"光晕突变"。 */
+		let loopPhase = null;
+		if (!changed && el.__haloLoop) {
+			try {
+				const ot = el.__haloLoop.effect.getTiming();
+				const od = Math.max(1, parseFloat(ot.duration) || 1);
+				const odelay = Math.max(0, parseFloat(ot.delay) || 0);
+				const oc = typeof el.__haloLoop.currentTime === 'number'
+					? el.__haloLoop.currentTime
+					: ((el.__haloLoop.currentTime && el.__haloLoop.currentTime.value) || 0);
+				loopPhase = ((((oc - odelay) % od) + od) % od) / od;
+			} catch (e) {}
+		}
 		/* 呼吸：幅度很小；② 刚淡入时要 delay，别把淡入顶掉 */
 		if (!el.__haloLoop || el.__loopDur !== durMs || el.__loopGlow !== glowPx) {
 			el.__loopDur = durMs; el.__loopGlow = glowPx;
@@ -3174,6 +3209,7 @@
 					duration: durMs, direction: 'alternate', iterations: Infinity, easing: 'ease-in-out',
 					delay: changed ? dur : 0
 				});
+				if (loopPhase != null) el.__haloLoop.currentTime = loopPhase * durMs;
 			} catch (e) {}
 		}
 	}
@@ -3439,7 +3475,39 @@
 		/* 变形结束/取消时同时解除过渡抑制（class，不碰内联 transition）。 */
 		try { if (hud) hud.classList.remove('ttn-morphing'); } catch (e) {}
 		try { if (hudBall) hudBall.classList.remove('ttn-morphing'); } catch (e) {}
+		try {
+			const d = hud && hud.querySelector('#ttn-dot');
+			if (d) d.classList.remove('ttn-morphing');
+		} catch (e) {}
 	}
+
+	/** 悬浮态跨交接（.ttn-hover）：ball 和 dot 同心同位置，但 display 切换后浏览器
+	 *  不保证 :hover 立刻生效；用一个 class 表示"现在应该按 hover 观感画"，
+	 *  CSS 里 .ttn-hover 与 :hover 共用同一份配方。 */
+	function setHudHover(on) {
+		try {
+			const d = hud && hud.querySelector('#ttn-dot');
+			if (hudBall) hudBall.classList.toggle('ttn-hover', !!on);
+			if (d) d.classList.toggle('ttn-hover', !!on);
+		} catch (e) {}
+	}
+	function hudHoverLike(el) {
+		try {
+			if (!el) return false;
+			return !!(el.matches(':hover') || el.classList.contains('ttn-hover'));
+		} catch (e) { return !!(el && el.classList && el.classList.contains('ttn-hover')); }
+	}
+	function hudPointerOver(el) {
+		/* 真实指针是否压在这个元素上（用来在交接瞬间决定 hover class）。 */
+		try {
+			if (!el || !document.elementFromPoint) return false;
+			const r = el.getBoundingClientRect();
+			if (!(r.width > 0 && r.height > 0)) return false;
+			const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+			return !!(top && (top === el || el.contains(top)));
+		} catch (e) { return false; }
+	}
+
 
 	function hudAnimate(collapse) {
 		if (!hud) return;
@@ -3457,6 +3525,47 @@
 		 * 一个和 WAAPI 抢同一属性的 CSSTransition（规范里过渡优先级更高），终点前必然跳。 */
 		try { hud.classList.add('ttn-morphing'); } catch (e) {}
 		try { if (hudBall) hudBall.classList.add('ttn-morphing'); } catch (e) {}
+		const dotMorph = hud.querySelector('#ttn-dot');
+		/* 圆点自己的 background/color 也有 .4s 过渡：变形期间先压掉，防止它带着
+		 * 上一拍的过渡值去交接（球已经到 tint 了，圆点还没有 = 一帧异色闪）。 */
+		if (dotMorph) dotMorph.classList.add('ttn-morphing');
+
+		/* 交接的 hover 继承：先按"开始瞬间真正在指针下的元素"把 class 对齐。
+		 * ball 和 dot 同心同位置、只有一个可见；浏览器不保证 display 切换后 :hover
+		 * 立刻生效，所以用 .ttn-hover（CSS 里和 :hover 同一份配方）跨交接保留悬浮态。 */
+		const startVisible = collapse ? dotMorph : hudBall;
+		setHudHover(hudPointerOver(startVisible) || hudHoverLike(startVisible));
+
+		/* 清掉上一轮交接留下的 filter/box-shadow 内联冻结。当前入场元素是隐藏的，
+		 * 且 .ttn-morphing 已经压住过渡 → 看不到跳。若留着它，它会盖住 hover/终点的
+		 * CSS 目标，交接清掉的那一刻就是用户复现的"光晕突变"。 */
+		if (!collapse && dotMorph) {
+			/* 展开方向入场的是圆点：此刻它还没显示，清冻结安全。 */
+			dotMorph.style.filter = '';
+			dotMorph.style.boxShadow = '';
+		} else if (collapse && hudBall) {
+			/* 收起方向入场的是球：只有它当前不可见（面板开着）才能清冻结。
+			 * 反向收起时球正可见/半途，清内联会当场改变阴影 → 又是一次"光晕突变"。 */
+			let ballVisible = false;
+			try { ballVisible = getComputedStyle(hudBall).display !== 'none'; } catch (e) {}
+			if (!ballVisible) { hudBall.style.filter = ''; hudBall.style.boxShadow = ''; }
+		}
+
+		/* 颜色冻结：变形的 300ms 里 refreshHud 还会每 250ms 跑一次；如果两端颜色各走各的，
+		 * 交接那一帧就会出现"有时候黑、有时候接近本色"的闪。这里把两端的颜色钉死成
+		 * 同一个 tint，动画起止、交接、落终态都用它；变形结束后再让 refreshHud 正常更新
+		 * （圆点有 background .4s 过渡，是渐变不是闪）。 */
+		const frozenTint = cssOf(dotMorph, 'backgroundColor') || hudTint.last || BALL_SURFACE;
+		hudAnim.tint = frozenTint;
+		if (dotMorph) {
+			if (dotMorph.style.background !== frozenTint) dotMorph.style.background = frozenTint;
+			if (dotMorph.style.color !== frozenTint) dotMorph.style.color = frozenTint;
+		}
+		if (hudBall) {
+			if (hudBall.style.borderColor !== frozenTint) hudBall.style.borderColor = frozenTint;
+			if (hudBall.style.color !== frozenTint) hudBall.style.color = frozenTint;
+		}
+
 
 		const B = hudCache.BALL;
 		const s0 = DOT_SIZE / B;                 // 球要缩到圆点那么大，两个圆心才重合得上
@@ -3473,7 +3582,6 @@
 		/* 无缝变形（用户要求）：展开时**球保持可见**、原地从 66px 缩到圆点大小，
 		 * 面板在它周围长大；圆点整段**隐藏**，最后一帧在同一位置同一尺寸上交接。
 		 * 收起时完全反向（球从圆点大小长回去）。球心本来就压在圆点圆心上，所以只改 scale。 */
-		const dotMorph = hud.querySelector('#ttn-dot');
 		const ballStart = tPose(fromBall, collapse ? s0 : 1);
 		const ballEnd = tPose(fromBall, collapse ? 1 : s0);
 		const panelStart = tPose(from, collapse ? 1 : 0.03);
@@ -3517,8 +3625,8 @@
 		hud.style.opacity = curPanelO;
 		if (hudBall) {
 			hudBall.style.transform = curBallT;
-			const bg0 = collapse ? (cssOf(dotMorph, 'backgroundColor') || BALL_SURFACE)
-				: (cssOf(hudBall, 'backgroundColor') || BALL_SURFACE);
+			const bg0 = collapse ? frozenTint
+				: (cssOf(hudBall, 'backgroundColor') || frozenTint);
 			hudBall.style.backgroundColor = bg0;
 			const sh0 = cssOf(hudBall, 'boxShadow');
 			if (sh0) hudBall.style.boxShadow = sh0;
@@ -3535,8 +3643,8 @@
 			 * 变成有色球"（用户实测的 bug）。收起方向反过来：变回深色盘面。 */
 			/* 颜色一律以**圆点当前的颜色**为准：面板开着这段时间分级色可能已经变了，
 			 * 球身上冻结的内联色是旧的（用户实测"过渡的颜色是错的，不是最新颜色"）。 */
-			let liveTint = cssOf(dotMorph, 'backgroundColor');
-			if (!liveTint) liveTint = hudTint.last || BALL_SURFACE;
+			const liveTint = hudAnim.tint || cssOf(dotMorph, 'backgroundColor') || hudTint.last || BALL_SURFACE;
+
 			const curBg = collapse ? liveTint : (cssOf(hudBall, 'backgroundColor') || liveTint);
 			const wantBg = collapse ? BALL_SURFACE : liveTint;
 			const bgEnd = fromScratch ? wantBg : curBg;   // 反向时按当前色接着走
@@ -3587,12 +3695,15 @@
 		if (!hud) return;
 
 		const dotEl = hud.querySelector('#ttn-dot');
-		const collapsed = !!hudState.ball;
+		const collapsed = !!hudState.ball;              // 落终态后：true=球，false=面板
 		const ta = { x: hudState.x, y: hudState.y };
 		const bp = ballAtOf(ta.x, ta.y);
 		const s0 = DOT_SIZE / hudCache.BALL;
+		const tint = hudAnim.tint || hudTint.last || BALL_SURFACE;
+		const incoming = collapsed ? hudBall : dotEl;  // 交接后可见的那个
+		const outgoing = collapsed ? dotEl : hudBall;  // 交接前可见的那个
 
-		/* 先把终态写进内联样式，再撤主变形动画 —— 撤的那一帧不会跳 */
+		/* 1) 先把终态内联写死：撤动画/撤 .ttn-morphing 的那一帧不会跳。 */
 		hud.style.transform = 'translate(' + Math.round(ta.x) + 'px,' + Math.round(ta.y) + 'px)' +
 			(collapsed ? ' scale(0.03)' : ' scale(1)');
 		hud.style.opacity = collapsed ? '0' : '1';
@@ -3600,82 +3711,97 @@
 			hudBall.style.transform = 'translate(' + Math.round(bp.x) + 'px,' + Math.round(bp.y) + 'px)' +
 				(collapsed ? ' scale(1)' : ' scale(' + s0 + ')');
 			hudBall.style.opacity = '1';
-			hudBall.style.backgroundColor = collapsed ? BALL_SURFACE : (hudTint.last || BALL_SURFACE);
-			if (collapsed) {
-				hudBall.style.boxShadow = '';            // 收起后交还给 .on/:not(.on) 规则
-			} else {
-				/* 展开后球是"圆点的替身"：阴影也必须和圆点一模一样，否则交接那一帧掉一块光 */
-				/* 冻结**球自己当前**的阴影：此时鼠标多半悬在球上（hover 生效），
-				 * 而圆点因为被球挡着**不算 hovered** —— 以前读圆点的阴影就会取到"未悬浮"那份，
-				 * 交接后圆点被 hover → 亮度/光晕突变（用户实测的"细微突变"）。 */
-				hudBall.style.boxShadow = cssOf(hudBall, 'boxShadow');
-			}
+			hudBall.style.backgroundColor = collapsed ? BALL_SURFACE : tint;   // 与动画终点同一个 tint
+			/* 球始终保留自己的阴影；先把动画终点值钉住，等过渡恢复后再平滑交还 CSS。 */
+			hudBall.style.boxShadow = cssOf(hudBall, 'boxShadow');
 			hudBall.classList.toggle('morph', !collapsed);
 			const rows = hudBall.querySelectorAll('.t, .m, .b');
 			Array.prototype.forEach.call(rows, function (el) {
 				el.style.opacity = collapsed ? '1' : '0';
 			});
 		}
+		if (!collapsed && dotEl && tint) {
+			/* 展开方向：圆点是入场方，背景/文字色钉成与球最后一帧相同的 tint。 */
+			if (dotEl.style.background !== tint) dotEl.style.background = tint;
+			if (dotEl.style.color !== tint) dotEl.style.color = tint;
+		}
+
+		/* 2) 展开方向有"球→圆点"的真实交接：把出场球当前的 filter/box-shadow/
+		 * hover-glow 冻结到入场圆点上，交换那一帧逐项一致。清内联放到 220ms 后、
+		 * 且一定在 cancelMorph() 恢复过渡之后 —— 清值与 CSS 目标不一致时是渐变不是瞬变。 */
+		let clearIncomingVisual = null;
+		if (!collapsed && incoming) {
+			const outGlow = outgoing && outgoing.querySelector('.hover-glow');
+			const inGlow = incoming.querySelector('.hover-glow');
+			const f = cssOf(outgoing, 'filter');
+			const sh = cssOf(outgoing, 'boxShadow');
+			let touched = false;
+			if (f) { incoming.style.filter = f; touched = true; }
+			if (sh) { incoming.style.boxShadow = sh; touched = true; }
+			if (outGlow && inGlow) {
+				const want = cssOf(outGlow, 'opacity');
+				if (want) { inGlow.style.opacity = want; touched = true; }
+			}
+			if (touched) {
+				clearIncomingVisual = function () {
+					if (inGlow) inGlow.style.opacity = '';
+					incoming.style.filter = '';
+					incoming.style.boxShadow = '';
+				};
+			}
+		}
+		/* 收起方向：球从头到尾都可见，不需要接过圆点的外观；只把动画终点的阴影
+		 * 钉成内联，220ms 后清掉，让 .on/:not(.on) + hover class 平滑接管。 */
+		let clearBallShadow = null;
+		if (collapsed && hudBall) {
+			const sh2 = cssOf(hudBall, 'boxShadow');
+			if (sh2) {
+				hudBall.style.boxShadow = sh2;
+				clearBallShadow = function () { if (hudBall) hudBall.style.boxShadow = ''; };
+			}
+		}
+
+		/* 3) 先撤动画/撤过渡抑制（过渡恢复后，之后再清内联都是渐变）。 */
 		cancelMorph();
 
-		/* 交接：**原子交换**（同一帧里球隐藏、圆点显示）。
-		 * 之前用 90ms 交叉淡接，结果是两者同时绘制 → 亮度叠加 = 用户看到的"结束时会闪"，
-		 * 而且那个延迟定时器会和"连点"的下一次动画抢状态（连点 bug 连篇）。
-		 * 球的最后一帧已经插值成和圆点同色同尺寸，直接换没有任何可见跳变。 */
-		if (dotEl) dotEl.style.opacity = '';
-		/* 内部发光（.hover-glow）跨交接冻结：球是 hover 状态、圆点交接前不算 hovered，
-		 * 于是圆点的 .hover-glow 会从 0 淡入 → 用户看到的"悬浮时发光瞬变"。
-		 * 把圆点的 .hover-glow 内联成球当前的实际值（内联不会被 :hover 规则盖过），
-		 * 200ms 后清掉，交还给 CSS（此时 :hover 已生效，视觉无变化）。 */
+		/* 4) 冻结内联的清理由这里排程：cancelMorph 不会再把它们提前收掉。 */
+		if (clearIncomingVisual) {
+			hudAnim.glowTimer = setTimeout(function () {
+				hudAnim.glowTimer = null;
+				try { clearIncomingVisual(); } catch (e) {}
+			}, 220);
+		}
+		if (clearBallShadow) {
+			hudAnim.glowTimer2 = setTimeout(function () {
+				hudAnim.glowTimer2 = null;
+				try { clearBallShadow(); } catch (e) {}
+			}, 220);
+		}
+
+		/* 5) hover 继承 + 原子交换：出场方在指针下 → 入场方也按 hover 观感画。 */
 		try {
-			const bGlow = hudBall && hudBall.querySelector('.hover-glow');
-			const dGlow = dotEl && dotEl.querySelector('.hover-glow');
-			if (bGlow && dGlow) {
-				const want = cssOf(bGlow, 'opacity');
-				if (want) {
-					dGlow.style.opacity = want;
-					if (hudAnim.glowTimer) clearTimeout(hudAnim.glowTimer);
-					hudAnim.glowTimer = setTimeout(function () {
-						hudAnim.glowTimer = null;
-						if (dGlow) dGlow.style.opacity = '';
-					}, 220);
-				}
-			}
-			/* 收起方向：球接过圆点的发光值 */
-			const bGlow2 = hudBall && hudBall.querySelector('.hover-glow');
-			const dGlow2 = dotEl && dotEl.querySelector('.hover-glow');
-			if (bGlow2 && dGlow2 && collapsed) {
-				const want2 = cssOf(dGlow2, 'opacity');
-				if (want2) {
-					bGlow2.style.opacity = want2;
-					if (hudAnim.glowTimer2) clearTimeout(hudAnim.glowTimer2);
-					hudAnim.glowTimer2 = setTimeout(function () {
-						hudAnim.glowTimer2 = null;
-						if (bGlow2) bGlow2.style.opacity = '';
-					}, 220);
-				}
-			}
+			setHudHover(hudHoverLike(outgoing) || hudHoverLike(incoming) || hudPointerOver(incoming));
 		} catch (e) {}
-		/* 呼吸相位对齐：两个循环周期相同，但启动时刻不同 → 交接那一帧内圈光晕明暗可能不同。
-		 * 按循环进度比例把圆点的**循环动画**（不是带 fill 的淡入）对到球的相位上。 */
+		if (dotEl) dotEl.style.opacity = '';
+
+		hudAnim.tint = '';
+		applyHudVisibility(false);      // 动画自己已经管过 opacity 了
+		/* 呼吸相位对齐：展开方向是圆点接手球的循环相位（收起方向球一直可见，不动它）。 */
 		try {
 			const bh = hudBall && hudBall.querySelector('.halo');
 			const dh = dotEl && dotEl.querySelector('.halo');
 			const bl = loopAnimOf(bh), dl = loopAnimOf(dh);
 			if (bl && dl) {
-				/* 按"循环内进度比例"对齐，而不是裸拷 currentTime：两个循环的 duration 会随
-				 * 延迟各自重建，可能不同；delay 也可能不同。比例对齐才是真正的相位。 */
 				const tb = bl.effect.getTiming(), td = dl.effect.getTiming();
 				const db = Math.max(1, parseFloat(tb.duration) || 1);
 				const dd = Math.max(1, parseFloat(td.duration) || 1);
 				const c0 = function (v) { return typeof v === 'number' ? v : ((v && v.value) || 0); };
 				const bT = c0(bl.currentTime), dDelay = Math.max(0, parseFloat(td.delay) || 0);
 				const bDelay = Math.max(0, parseFloat(tb.delay) || 0);
-				const phase = ((((bT - bDelay) % db) + db) % db) / db;   // 0..1
+				const phase = ((((bT - bDelay) % db) + db) % db) / db;
 				dl.currentTime = dDelay + phase * dd;
 			}
 		} catch (e) {}
-		applyHudVisibility(false);      // 动画自己已经管过 opacity 了
 		clampHud();
 		saveHudState();
 		hudAnim.debug = { fadeDone: true, atomic: true, glide: hudGlide.active, x: hudState.x, y: hudState.y };
@@ -3856,11 +3982,14 @@
 		const m = netMetrics();
 		const col = overallColor(m);
 		const colStr = cstr(col);
+		/* 变形期间颜色钉在开始时的 tint：一次 morph 里 metrics 往往刷新一次，
+		 * 如果两端各走各的，交接那一帧就会出现"有时黑、有时接近本色"的闪。 */
+		const liveCol = (hudAnim.phase !== 'idle' && hudAnim.tint) ? hudAnim.tint : colStr;
 		/* 球的颜色**始终**跟最新分级色同步：以前只在球可见时才写，于是面板开着时
 		 * 球身上还是旧色（灰）→ 收起时"过渡的颜色是错的，不是最新颜色"（用户实测）。 */
 		if (hudBall) {
-			if (hudBall.style.borderColor !== colStr) hudBall.style.borderColor = colStr;
-			if (hudBall.style.color !== colStr) hudBall.style.color = colStr;
+			if (hudBall.style.borderColor !== liveCol) hudBall.style.borderColor = liveCol;
+			if (hudBall.style.color !== liveCol) hudBall.style.color = liveCol;
 		}
 		updateOptLabel();
 
@@ -3880,17 +4009,21 @@
 			setPlain(hudRefs.ballB.pre, tr('ballStab') + ' ');
 			setVal(hudRefs.ballB, m.okCad ? String(m.stability) : '--', cStab);
 			if (hudRefs.ballB.pre && hudRefs.ballB.pre.style.color !== cStab) hudRefs.ballB.pre.style.color = cStab;
-			if (hudBall.style.borderColor !== colStr) hudBall.style.borderColor = colStr;
-			if (hudBall.style.color !== colStr) hudBall.style.color = colStr;
+			if (hudBall.style.borderColor !== liveCol) hudBall.style.borderColor = liveCol;
+			if (hudBall.style.color !== liveCol) hudBall.style.color = liveCol;
 			/* 优化开：呼吸光晕（周期/强度跟着延迟走 —— 延迟越大，呼吸越慢、光晕越铺开）；
 			 * 优化关：只有颜色，没有额外发光（全靠 CSS 的 .on / :not(.on)）。 */
 			const wantOn = !!SMOOTH.enabled;
 			// 延迟决定呼吸周期/强度：60ms → 1.4s，300ms → 2.6s（量化 200ms 一档，避免抖动）
 			const breatheDur = Math.max(1200, Math.min(2600, Math.round((1400 + (m.avg - 60) * 5) / 200) * 200));
 			const breatheGlow = Math.max(10, Math.min(30, Math.round(14 + (m.avg - 60) / 6)));
-			// 大球和面板左上角的小圆点用**同一套**激活效果（用户要求同步）
-			applyGlow(hudBall, wantOn, breatheDur, breatheGlow);
-			applyGlow(hud.querySelector('#ttn-dot'), wantOn, breatheDur, breatheGlow);
+			// 大球和面板左上角的小圆点用**同一套**激活效果（用户要求同步）。
+			// 变形期间先不重建呼吸循环/淡入：刷新刚好落在 300ms 里时会把光晕相位顶掉，
+			// 终点看上去就是"光晕突变"。变形结束后下一拍再平滑生效。
+			if (hudAnim.phase === 'idle') {
+				applyGlow(hudBall, wantOn, breatheDur, breatheGlow);
+				applyGlow(hud.querySelector('#ttn-dot'), wantOn, breatheDur, breatheGlow);
+			}
 			// 只在"缺数据"时给一句原因（用户明确不要"点击展开面板"这种提示字，多余）
 			const tip = m.why || '';
 			if (hudBall.title !== tip) hudBall.title = tip;
@@ -3900,10 +4033,10 @@
 		 * （用户实测"过渡颜色不对"）。球/圆点任何时刻都共用同一个实时色。 */
 		const dotLive = hud.querySelector('#ttn-dot');
 		if (dotLive) {
-			if (dotLive.style.background !== colStr) dotLive.style.background = colStr;
-			if (dotLive.style.color !== colStr) dotLive.style.color = colStr;
+			if (dotLive.style.background !== liveCol) dotLive.style.background = liveCol;
+			if (dotLive.style.color !== liveCol) dotLive.style.color = liveCol;
 		}
-		hudTint.last = colStr;
+		hudTint.last = liveCol;
 
 		if (!hudState.ball && hudRefs) {
 			const c = primaryConn();
