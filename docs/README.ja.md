@@ -1,14 +1,5 @@
 # 🇯🇵 TankTrouble ネットワーク最適化
 
-> [!TIP]
-> TankTrouble で **日本語** を送りたい？多言語チャット拡張を作りました！👉 [TankTrouble-Chat-Unblock](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock)
-
-
-
-
-![TankTrouble ネットワーク最適化](img/v053/ja.png?v=0.5.3)
-
-
 > より豊富・よりリアルタイム・より正確な回線表示と、実際の最適化。
 
 **tanktrouble.com** 用の Tampermonkey ユーザースクリプト。回線の実情を表示し、TCP の隊頭ブロッキングによる「固まる → ワープ」を滑らかな移動に変えます。
@@ -35,4 +26,3 @@
 * [Repository](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) · [インストール手順](install/ja.md) · [Technical notes (中文)](TECHNICAL.zh.md)
 
 <p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · <b>🇯🇵 日本語</b> · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · [🇻🇳 Tiếng Việt](vi.md)</sub></p>
-

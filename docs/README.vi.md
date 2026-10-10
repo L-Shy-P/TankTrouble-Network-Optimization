@@ -1,12 +1,5 @@
 # 🇻🇳 TankTrouble — tối ưu hóa mạng
 
-> [!TIP]
-> Muốn gửi **tiếng Việt** trong TankTrouble? Tôi đã làm một tiện ích chat đa ngôn ngữ! 👉 [TankTrouble-Chat-Unblock](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock)
-
-
-<img src="img/v053/vi.png?v=0.5.3" alt="TankTrouble — tối ưu hóa mạng">
-
-
 > Hiển thị mạng phong phú hơn, thời gian thực hơn và chính xác hơn — kèm tối ưu hóa thật sự.
 
 Userscript Tampermonkey cho **tanktrouble.com**: hiển thị chính xác tình trạng kết nối của bạn và biến tình trạng tắc nghẽn TCP (đứng hình → dịch chuyển tức thời) thành chuyển động mượt.

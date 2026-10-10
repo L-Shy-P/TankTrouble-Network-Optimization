@@ -1,14 +1,5 @@
 # 🇩🇪 TankTrouble — Netzwerk-Optimierung
 
-> [!TIP]
-> Willst du **auf Deutsch** in TankTrouble schreiben? Ich habe eine mehrsprachige Chat-Erweiterung gebaut! 👉 [TankTrouble-Chat-Unblock](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock)
-
-
-
-
-![TankTrouble — Netzwerk-Optimierung](img/v053/de.png?v=0.5.3)
-
-
 > Reichere, aktuellere und genauere Netzwerkanzeige — plus echte Optimierung.
 
 Ein Tampermonkey-Userscript für **tanktrouble.com**. Es zeigt, was deine Verbindung wirklich macht, und verwandelt „Hänger → Teleport“ durch TCP-Head-of-Line-Blocking in ein weiches Gleiten.
@@ -35,4 +26,3 @@ Die Optimierung ändert nur *das, was du siehst*: die Position wird im Moment de
 * [Repository](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) · [Installationsanleitung](install/de.md) · [Technical notes (中文)](TECHNICAL.zh.md)
 
 <p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · <b>🇩🇪 Deutsch</b> · [🇧🇷 Português](pt.md) · [🇻🇳 Tiếng Việt](vi.md)</sub></p>
-

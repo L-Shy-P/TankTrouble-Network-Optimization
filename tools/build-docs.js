@@ -87,7 +87,24 @@ const S = {
 
 const L = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'langs.json'), 'utf8'));
 const KEYS = ['Ctrl+Shift+S', 'Ctrl+Shift+L', 'Ctrl+Shift+E', 'Ctrl+Shift+P'];
-const write = (p, s) => fs.writeFileSync(path.join(ROOT, p), s, 'utf8');
+/* ⚠️⚠️ 这个生成器目前是**过时的**：它的模板还没和现行成品文档对齐（缺"不是浏览器扩展"警告、
+ * 方法 A/B、FAQ、TIP 推广框、截图块等）。直接跑会把手工维护的内容回退掉 —— 实测一次就删了
+ * 444 行（README 74 行 + docs/README.* + 11 个安装教程）。
+ * 因此：它写出的**所有**文件默认都被保护，只有显式 `node tools/build-docs.js --force` 才会覆盖。
+ * 想恢复"用生成器出文档"的能力，必须先把模板对齐到现行 docs（见 docs/PUBLISH.md）。 */
+const FORCE = process.argv.includes('--force');
+const PROTECTED = /^(README\.md|docs\/README\..*\.md|docs\/install\/.+\.md)$/;
+const write = (p, s) => {
+	if (PROTECTED.test(p) && !FORCE) {
+		let old = '';
+		try { old = fs.readFileSync(path.join(ROOT, p), 'utf8'); } catch (e) {}
+		if (old && (old.includes('[!WARNING]') || old.includes('⚠️') || /FAQ|よくある|常见|자주/i.test(old))) {
+			console.warn('[build-docs] 跳过（会覆盖手工内容，需 --force）: ' + p);
+			return;
+		}
+	}
+	fs.writeFileSync(path.join(ROOT, p), s, 'utf8');
+};
 
 /** 页脚语言切换器：prefix 为空表示当前目录里就是 README.<lang>.md */
 function switcher(prefix, self) {

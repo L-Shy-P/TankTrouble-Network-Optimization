@@ -1,14 +1,5 @@
 # 🇨🇳 TankTrouble 网络优化
 
-> [!TIP]
-> 想要在 TankTrouble 里发送 **中文** 吗？我做了一款多语言聊天扩展！👉 [TankTrouble-Chat-Unblock](https://github.com/L-Shy-P/TankTrouble-Chat-Unblock)
-
-
-
-
-![TankTrouble 网络优化](img/v053/zh.png?v=0.5.3)
-
-
 > 更丰富、更实时、更准确的网络情况显示，以及真正的网络优化。
 
 给 **tanktrouble.com** 写的油猴脚本：把你这局的网络情况如实显示出来，并把 TCP 队头阻塞造成的「僵住 → 瞬移」抹平成滑行。
@@ -35,4 +26,3 @@
 * [Repository](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) · [安装教程](install/zh.md) · [Technical notes (中文)](TECHNICAL.zh.md)
 
 <p align="right"><sub>[🇬🇧 English](en.md) · <b>🇨🇳 中文</b> · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · [🇻🇳 Tiếng Việt](vi.md)</sub></p>
-
