@@ -8,7 +8,7 @@
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![platform](https://img.shields.io/badge/Tampermonkey-userscript-orange)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
 
-[**⬇ Install**](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js) · [**⬇ Download**](https://github.com/L-Shy-P/TankTrouble-Network-Optimization/raw/main/tanktrouble-netlab.install.user.js) · [**📖 Install tutorial**](docs/install/en.md) · [简体中文](docs/README.zh.md)
+[**⬇ Install**](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js) · [**⬇ Download**](https://github.com/L-Shy-P/TankTrouble-Network-Optimization/raw/main/tanktrouble-netlab.install.user.js) · [**📖 English guide**](docs/README.en.md) · [简体中文](docs/README.zh.md)
 
 </div>
 
@@ -18,19 +18,19 @@
 
 ## 🌐 Languages · 多语言
 
-| | Read | Install | Download |
-|---|---|---|---|
-| 🇬🇧 | [English](docs/README.en.md) | [Install tutorial](docs/install/en.md) | [⬇ Download](https://github.com/L-Shy-P/TankTrouble-Network-Optimization/raw/main/tanktrouble-netlab.install.user.js) |
-| 🇨🇳 | [中文](docs/README.zh.md) | [安装教程](docs/install/zh.md) | [⬇ Download](https://github.com/L-Shy-P/TankTrouble-Network-Optimization/raw/main/tanktrouble-netlab.install.user.js) |
-| 🇯🇵 | [日本語](docs/README.ja.md) | [インストール手順](docs/install/ja.md) | [⬇ Download](https://github.com/L-Shy-P/TankTrouble-Network-Optimization/raw/main/tanktrouble-netlab.install.user.js) |
-| 🇰🇷 | [한국어](docs/README.ko.md) | [설치 안내](docs/install/ko.md) | [⬇ Download](https://github.com/L-Shy-P/TankTrouble-Network-Optimization/raw/main/tanktrouble-netlab.install.user.js) |
-| 🇷🇺 | [Русский](docs/README.ru.md) | [Руководство по установке](docs/install/ru.md) | [⬇ Download](https://github.com/L-Shy-P/TankTrouble-Network-Optimization/raw/main/tanktrouble-netlab.install.user.js) |
-| 🇸🇦 | [العربية](docs/README.ar.md) | [دليل التثبيت](docs/install/ar.md) | [⬇ Download](https://github.com/L-Shy-P/TankTrouble-Network-Optimization/raw/main/tanktrouble-netlab.install.user.js) |
-| 🇫🇷 | [Français](docs/README.fr.md) | [Tutoriel d'installation](docs/install/fr.md) | [⬇ Download](https://github.com/L-Shy-P/TankTrouble-Network-Optimization/raw/main/tanktrouble-netlab.install.user.js) |
-| 🇪🇸 | [Español](docs/README.es.md) | [Tutorial de instalación](docs/install/es.md) | [⬇ Download](https://github.com/L-Shy-P/TankTrouble-Network-Optimization/raw/main/tanktrouble-netlab.install.user.js) |
-| 🇩🇪 | [Deutsch](docs/README.de.md) | [Installationsanleitung](docs/install/de.md) | [⬇ Download](https://github.com/L-Shy-P/TankTrouble-Network-Optimization/raw/main/tanktrouble-netlab.install.user.js) |
-| 🇧🇷 | [Português](docs/README.pt.md) | [Tutorial de instalação](docs/install/pt.md) | [⬇ Download](https://github.com/L-Shy-P/TankTrouble-Network-Optimization/raw/main/tanktrouble-netlab.install.user.js) |
-| 🇻🇳 | [Tiếng Việt](docs/README.vi.md) | [Hướng dẫn cài đặt](docs/install/vi.md) | [⬇ Download](https://github.com/L-Shy-P/TankTrouble-Network-Optimization/raw/main/tanktrouble-netlab.install.user.js) |
+| | |
+|---|---|
+| 🇬🇧 | [English](docs/README.en.md) |
+| 🇨🇳 | [中文](docs/README.zh.md) |
+| 🇯🇵 | [日本語](docs/README.ja.md) |
+| 🇰🇷 | [한국어](docs/README.ko.md) |
+| 🇷🇺 | [Русский](docs/README.ru.md) |
+| 🇸🇦 | [العربية](docs/README.ar.md) |
+| 🇫🇷 | [Français](docs/README.fr.md) |
+| 🇪🇸 | [Español](docs/README.es.md) |
+| 🇩🇪 | [Deutsch](docs/README.de.md) |
+| 🇧🇷 | [Português](docs/README.pt.md) |
+| 🇻🇳 | [Tiếng Việt](docs/README.vi.md) |
 
 ---
 
@@ -61,9 +61,8 @@ A Tampermonkey userscript for **tanktrouble.com**: it shows what your connection
 
 The optimization only changes *what you see*: the position is smoothed at render time, while the game logic, physics and server validation always use the real values. Your own tank is locally authoritative, so a reconnect will not drag you back.
 
-👉 **[Install tutorial](docs/install/en.md)** · [English](docs/README.en.md)
+👉 **[Open the English page](docs/README.en.md)**
 
-⬇ **[Download the script file](https://github.com/L-Shy-P/TankTrouble-Network-Optimization/raw/main/tanktrouble-netlab.install.user.js)** — saves `tanktrouble-netlab.install.user.js` to your Downloads folder; then drag it onto the Tampermonkey Dashboard (see the tutorial).
 
 </details>
 
@@ -82,7 +81,7 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 优化只改**你看到的东西**：渲染那一瞬间的位置被平滑，游戏逻辑 / 物理 / 服务端校验全程用真值；你自己的坦克以本地为准，断线重连不会被拉回去。
 
-👉 **[安装教程](docs/install/zh.md)** · [中文](docs/README.zh.md)
+👉 **[进入本语言页面（中文）](docs/README.zh.md)**
 
 
 </details>
@@ -102,7 +101,7 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 最適化が変えるのは*見た目だけ*：描画の瞬間だけ位置を滑らかにし、ゲームロジック・物理・サーバー検証は常に真値を使います。自分の戦車はローカル優先なので、再接続後も引き戻されません。
 
-👉 **[インストール手順](docs/install/ja.md)** · [日本語](docs/README.ja.md)
+👉 **[日本語ページを開く](docs/README.ja.md)**
 
 
 </details>
@@ -122,7 +121,7 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 최적화가 바꾸는 것은 *보이는 것*뿐입니다. 렌더링 순간의 위치만 부드럽게 하고, 게임 로직·물리·서버 검증은 항상 실제 값을 씁니다. 내 탱크는 로컬 기준이라 재접속해도 끌려가지 않습니다.
 
-👉 **[설치 안내](docs/install/ko.md)** · [한국어](docs/README.ko.md)
+👉 **[한국어 페이지 열기](docs/README.ko.md)**
 
 
 </details>
@@ -142,7 +141,7 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 Оптимизация меняет только *то, что вы видите*: сглаживается позиция в момент отрисовки, а логика, физика и проверка на сервере всегда используют истинные значения. Ваш танк — локально авторитетный, поэтому после переподключения вас не отбросит назад.
 
-👉 **[Руководство по установке](docs/install/ru.md)** · [Русский](docs/README.ru.md)
+👉 **[Открыть страницу на русском](docs/README.ru.md)**
 
 
 </details>
@@ -162,7 +161,7 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 التحسين يغيّر *ما تراه فقط*: يتم تنعيم الموضع لحظة الرسم، بينما المنطق والفيزياء والتحقق على الخادم تستخدم القيم الحقيقية دائمًا. دبابتك محليّة السلطة، لذا لن يعيدك الخادم بعد انقطاع.
 
-👉 **[دليل التثبيت](docs/install/ar.md)** · [العربية](docs/README.ar.md)
+👉 **[افتح الصفحة العربية](docs/README.ar.md)**
 
 
 </details>
@@ -182,7 +181,7 @@ Un userscript Tampermonkey pour **tanktrouble.com**. Il montre ce que fait vraim
 
 L'optimisation ne change que *ce que vous voyez* : la position est lissée au moment du rendu, tandis que la logique, la physique et la validation serveur utilisent toujours les vraies valeurs. Votre tank est localement autoritaire : pas de retour en arrière après une reconnexion.
 
-👉 **[Tutoriel d'installation](docs/install/fr.md)** · [Français](docs/README.fr.md)
+👉 **[Ouvrir la page en français](docs/README.fr.md)**
 
 
 </details>
@@ -202,7 +201,7 @@ Un userscript de Tampermonkey para **tanktrouble.com**. Muestra lo que hace de v
 
 La optimización solo cambia *lo que ves*: la posición se suaviza en el momento del render, mientras que la lógica, la física y la validación del servidor usan siempre los valores reales. Tu tanque es de autoridad local: tras reconectar no te devuelven atrás.
 
-👉 **[Tutorial de instalación](docs/install/es.md)** · [Español](docs/README.es.md)
+👉 **[Abrir la página en español](docs/README.es.md)**
 
 
 </details>
@@ -222,7 +221,7 @@ Ein Tampermonkey-Userscript für **tanktrouble.com**. Es zeigt, was deine Verbin
 
 Die Optimierung ändert nur *das, was du siehst*: die Position wird im Moment des Renderns geglättet, während Logik, Physik und Serverprüfung immer die echten Werte nutzen. Dein Panzer ist lokal autoritativ — nach einem Reconnect wirst du nicht zurückgezogen.
 
-👉 **[Installationsanleitung](docs/install/de.md)** · [Deutsch](docs/README.de.md)
+👉 **[Deutsche Seite öffnen](docs/README.de.md)**
 
 
 </details>
@@ -242,7 +241,7 @@ Um userscript de Tampermonkey para **tanktrouble.com**. Mostra o que a sua conex
 
 A otimização muda apenas *o que você vê*: a posição é suavizada no momento do render, enquanto a lógica, a física e a validação do servidor usam sempre os valores reais. Seu tanque é de autoridade local: após reconectar você não é puxado de volta.
 
-👉 **[Tutorial de instalação](docs/install/pt.md)** · [Português](docs/README.pt.md)
+👉 **[Abrir a página em português](docs/README.pt.md)**
 
 
 </details>
@@ -262,7 +261,7 @@ Userscript Tampermonkey cho **tanktrouble.com**: hiển thị chính xác tình 
 
 Tối ưu hóa chỉ thay đổi *những gì bạn thấy*: vị trí được làm mượt lúc render, còn logic game, vật lý và xác thực máy chủ luôn dùng giá trị thật. Xe tăng của bạn do máy bạn quyết định, nên khi kết nối lại sẽ không bị kéo ngược.
 
-👉 **[Hướng dẫn cài đặt](docs/install/vi.md)** · [Tiếng Việt](docs/README.vi.md)
+👉 **[Mở trang tiếng Việt](docs/README.vi.md)**
 
 
 </details>
@@ -271,7 +270,7 @@ Tối ưu hóa chỉ thay đổi *những gì bạn thấy*: vị trí được 
 
 ## 🔗 Links
 
-* [Install tutorial (11 languages)](docs/install/en.md)
+* [Language guides — 11 languages](docs/README.en.md)
 * [Technical notes — how it works & the dead ends (中文)](docs/TECHNICAL.zh.md)
 * [Changelog](tanktrouble-netlab.user.js) — see the `CHANGELOG` constant in the script
 * [License (MIT)](LICENSE)

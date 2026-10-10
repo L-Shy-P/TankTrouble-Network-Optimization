@@ -50,8 +50,8 @@ git push -u origin main
 | 路径 | 说明 |
 |---|---|
 | `README.md` | 仓库主页：只放**多语言介绍** + 语言/教程跳转（用户要求） |
-| `docs/README.<lang>.md` | 各语言的介绍页（11 国） |
-| `docs/install/<lang>.md` | 各语言的**从安装油猴开始**的安装教程（11 国） |
+| `docs/README.<lang>.md` | 各语言的**介绍 + 安装**单一页面（11 国）：截图 / 简介 / 特点表 / 安装 A·B·C / 自检 / FAQ 13 条 / Hotkeys / Troubleshooting |
+| `docs/install/<lang>.md` | 一行兼容跳转，指向 `../README.<lang>.md`（内容已合并；不要再从别处导航到这里） |
 | `docs/TECHNICAL.zh.md` | 技术原理 / 实测结论 / 踩坑记录（中文） |
 | `tanktrouble-netlab.user.js` | 主脚本（油猴直接安装这个） |
 | `tanktrouble-netlab.install.user.js` | 同一份内容 + UTF-8 BOM（拖拽安装用） |
