@@ -1727,6 +1727,17 @@ ok(gPanelHandled === true && T.hudState.ballHiddenFromPanel === true && T.hudSta
 T._ballVis.pendingHide = false;
 T.hudState.ball = false; T.hudState.ballHidden = false; T.hudState.ballHiddenFromPanel = false;
 T._finishHudAnim();
+/* 新增：ballVis 调试倍率（只乘时长，不改顺序/终态） */
+ok(!!T.ballVis && typeof T.ballVis.slow === 'number' && T.ballVis.slow >= 2.5 && T.ballVis.slow <= 3,
+	'ballVis.slow 默认 2.5~3×（临时放慢便于肉眼观察）', String(T.ballVis && T.ballVis.slow));
+const slow0 = T.ballVis.slow;
+const scaled = T._ballVisDur(100);
+T.ballVis.slow = 1;
+const normal = T._ballVisDur(100);
+T.ballVis.slow = slow0;
+ok(Math.abs(scaled - Math.round(100 * slow0)) <= 1 && normal === 100,
+	'__TTN__.ballVis.slow 只乘时长：默认 100ms→' + scaled + 'ms，设 1 后→' + normal + 'ms',
+	JSON.stringify({ scaled: scaled, normal: normal, slow: slow0 }));
 /* 收尾：恢复测试前的状态，不影响后面的报告断言 */
 T.hudState.x = 8; T.hudState.y = 8; T.hudState.ball = false; T.hudState.ballHidden = false; T.hudState.ballHiddenFromPanel = false; T.hudState.hidden = false;
 sandbox.localStorage.removeItem('ttn.hud.v4');

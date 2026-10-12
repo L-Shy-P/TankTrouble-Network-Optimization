@@ -2931,53 +2931,55 @@ function gSaturation(v) {
 function gNormCss(v) { return String(v || '').replace(/\s+/g, '').toLowerCase(); }
 
 step(function () {
-	/* 1) 球自身的 box-shadow 必须跟着 shrink 淡出；落 display:none 那一帧不能跳。 */
+	/* 1) box-shadow 不再参与动画：它属于球元素，跟着 transform:scale() 一起视觉缩放，
+	 *    并跟着 opacity 一起淡出/淡入；全程 computed 必须始终等于当前状态配方，
+	 *    display:none 前也不能写透明内联。 */
 	var T = window.__TTN__, ball = gBall();
 	gForceVisible(T);
 	T.hudState.ballHiddenFromPanel = false; T._saveHudState();
+	void ball.offsetWidth;
+	var beforeShadow = gNormCss(getComputedStyle(ball).boxShadow);
+	var beforeInline = gNormCss(ball.style.boxShadow);
 	gKeyPress();
-	var stage1Shadow = gCountProp(ball, 'boxShadow');
+	var stage1Anims = gCountProp(ball, 'boxShadow');
+	var stage1Shadow = gNormCss(getComputedStyle(ball).boxShadow);
 	T._ballVisFinishGlow();                       // 进入 hiding-shrink
-	var sa = gAnimWith(ball, 'boxShadow');
-	var kf = sa ? sa.effect.getKeyframes() : null;
-	if (sa) { sa.pause(); sa.currentTime = 110; }
-	void ball.offsetWidth;
-	var midShadow = gNormCss(getComputedStyle(ball).boxShadow);
-	if (sa) { sa.currentTime = 215; }
-	void ball.offsetWidth;
-	var nearShadow = gNormCss(getComputedStyle(ball).boxShadow);
+	var stage2Anims = gCountProp(ball, 'boxShadow');
+	var stage2Shadow = gNormCss(getComputedStyle(ball).boxShadow);
 	T._ballVisFinishShrink();
-	var hiddenInlineShadow = gNormCss(ball.style.boxShadow);
+	var hiddenInline = gNormCss(ball.style.boxShadow);
 	var hiddenAnims = gCountProp(ball, 'boxShadow');
+	var hiddenDisplay = getComputedStyle(ball).display;
 	window.__G_SHADOW__ = {
-		stage1Shadow: stage1Shadow,
-		from: kf && kf[0] && kf[0].boxShadow, to: kf && kf[kf.length - 1] && kf[kf.length - 1].boxShadow,
-		mid: midShadow, near: nearShadow, hiddenInline: hiddenInlineShadow, hiddenAnims: hiddenAnims,
-		display: getComputedStyle(ball).display
+		beforeShadow: beforeShadow, beforeInline: beforeInline,
+		stage1Anims: stage1Anims, stage1Shadow: stage1Shadow,
+		stage2Anims: stage2Anims, stage2Shadow: stage2Shadow,
+		hiddenInline: hiddenInline, hiddenAnims: hiddenAnims, display: hiddenDisplay
 	};
 	ck('hide-animates-own-shadow',
-		stage1Shadow === 0 && !!sa && !!kf &&
-		gNormCss(kf[0].boxShadow) !== gNormCss(kf[kf.length - 1].boxShadow) &&
-		midShadow !== gNormCss(kf[0].boxShadow) && midShadow !== gNormCss(kf[kf.length - 1].boxShadow) &&
-		hiddenInlineShadow.indexOf('rgba(0,0,0,0)') >= 0 && hiddenAnims === 0,
-		'球自身 box-shadow 在 hiding-shrink 全程有且只有一条 WAAPI 动画（中点 computed 处于插值中），隐藏终态内联全透明: ' +
+		stage1Anims === 0 && stage2Anims === 0 &&
+		stage1Shadow === beforeShadow && stage2Shadow === beforeShadow &&
+		hiddenInline === '' && hiddenAnims === 0,
+		'隐藏全程 box-shadow 不被 WAAPI 改动（数值始终等于当前状态配方），也不写透明内联；它随 transform 缩放/opacity 淡出: ' +
 		JSON.stringify(window.__G_SHADOW__));
 	ck('hide-shadow-no-jump-at-display-none',
-		getComputedStyle(ball).display === 'none' &&
-		nearShadow.indexOf('rgba(0,0,0,0)') >= 0 && hiddenInlineShadow.indexOf('rgba(0,0,0,0)') >= 0,
-		'display:none 之前的阴影已经接近全透明，落终态/隐藏那一帧没有可见突变: ' + JSON.stringify(window.__G_SHADOW__));
-	/* 显示方向：showing-glow 阶段阴影从透明淡回隐藏前 live 值 */
+		hiddenDisplay === 'none' && hiddenInline === '' && hiddenAnims === 0 &&
+		stage2Shadow === beforeShadow,
+		'落 display:none 前后 box-shadow 配方不变（无透明内联、无突变），只是元素随 scale/opacity 消失: ' +
+		JSON.stringify(window.__G_SHADOW__));
+	/* 显示方向同理：不把 shadow 从透明淡回来，仍由 transform/opacity 带回来 */
 	gKeyPress();
 	T._ballVisFinishGrow();
-	var sa2 = gAnimWith(ball, 'boxShadow');
-	var kf2 = sa2 ? sa2.effect.getKeyframes() : null;
-	var showShadowOk = !!sa2 && gNormCss(kf2[0].boxShadow) !== gNormCss(kf2[kf2.length - 1].boxShadow) &&
-		gCountProp(ball, 'boxShadow') === 1;
+	var growAnims = gCountProp(ball, 'boxShadow');
+	var growShadow = gNormCss(getComputedStyle(ball).boxShadow);
 	T._ballVisFinishShow();
-	window.__G_SHADOW__.show = { ok: showShadowOk, display: getComputedStyle(ball).display, phase: T._ballVis.phase };
+	var afterInline = gNormCss(ball.style.boxShadow);
+	var afterShadow = gNormCss(getComputedStyle(ball).boxShadow);
+	window.__G_SHADOW__.show = { growAnims: growAnims, growShadow: growShadow, afterInline: afterInline, afterShadow: afterShadow, display: getComputedStyle(ball).display, phase: T._ballVis.phase };
 	ck('show-animates-own-shadow',
-		showShadowOk && getComputedStyle(ball).display !== 'none' && T._ballVis.phase === 'idle',
-		'显示时 box-shadow 也走 WAAPI 从透明淡回 live 值: ' + JSON.stringify(window.__G_SHADOW__.show));
+		growAnims === 0 && afterInline === '' && afterShadow === beforeShadow &&
+		getComputedStyle(ball).display !== 'none' && T._ballVis.phase === 'idle',
+		'显示全程 box-shadow 同样不被动画改动；阴影随球长大自然恢复，无内联污染: ' + JSON.stringify(window.__G_SHADOW__.show));
 });
 
 step(function () {
@@ -3212,10 +3214,11 @@ step(function () {
 	var stageCount = gCountProp(ball, 'opacity');
 	var a = gAnimWith(ball, 'opacity');
 	var kf = a ? a.effect.getKeyframes() : null;
-	if (a) { a.pause(); a.currentTime = 110; }
+	var dur = a ? (parseFloat(a.effect.getTiming().duration) || 180) : 180;
+	if (a) { a.pause(); a.currentTime = dur * 0.5; }
 	void ball.offsetWidth;
 	var mid = getComputedStyle(ball).opacity;
-	if (a) { a.currentTime = 215; }
+	if (a) { a.currentTime = dur * 0.99; }
 	void ball.offsetWidth;
 	var near = getComputedStyle(ball).opacity;
 	T._ballVisFinishShrink();
@@ -3242,11 +3245,12 @@ step(function () {
 	gKeyPress();                                  // showing-grow
 	var a = gAnimWith(ball, 'opacity');
 	var kf = a ? a.effect.getKeyframes() : null;
-	if (a) { a.pause(); a.currentTime = 110; }
+	var dur = a ? (parseFloat(a.effect.getTiming().duration) || 220) : 220;
+	if (a) { a.pause(); a.currentTime = dur * 0.5; }
 	void ball.offsetWidth;
 	var mid = getComputedStyle(ball).opacity;
 	var count = gCountProp(ball, 'opacity');
-	if (a) { a.currentTime = 110; }               // 保持在 50% 再走完
+	if (a) { a.currentTime = dur * 0.5; }           // 保持在 50% 再走完
 	T._ballVisFinishGrow();
 	T._ballVisFinishShow();
 	window.__G_OPACITY_SHOW__ = {
@@ -3285,6 +3289,39 @@ step(function () {
 		'showing-glow 钉 99% 的 boxShadow/filter/opacity/.halo/.hover-glow/行 opacity 必须全部等于交接后的静止态: ' +
 		JSON.stringify(window.__G_SHOW_END__));
 	T.setSmoothing(true);
+});
+
+step(function () {
+	/* v0.6.3 回归：hover 态下悬浮球必须照样能拖。 */
+	var T = window.__TTN__, ball = gBall();
+	gForceVisible(T);
+	T.hudState.x = 320; T.hudState.y = 320;
+	T.hudState.ball = true; T.setHud(true); T._finishHudAnim();
+	var r = ball.getBoundingClientRect();
+	var cx = Math.round(r.left + r.width / 2), cy = Math.round(r.top + r.height / 2);
+	var before = { x: T.hudState.x, y: T.hudState.y, transform: String(ball.style.transform) };
+	ball.dispatchEvent(new PointerEvent('pointerenter', { bubbles: false, pointerId: 5, clientX: cx, clientY: cy }));
+	var hovered = ball.classList.contains('ttn-hover');
+	/* 关键复现：pointerdown 命中球里的子元素（数字/文字），move/up 落在 document 上
+	 * （即"指针捕获没生效 / 事件没有回到球自己"的真实路径）。 */
+	var hit = ball.querySelector('.m') || ball.querySelector('.t') || ball;
+	hit.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 5, clientX: cx, clientY: cy, button: 0, buttons: 1 }));
+	var downDrag = !!ball.__ttnDragging;
+	document.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, cancelable: true, pointerId: 5, clientX: cx + 80, clientY: cy + 30, button: 0, buttons: 1 }));
+	var mid = { x: T.hudState.x, y: T.hudState.y, transform: String(ball.style.transform), cursor: getComputedStyle(ball).cursor, dragging: !!ball.__ttnDragging };
+	document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerId: 5, clientX: cx + 80, clientY: cy + 30, button: 0, buttons: 0 }));
+	var after = {
+		x: T.hudState.x, y: T.hudState.y, transform: String(ball.style.transform),
+		cursor: getComputedStyle(ball).cursor, hovered: ball.classList.contains('ttn-hover'),
+		dragCls: ball.classList.contains('ttn-drag'), downDrag: downDrag, dragging: !!ball.__ttnDragging
+	};
+	window.__G_DRAG_HOVER__ = { before: before, hovered: hovered, mid: mid, after: after };
+	ck('drag-ball-while-hovered',
+		hovered === true && downDrag === true &&
+		Math.abs(after.x - before.x) >= 40 && Math.abs(after.y - before.y) >= 15 &&
+		after.cursor === 'pointer' && after.dragCls === false && after.dragging === false,
+		'hover 态下 pointerdown→move 80x30 必须真的移动锚点、cursor 保持 pointer、结束后无 .ttn-drag 残留: ' +
+		JSON.stringify(window.__G_DRAG_HOVER__));
 });
 step(function () {
 	ck('report-ok', (function () {
