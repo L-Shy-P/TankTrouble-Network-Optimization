@@ -3301,13 +3301,13 @@
 		}
 
 		function onDown(ev) {
-			if (dragging || activeDrag) return;
+			if (dragging) return;
 			if (!el || !el.contains || !ev || !ev.target) return;
 			try { if (!el.contains(ev.target)) return; } catch (e) { return; }
 			if (isExcluded(ev.target)) return;                 // 圆点/按钮走自己的 click
 			if (ballVisAnimating() || hudState.ballHidden || hudState.hidden) { traceSkipped('simple-drag', ballVisAnimating() ? 'ballvis' : 'hidden'); return; }
 			if (ev.button != null && ev.button !== 0) return;
-			dragging = true; moved = false; pointerId = ev.pointerId;
+			dragging = true; moved = false; pointerId = (ev.pointerId != null ? ev.pointerId : 'mouse');
 			sx = ev.clientX; sy = ev.clientY;
 			ox = hudState.x; oy = hudState.y;
 			pendingMorphFinish = hudAnimating;
@@ -3327,6 +3327,7 @@
 
 		function onMove(ev) {
 			if (!dragging || ev.pointerId !== pointerId) return;
+			if (ev.type === 'mousemove' && (ev.buttons & 1) === 0) return;   // mouse 通道：按键已松
 			const dx = ev.clientX - sx, dy = ev.clientY - sy;
 			if (!moved && Math.abs(dx) + Math.abs(dy) > 4) {
 				moved = true;
@@ -3368,10 +3369,13 @@
 			if (ev) { try { ev.preventDefault(); } catch (e) {} }
 		}
 
-		window.addEventListener('pointerdown', onDown, true);
-		window.addEventListener('pointermove', onMove, true);
-		window.addEventListener('pointerup', onUp, true);
-		window.addEventListener('pointercancel', onUp, true);
+		/* 双通道：pointer 优先，mouse 兜底（有些环境/扩展会把 pointerdown 整条吃掉）。
+		 * 关键：元素级 + window 捕获都挂，任一条能到就工作；不依赖任何单一通道。 */
+		const CH = ['pointerdown','mousedown'], MV = ['pointermove','mousemove'], UP = ['pointerup','mouseup','pointercancel'];
+		CH.forEach(function (t) { try { el.addEventListener(t, onDown, true); } catch (e) {} });
+		CH.forEach(function (t) { window.addEventListener(t, onDown, true); try { document.addEventListener(t, onDown, true); } catch (e) {} });
+		MV.forEach(function (t) { window.addEventListener(t, onMove, true); });
+		UP.forEach(function (t) { window.addEventListener(t, onUp, true); });
 		window.addEventListener('blur', function () { if (dragging) resetLocal(); }, true);
 		window.addEventListener('click', function (ev) {
 			if (justDragged && el.contains && el.contains(ev.target)) {
@@ -3740,7 +3744,7 @@
 	 *   phase: idle | hiding-glow | hiding-shrink | showing-grow | showing-glow
 	 * 每段都是 WAAPI；定时器/动画列表只属于这一台状态机。 */
 	const ballVis = { phase: 'idle', token: 0, timer: null, anims: [], pendingHide: false, saved: null, debug: {} };
-	const BALLVIS = { GLOW: 180, SHRINK: 220, GROW: 220, GLOW_IN: 180,
+	const BALLVIS = { GLOW: 430, SHRINK: 220, GROW: 220, GLOW_IN: 430,
 		DIM_MID: 'saturate(.55) brightness(.55)', DIM_FINAL: 'saturate(.15) brightness(.25)' };
 	/* 临场观察用倍率：__TTN__.ballVis.slow 默认 2.7，设 1 恢复原速；只乘时长，不改顺序/终态。 */
 	const ballVisTune = { slow: 1 };
