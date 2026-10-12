@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.6.3
+// @version      0.6.4
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,93 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.6.3';
+	const VERSION = '0.6.4';
+	/* ==================== 动画证据通道（animTrace） ====================
+	 * 用户遇到"闪一下直接到终点"时，直接把 __TTN__.trace() 的输出发回来。
+	 * 每条记录：时间 / create|cancel|finish|preempt|skipped-writer / family / name /
+	 * props / phase / currentTime / playState / 内联值。环形缓冲，最多 240 条。 */
+	const ANIM_TRACE_MAX = 240;
+	const animTrace = [];
+	const traceSkipLast = {};
+	function traceNow(a) {
+		try {
+			const c = a && a.currentTime;
+			if (typeof c === 'number') return c;
+			if (c && typeof c.value === 'number') return c.value;
+		} catch (e) {}
+		return null;
+	}
+	function traceInline() {
+		try {
+			return {
+				transform: hudBall ? hudBall.style.transform : '',
+				opacity: hudBall ? hudBall.style.opacity : '',
+				filter: hudBall ? hudBall.style.filter : '',
+				boxShadow: hudBall ? hudBall.style.boxShadow : ''
+			};
+		} catch (e) { return null; }
+	}
+	function traceAnim(kind, data) {
+		try {
+			const rec = { t: Date.now(), kind: kind };
+			if (data) for (const k in data) rec[k] = data[k];
+			animTrace.push(rec);
+			if (animTrace.length > ANIM_TRACE_MAX) animTrace.splice(0, animTrace.length - ANIM_TRACE_MAX);
+		} catch (e) {}
+	}
+	function traceSkipped(name, why) {
+		const t = Date.now();
+		if (traceSkipLast[name] && t - traceSkipLast[name] < 500) return;
+		traceSkipLast[name] = t;
+		traceAnim('skipped-writer', { name: name, why: why || '', phase: hudAnim ? hudAnim.phase : '', ballPhase: ballVis ? ballVis.phase : '' });
+	}
+	function tracePropsOf(frames) {
+		try {
+			const out = [];
+			(frames || []).forEach(function (f) {
+				Object.keys(f || {}).forEach(function (k) {
+					if (k !== 'offset' && k !== 'computedOffset' && k !== 'easing' && k !== 'composite' && out.indexOf(k) < 0) out.push(k);
+				});
+			});
+			return out;
+		} catch (e) { return []; }
+	}
+	const animOwners = (typeof WeakMap === 'function') ? new WeakMap() : null;
+	function trackAnimation(a, el, frames, meta) {
+		if (!a) return a;
+		meta = meta || {};
+		const props = tracePropsOf(frames);
+		const base = { family: meta.family || 'misc', name: meta.name || 'anim', props: props, phase: hudAnim ? hudAnim.phase : '', ballPhase: ballVis ? ballVis.phase : '', playState: a.playState };
+		traceAnim('create', Object.assign({}, base, { currentTime: traceNow(a), inline: traceInline() }));
+		if (animOwners && el && props.length) {
+			let map = animOwners.get(el);
+			if (!map) { map = {}; animOwners.set(el, map); }
+			props.forEach(function (p) {
+				const prev = map[p];
+				if (prev && prev !== a && prev.playState !== 'idle') {
+					traceAnim('preempt', { family: base.family, name: base.name, prop: p, prevTime: traceNow(prev), prevState: prev.playState, phase: base.phase, ballPhase: base.ballPhase });
+				}
+				map[p] = a;
+			});
+		}
+		const origCancel = a.cancel;
+		try {
+			a.cancel = function () {
+				traceAnim('cancel', Object.assign({}, base, { currentTime: traceNow(a), playState: a.playState, inline: traceInline() }));
+				try { return origCancel.apply(a, arguments); } catch (e) {}
+			};
+		} catch (e) {}
+		try {
+			a.finished.then(function () {
+				traceAnim('finish', Object.assign({}, base, { currentTime: traceNow(a), playState: a.playState, inline: traceInline() }));
+			}).catch(function () {});
+		} catch (e) {}
+		return a;
+	}
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.6.4', '用户实测三类：① 小球拖不动 → 真因：游戏/页面可能在 window/document 捕获阶段就 stopPropagation/preventDefault，球元素冒泡阶段的 pointerdown 根本收不到（之前 document 兜底也来不及）→ userscript 在 document-start 就用 window+document capture 注册 takeover：命中球/子元素才接管，stopPropagation + preventDefault 避免触发游戏，按 pointerId 去重；另加 window capture 的 move/up 兜底，去掉 capture 后对应回归变红；② "过渡偶尔混乱、闪一下直接到终点" → 新增 animTrace 证据通道（create/cancel/finish/preempt/skipped-writer，环形 240 条，__TTN__.trace(n) 与 report().animTrace 可导出）；审计并发写入者：refreshHud 在 morph/ballVis 期间直接跳过，clampHud/applyAnchorNow/applyHudVisibility 同样跳过并记 skipped-writer，防止周期代码写 transform/opacity/filter/backgroundColor/boxShadow/halo/glow；③ 光晕/光圈颜色不对应 → 真因：ballVis 期间 refreshHud 仍会分别写球 color/borderColor、圆点 background/文字，CSS 过渡时序不同 → 现在 ballVis 起手把球 color/borderColor（box-shadow currentColor 来源）与圆点 background/color 冻结成同一 tint，动画期间不刷新；显示结束保持 .ttn-ballvis 压制过渡时一次性刷新颜色，再摘 class，保证同一 tick 切到新色。',
+			'回归：drag-survives-game-capturing-pointerdown、drag-child-target-works、drag-after-g-animation、no-instant-land-during-morph、no-instant-land-during-ballvis、trace-records-preemption、ballvis-during-drag、no-drag-during-ballvis、halo-rim-colors-stay-in-sync；smoke 新增 trace/trace.animTrace 断言。每条都做了反例验证。'],
 		['0.6.3', '用户实测 3 条：① 需要肉眼观察 G 动画 → ballVis 全流程新增 __TTN__.ballVis.slow 倍率，默认 2.7×（每段时长都乘它），控制台加一行英文提示，设 1 即可恢复原速；② 影子不应该消失 → 撤掉 box-shadow 的 WAAPI 动画与透明内联：transform:scale() 会带着元素渲染（含 box-shadow）整体缩放，opacity 淡出时影子也一起淡，所以影子始终和球一一对应；③ hover 时悬浮球拖不动 → 真因：installHudDrag 只把 pointermove 绑在球元素上，hover 时 pointerdown 命中球里的文字/数字子元素，一旦 setPointerCapture 没生效/被抢走，后续 pointermove 落在 document/其它元素上球就收不到 → 增加 document 捕获兜底 pointermove（目标本来就在球内则跳过，避免双处理），hover 观感保留、cursor 仍是 pointer。',
 			'回归：新增 drag-ball-while-hovered（pointerdown 命中 .m/.t 子元素、move/up 落在 document，锚点仍跟手 ≥40px、cursor=pointer、无 .ttn-drag 残留）；hide-animates-own-shadow / hide-shadow-no-jump-at-display-none / show-animates-own-shadow 改为新语义（全程 box-shadow 不被动画改动、数值=当前状态配方、无透明内联；视觉随 transform 缩放）；smoke 新增 ballVis.slow 默认 2.5~3× 与"只乘时长"断言。每条都做了反例验证。'],
 		['0.6.2', '修用户实测 3 条：① 面板 #ttn-gkey 提示 9px 太小 → 提到 11px、颜色 #9aa3b2；11 语言逐个实测都放得下（最宽法语 146px，可用宽度 270px），无需缩短文案；② 悬浮球出现末尾仍有一处硬切：把 showing-glow 钉到 99% 与交接后静止态逐项对比，发现 box-shadow 终点仍是隐藏前的非 hover 值（0 0 7px），而静止态是 hover 配方（0 0 20px -3px + inset），同时 .halo 终点 0 / .hover-glow 终点 0，静止态实际是 0.34 / 0.62 → 终点改为按交接时 CSS 目标计算：halo 用呼吸循环起点 0.34、hover-glow 用当前 hover 态、shadow/filter 用清掉内联后的 computed，交接那一拍完全对齐；③ 收缩只有 transform/filter/shadow、没有透明度 → hiding-shrink 同一条 WAAPI 加 opacity live→0，隐藏终态内联 opacity:0；显示 grow 从 opacity 0→live，再在 showing-glow 恢复亮度/阴影/发光。',
@@ -3187,6 +3271,10 @@
 	function installHudDrag(el, isPanel) {
 		let dragging = false, moved = false, pendingMorphFinish = false, sx = 0, sy = 0, ox = 0, oy = 0;
 		const track = [];          // 最近几次"球的位置 + 时刻"：用来算松手速度
+		/** 事件 target 可能是 window/document（不是 Node），contains 必须先兜住 */
+		function isInsideEl(t) {
+			try { return t === el || !!(el && el.contains && t && el.contains(t)); } catch (e) { return false; }
+		}
 
 		/** 记一次"球自己"的位置（必须在夹取之后调用） */
 		function pushTrack() {
@@ -3194,19 +3282,15 @@
 			if (track.length > 12) track.shift();
 		}
 
-		el.addEventListener('pointerdown', function (ev) {
-			// 按钮和左上角圆点都不参与拖拽：
-			// 一旦对标题栏 setPointerCapture，click 会被重定向到标题栏，
-			// 圆点上的收起监听就永远不会触发（这就是"根本无法收起"的原因）。
-			if (ev.target && ev.target.classList.contains &&
-				(ev.target.classList.contains('ttn-btn') || ev.target.id === 'ttn-dot')) return;
-
-
-			/* 按一下多半是想反向/连点：立刻落终态会把插值到一半的颜色/阴影硬切到
-			 * 终点（用户看到的"有时黑、有时接近本色的闪"）。真拖动超过阈值时再落终态。 */
+		let dragPointerId = null;
+		/** 统一起手：元素监听和 window/document 捕获接管共用，保证同一 pointerId 只处理一次 */
+		function beginDrag(ev) {
+			if (dragging) return;
+			if (ev.button != null && ev.button !== 0) return;
 			pendingMorphFinish = hudAnimating;
 			ballVis.pendingHide = false;   // 用户亲自抓住球 = 取消"收起后消失"的意图
 			dragging = true; moved = false;
+			dragPointerId = ev.pointerId;
 			closeLangMenu();
 			hideTip();
 			el.__ttnDragging = true;
@@ -3221,7 +3305,41 @@
 			clearTimeout(dragWatchdog);          // 兜底：无论指针事件丢没丢，都必须能收拾干净
 			dragWatchdog = setTimeout(cleanupDrag, 4000);
 			try { el.setPointerCapture(ev.pointerId); } catch (e) {}
+			traceAnim('drag-start', { family: 'drag', name: isPanel ? 'panel' : 'ball', pointerId: ev.pointerId });
+		}
+		el.addEventListener('pointerdown', function (ev) {
+			// 按钮和左上角圆点都不参与拖拽：
+			// 一旦对标题栏 setPointerCapture，click 会被重定向到标题栏，
+			// 圆点上的收起监听就永远不会触发（这就是"根本无法收起"的原因）。
+			if (ev.target && ev.target.classList.contains &&
+				(ev.target.classList.contains('ttn-btn') || ev.target.id === 'ttn-dot')) return;
+			if (dragging) return;
+			if (ev.__ttnDragTaken) return;      // window/document 捕获接管已处理
+			beginDrag(ev);
 		});
+		/* 捕获阶段优先接管球上的 pointerdown：游戏可能在 window/document 捕获阶段
+		 * stopPropagation/preventDefault，冒泡到球元素时事件已经不存在。
+		 * window 捕获（document-start 注册，通常早于游戏监听）先手，document 捕获兜底；
+		 * 命中球/子元素才接管，且只接管这一条事件。 */
+		if (!isPanel) {
+			const takeover = function (ev) {
+				if (dragging || ev.__ttnDragTaken) return;
+				if (!hudBall || el !== hudBall) return;
+				const t = ev.target;
+				if (!isInsideEl(t)) return;
+				if (ballVisAnimating() || hudState.ballHidden || hudState.hidden) {
+					traceSkipped('drag-takeover', ballVisAnimating() ? 'ballvis' : 'hidden');
+					return;
+				}
+				if (ev.button != null && ev.button !== 0) return;
+				ev.__ttnDragTaken = true;
+				beginDrag(ev);
+				try { ev.stopPropagation(); } catch (e) {}
+				try { ev.preventDefault(); } catch (e) {}
+			};
+			window.addEventListener('pointerdown', takeover, true);
+			document.addEventListener('pointerdown', takeover, true);
+		}
 
 		/* 拖动跟手逻辑抽出来，元素自身和 document 兜底共用。
 		 * 只绑在球上有风险：hover 时 pointerdown 命中球里的数字/文字子元素，
@@ -3246,15 +3364,25 @@
 			ev.preventDefault();
 		};
 		el.addEventListener('pointermove', onMove);
+		/* window 捕获优先兜底，document 再兜一层；目标本来在球内时交给元素自身，
+		 * 避免同一 move 被处理两次。 */
+		window.addEventListener('pointermove', function (ev) {
+			if (!dragging || ev.__ttnHandledDrag) return;
+			if (isInsideEl(ev.target)) return;
+			ev.__ttnHandledDrag = true;
+			onMove(ev);
+		}, true);
 		document.addEventListener('pointermove', function (ev) {
-			if (!dragging) return;
-			if (el === ev.target || (el.contains && el.contains(ev.target))) return;
+			if (!dragging || ev.__ttnHandledDrag) return;
+			if (isInsideEl(ev.target)) return;
+			ev.__ttnHandledDrag = true;
 			onMove(ev);
 		}, true);
 
 		const end = function (ev) {
 			if (!dragging) return;
 			dragging = false;
+			dragPointerId = null;
 			pendingMorphFinish = false;
 			el.__ttnDragging = false;
 			el.classList.remove('ttn-drag');
@@ -3298,6 +3426,10 @@
 		el.addEventListener('lostpointercapture', end);        // capture 被抢走也要收拾干净
 		/* 关键：松手发生在元素之外时，元素上收不到 pointerup → 拖动状态会永久卡住，
 		 * 之后 hover 全部瞬变（用户实测的"卡出 bug"）。所以在 document 上兜底收一次。 */
+		window.addEventListener('pointerup', function (ev) {
+			if (dragging) { try { el.releasePointerCapture(ev.pointerId); } catch (e) {} end(ev); }
+		}, true);
+		window.addEventListener('pointercancel', function (ev) { if (dragging) end(ev); }, true);
 		document.addEventListener('pointerup', function (ev) {
 			if (dragging) { try { el.releasePointerCapture(ev.pointerId); } catch (e) {} end(ev); }
 		}, true);
@@ -3383,8 +3515,9 @@
 			const to = on ? GLOW_FILTER_ON : GLOW_FILTER_OFF;
 			try {
 				if (el.__glowAnim) el.__glowAnim.cancel();
-				const anim = el.animate([{ filter: from }, { filter: to }],
-					{ duration: dur, easing: 'ease' });
+				const glowFrames = [{ filter: from }, { filter: to }];
+				const anim = trackAnimation(el.animate(glowFrames,
+					{ duration: dur, easing: 'ease' }), el, glowFrames, { family: 'glow', name: 'filter' });
 				el.__glowAnim = anim;
 				/* 兜底：这段动画没有 fill，正常结束后会交还给 CSS；但万一它卡住
 				 * （页面被节流、时间轴不动），元素就会一直停在**起始值** —— 表现就是
@@ -3410,8 +3543,9 @@
 				if (el.__haloFade) el.__haloFade.cancel();
 				if (el.__haloLoop) { el.__haloLoop.cancel(); el.__haloLoop = null; }
 				el.__loopDur = null;                                       // 下次开时重建（带淡入延迟）
-				el.__haloFade = halo.animate([{ opacity: fromOp }, { opacity: on ? 0.34 : 0 }],
-					{ duration: dur, easing: 'ease', fill: 'forwards' });
+				const fadeFrames = [{ opacity: fromOp }, { opacity: on ? 0.34 : 0 }];
+				el.__haloFade = trackAnimation(halo.animate(fadeFrames,
+					{ duration: dur, easing: 'ease', fill: 'forwards' }), halo, fadeFrames, { family: 'glow', name: 'halo-fade' });
 			} catch (e) {}
 		}
 		if (!on) { if (el.__haloLoop) { el.__haloLoop.cancel(); el.__haloLoop = null; } return; }
@@ -3435,13 +3569,14 @@
 			if (el.__haloLoop) el.__haloLoop.cancel();
 			const big = soft ? 1 : 1 + Math.min(0.06, glowPx / 500);
 			try {
-				el.__haloLoop = halo.animate([
+				const loopFrames = [
 					{ opacity: 0.34, transform: 'scale(1)' },
 					{ opacity: 0.58, transform: 'scale(' + big.toFixed(3) + ')' }
-				], {
+				];
+				el.__haloLoop = trackAnimation(halo.animate(loopFrames, {
 					duration: durMs, direction: 'alternate', iterations: Infinity, easing: 'ease-in-out',
 					delay: changed ? dur : 0
-				});
+				}), halo, loopFrames, { family: 'glow', name: 'halo-loop' });
 				if (loopPhase != null) el.__haloLoop.currentTime = loopPhase * durMs;
 			} catch (e) {}
 		}
@@ -3455,7 +3590,7 @@
 
 	/** 把当前锚点写到 DOM 上（动画期间不插手，交给 hudAnimate） */
 	function applyAnchorNow() {
-		if (hudAnimating || ballVisAnimating() || hudState.ballHidden) return;
+		if (hudAnimating || ballVisAnimating() || hudState.ballHidden) { traceSkipped('applyAnchorNow', hudAnimating ? 'morph' : (ballVisAnimating() ? 'ballvis' : 'hidden')); return; }
 		const bp = ballAt();
 		if (hudBall) hudBall.style.transform = 'translate(' + Math.round(bp.x) + 'px,' + Math.round(bp.y) + 'px)';
 		// 收起态不要重写面板 transform，否则会把"已缩到 0.03"的收起动画抹掉
@@ -3617,9 +3752,9 @@
 	function clampHud(forceInstant) {
 		if (!hud) return;
 		// 展开/收起动画期间由 hudAnimate 负责夹取目标锚点（它会把目标算进动画里去）
-		if (hudAnimating) return;
+		if (hudAnimating) { traceSkipped('clampHud', 'morph'); return; }
 		// 悬浮球隐藏/显示期间由 ballVis 自己管 transform/display，周期刷新别插手
-		if (ballVisAnimating()) return;
+		if (ballVisAnimating()) { traceSkipped('clampHud', 'ballvis'); return; }
 		/* 只藏球时可以不动 DOM，但逻辑锚点仍要跟着窗口夹取 —— 否则缩小窗口后
 		 * 再按 G 恢复，球会出现在屏幕外。 */
 		if (hudState.ballHidden) {
@@ -3685,12 +3820,13 @@
 		} catch (e) { return ''; }
 	}
 
-	function animAt(el, frames, dur, easing) {
+	function animAt(el, frames, dur, easing, meta) {
 		if (!el || typeof el.animate !== 'function') return null;
 		try {
-			return el.animate(frames, {
+			const a = el.animate(frames, {
 				duration: dur, easing: easing || 'cubic-bezier(.2,.8,.3,1)', fill: 'both'
 			});
+			return trackAnimation(a, el, frames, meta);
 		} catch (e) { return null; }
 	}
 
@@ -3722,7 +3858,10 @@
 	}
 
 	function cancelMorph() {
-		(hudAnim.anims || []).forEach(function (a) { try { a.cancel(); } catch (e) {} });
+		(hudAnim.anims || []).forEach(function (a) {
+			traceAnim('preempt', { family: 'morph', reason: 'cancelMorph', phase: hudAnim.phase, currentTime: traceNow(a), playState: a && a.playState });
+			try { a.cancel(); } catch (e) {}
+		});
 		hudAnim.anims = [];
 		if (hudAnim.timer) { clearTimeout(hudAnim.timer); hudAnim.timer = null; }
 		if (hudAnim.fadeTimer) { clearTimeout(hudAnim.fadeTimer); hudAnim.fadeTimer = null; }
@@ -3914,7 +4053,7 @@
 		hudAnim.anims.push(animAt(hud, [
 			{ transform: curPanelT, opacity: curPanelO },
 			{ transform: panelEnd, opacity: panelOpEnd }
-		], DUR));
+		], DUR, undefined, { family: 'morph', name: 'panel' }));
 		if (hudBall) {
 			/* 终点那一帧球必须"看起来就是圆点"：光缩尺寸不够（深色盘面 + 有色描边 →
 			 * 圆点是实心色块），所以背景色也要一起插值过去，否则交接时"空心黑球瞬间
@@ -3938,7 +4077,7 @@
 			hudAnim.anims.push(animAt(hudBall, [
 				{ transform: curBallT, backgroundColor: fromScratch ? curBg : curBg, boxShadow: shadowFrom },
 				{ transform: ballEnd, backgroundColor: bgEnd, boxShadow: shadowEnd }
-			], DUR));
+			], DUR, undefined, { family: 'morph', name: 'ball' }));
 			/* 球里的文字/数字也走 WAAPI（别指望 CSS 过渡，见函数头注释） */
 			const rows = hudBall.querySelectorAll('.t, .m, .b');
 			const rowTo = collapse ? 1 : 0;
@@ -3946,7 +4085,7 @@
 				let from0 = 1;
 				if (live && live.rows && live.rows.length > idx) from0 = live.rows[idx];
 				else { try { from0 = parseFloat(getComputedStyle(el).opacity) || 0; } catch (e) {} }
-				const a = animAt(el, [{ opacity: from0 }, { opacity: rowTo }], collapse ? DUR : 200);
+				const a = animAt(el, [{ opacity: from0 }, { opacity: rowTo }], collapse ? DUR : 200, undefined, { family: 'morph', name: 'row' });
 				if (a) hudAnim.anims.push(a);
 			});
 		}
@@ -4117,7 +4256,10 @@
 		if (ballVis.timer) { clearTimeout(ballVis.timer); ballVis.timer = null; }
 	}
 	function ballVisCancelAnims() {
-		(ballVis.anims || []).forEach(function (a) { try { a.cancel(); } catch (e) {} });
+		(ballVis.anims || []).forEach(function (a) {
+			traceAnim('preempt', { family: 'ballvis', reason: 'ballVisCancelAnims', ballPhase: ballVis.phase, currentTime: traceNow(a), playState: a && a.playState });
+			try { a.cancel(); } catch (e) {}
+		});
 		ballVis.anims = [];
 	}
 	function ballVisCancelKeepClass() { ballVisStopTimer(); ballVisCancelAnims(); }
@@ -4201,9 +4343,9 @@
 			try { if (el.__glowAnim) { el.__glowAnim.cancel(); el.__glowAnim = null; } } catch (e) {}
 		});
 	}
-	function ballVisAnimate(el, frames, dur, easing) {
+ 	function ballVisAnimate(el, frames, dur, easing) {
 		if (!el) return null;
-		const a = animAt(el, frames, dur, easing);
+		const a = animAt(el, frames, dur, easing, { family: 'ballvis', name: ballVis.phase || 'ballvis' });
 		if (a) ballVis.anims.push(a);
 		return a;
 	}
@@ -4298,6 +4440,17 @@
 		hudState.ball = true;
 		hudState.ballHidden = true;
 		saveHudState();
+		/* 先把颜色消费者冻结成同一份 tint：球 color/borderColor（box-shadow 的 currentColor 来源）、
+		 * 圆点 background/color。动画期间 refreshHud 会跳过，所以不会出现"外发光旧色、圆点新色"的半半帧。 */
+		const hideDot = hud && hud.querySelector('#ttn-dot');
+		const hideTint = hudTint.last || cssOf(hideDot, 'backgroundColor') || BALL_SURFACE;
+		if (hudBall) {
+			try { hudBall.style.color = hideTint; hudBall.style.borderColor = hideTint; } catch (e) {}
+		}
+		if (hideDot) {
+			try { hideDot.style.background = hideTint; hideDot.style.color = hideTint; } catch (e) {}
+		}
+		traceAnim('freeze-colors', { family: 'ballvis', tint: hideTint, phase: 'hiding-glow' });
 		/* 快照当前实时值：显示时淡回这份值；隐藏时从这里淡出，中途反向也不跳。
 		 * filter/box-shadow 的恢复目标取"取消 applyGlow 循环后的 CSS 值"，
 		 * 这样显示结束清内联时与 CSS 完全一致。 */
@@ -4378,6 +4531,15 @@
 		hudState.ball = true;
 		hudState.ballHidden = false;
 		saveHudState();
+		const showDot = hud && hud.querySelector('#ttn-dot');
+		const showTint = hudTint.last || cssOf(showDot, 'backgroundColor') || BALL_SURFACE;
+		if (hudBall) {
+			try { hudBall.style.color = showTint; hudBall.style.borderColor = showTint; } catch (e) {}
+		}
+		if (showDot) {
+			try { showDot.style.background = showTint; showDot.style.color = showTint; } catch (e) {}
+		}
+		traceAnim('freeze-colors', { family: 'ballvis', tint: showTint, phase: 'showing-grow' });
 		if (hud) { hud.style.display = 'none'; hud.style.opacity = '0'; }
 		hudBall.style.display = 'flex';
 		hudBall.style.opacity = '0';
@@ -4419,8 +4581,14 @@
 		hudState.ballHidden = false;
 		const restorePanel = !!(ballVis.restoreToPanel || hudState.ballHiddenFromPanel);
 		ballVis.restoreToPanel = false;
-		ballVisSetClass(false);
 		ballVis.debug.shownAt = now();
+		/* 关键顺序：先保持 .ttn-ballvis（transition:none）刷新一次颜色/光晕，让球 color/border、
+		 * 圆点 background、box-shadow currentColor 在同一 tick 内切成同一份新 tint，再摘 class。
+		 * 否则 color/background 各自跑 CSS 过渡，就会出现"外发光旧色、圆点新色"的半半帧。 */
+		applyHudVisibility(false);            // 球 flex / 面板 none
+		applyAnchorNow();                     // 落回静止态姿势（translate，无多余 scale）
+		refreshHud();                         // 重建光晕循环/颜色（此时 class 仍压制过渡）
+		ballVisSetClass(false);
 		if (restorePanel) {
 			/* 隐藏前是面板：球已经长回、发光已亮起，同一拍接力展开回面板。 */
 			hudState.ball = false;
@@ -4435,9 +4603,6 @@
 		hudState.ball = true;
 		hudState.ballHiddenFromPanel = false;
 		saveHudState();
-		applyHudVisibility(false);            // 球 flex / 面板 none
-		applyAnchorNow();                     // 落回静止态姿势（translate，无多余 scale）
-		refreshHud();                         // 重建光晕循环/颜色
 		clampHud();
 	}
 	/** 隐藏/显示动画途中再按 G：先读 live，再 cancel，再按新方向反向接着走。 */
@@ -4513,6 +4678,11 @@
 	function toggleBallHidden() {
 		if (!hud || !hudBall) ensureHud();
 		if (!hud || !hudBall) return;
+		/* 正在拖球时按 G：不要开 ballVis 和拖动抢 transform —— 记一条 trace，等松手后再按。 */
+		if ((activeDrag && activeDrag.el) || (hudBall && hudBall.__ttnDragging)) {
+			traceSkipped('g-while-drag', 'drag-active');
+			return;
+		}
 		if (hudState.hidden) {
 			/* 整块 HUD 已被 Ctrl+Shift+L 隐藏：只改持久意图，等 HUD 回来时再生效 */
 			hudState.ballHidden = !hudState.ballHidden;
@@ -4657,7 +4827,7 @@
 	function applyHudVisibility(fade) {
 		if (!hud) return;
 		/* 悬浮球隐藏/显示动画期间由 ballVis 自己管 display，周期逻辑/全局显隐都别插手。 */
-		if (ballVisAnimating()) return;
+		if (ballVisAnimating()) { traceSkipped('applyHudVisibility', 'ballvis'); return; }
 		const on = CFG.hud && !hudState.hidden;
 		const target = hudState.ball ? hudBall : hud;
 		const other = hudState.ball ? hud : hudBall;
@@ -4770,6 +4940,12 @@
 		sanitizeDragState();
 		ensureHud();
 		if (!hud || hudState.hidden) return;
+		/* 动画在飞时禁止周期性刷新写球/面板属性：交给动画自己，结束后下一次 refreshHud 再接管。
+		 * 这是用户"有时候根本不过渡，闪一下直接到终点"的守门（并发写入者会被 trace 记下）。 */
+		if (hudAnim.phase !== 'idle' || ballVis.phase !== 'idle') {
+			traceSkipped('refreshHud', hudAnim.phase !== 'idle' ? 'morph' : 'ballvis');
+			return;
+		}
 
 		const m = netMetrics();
 		const col = overallColor(m);
@@ -4887,6 +5063,7 @@
 			script: 'tanktrouble-netlab',
 			version: VERSION,
 			changelog: CHANGELOG,
+			animTrace: animTrace.slice(-40),
 			time: new Date().toISOString(),
 			href: location.href,
 			ua: navigator.userAgent,
@@ -5217,7 +5394,12 @@
 		regionTemplates: regionTemplates,   // 测试用：区域探测实际用的模板（观测优先）
 		pingRegion: pingRegion,             // 测试用：单次区域探测（原样建连接）
 		setHud(on) { CFG.hud = !!on; ensureHud(); applyHudVisibility(); refreshHud(); clampHud(); },
+		_setHudHidden: setHudHidden,    // 测试/调试：全局显隐
+		setHudHidden: setHudHidden,      // 兼容测试命名
 		hudState: hudState,          // 调试/测试用
+		trace: function (n) { const list = animTrace.slice(-(Math.max(1, n || 30))); try { console.log('[TTN] animTrace', list); } catch (e) {} return list; },
+		_animTrace: animTrace,       // 测试/调试：环形缓冲（最多 240 条）
+		_hudTint: hudTint,           // 测试/调试：当前分级色
 		ballVis: ballVisTune,        // 调试：ballVis.slow 默认 2.7，设 1 恢复隐藏/显示原速
 		_ballVisDur: ballVisDur,
 		clampHud: clampHud,

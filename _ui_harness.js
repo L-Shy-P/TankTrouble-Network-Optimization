@@ -3323,6 +3323,238 @@ step(function () {
 		'hover 态下 pointerdown→move 80x30 必须真的移动锚点、cursor 保持 pointer、结束后无 .ttn-drag 残留: ' +
 		JSON.stringify(window.__G_DRAG_HOVER__));
 });
+/* ---------- v0.6.4：抢占/并发写入/颜色同步/证据通道 ---------- */
+function gTraceHas(kind, name) {
+	return (window.__TTN__._animTrace || []).some(function (r) {
+		return r && r.kind === kind && (!name || r.name === name || r.reason === name);
+	});
+}
+function gTraceTail(n) { return (window.__TTN__._animTrace || []).slice(-(n || 12)); }
+function gColorSnap(ball) {
+	var dot = q('ttn-dot');
+	return {
+		color: getComputedStyle(ball).color,
+		border: getComputedStyle(ball).borderTopColor,
+		dot: dot ? getComputedStyle(dot).backgroundColor : '',
+		shadow: getComputedStyle(ball).boxShadow
+	};
+}
+function gShadowHasColor(shadow, color) {
+	var c = String(color).replace(/\s+/g, '');
+	var s = String(shadow).replace(/\s+/g, '');
+	return s.indexOf(c) >= 0;
+}
+
+step(function () {
+	/* 1) 游戏在 window capture 拦住 pointerdown：球仍必须能拖。 */
+	var T = window.__TTN__, ball = gBall();
+	gForceVisible(T);
+	var r = ball.getBoundingClientRect();
+	var cx = Math.round(r.left + r.width / 2), cy = Math.round(r.top + r.height / 2);
+	var pid = 77;
+	var badDown = function (ev) { if (ev.pointerId === pid) { ev.stopPropagation(); ev.preventDefault(); } };
+	var badMove = function (ev) { if (ev.pointerId === pid) { ev.stopPropagation(); ev.preventDefault(); } };
+	window.addEventListener('pointerdown', badDown, true);
+	window.addEventListener('pointermove', badMove, true);
+	var before = { x: T.hudState.x, y: T.hudState.y };
+	ball.dispatchEvent(new PointerEvent('pointerenter', { bubbles: false, pointerId: pid, clientX: cx, clientY: cy }));
+	var hit = ball.querySelector('.m') || ball;
+	hit.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: pid, clientX: cx, clientY: cy, button: 0, buttons: 1 }));
+	var grabbed = !!ball.__ttnDragging;
+	window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, cancelable: true, pointerId: pid, clientX: cx + 70, clientY: cy + 25, button: 0, buttons: 1 }));
+	var mid = { x: T.hudState.x, y: T.hudState.y, cursor: getComputedStyle(ball).cursor, hover: ball.classList.contains('ttn-hover') };
+	window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerId: pid, clientX: cx + 70, clientY: cy + 25, button: 0, buttons: 0 }));
+	window.removeEventListener('pointerdown', badDown, true);
+	window.removeEventListener('pointermove', badMove, true);
+	var after = { x: T.hudState.x, y: T.hudState.y, drag: ball.classList.contains('ttn-drag'), dragging: !!ball.__ttnDragging };
+	window.__G_CAPTURE_DRAG__ = { before: before, grabbed: grabbed, mid: mid, after: after };
+	ck('drag-survives-game-capturing-pointerdown',
+		grabbed === true && Math.abs(after.x - before.x) >= 40 && Math.abs(after.y - before.y) >= 15 &&
+		mid.cursor === 'pointer' && mid.hover === true && after.drag === false && after.dragging === false,
+		'window capture 上的坏监听 stopPropagation/preventDefault 后，球仍要捕获接管 pointerdown 并跟手移动，cursor 保持 pointer、无残留: ' +
+		JSON.stringify(window.__G_CAPTURE_DRAG__));
+});
+
+step(function () {
+	/* 2) 子元素/hover/G 动画结束三种情况都能拖。 */
+	var T = window.__TTN__, ball = gBall(), root = gRoot();
+	function dragOnce(pid) {
+		var r = ball.getBoundingClientRect();
+		var cx = Math.round(r.left + r.width / 2), cy = Math.round(r.top + r.height / 2);
+		var before = { x: T.hudState.x, y: T.hudState.y };
+		ball.dispatchEvent(new PointerEvent('pointerenter', { bubbles: false, pointerId: pid, clientX: cx, clientY: cy }));
+		var hit = ball.querySelector('.t') || ball.querySelector('.m') || ball;
+		hit.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: pid, clientX: cx, clientY: cy, button: 0, buttons: 1 }));
+		window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, cancelable: true, pointerId: pid, clientX: cx + 60, clientY: cy + 20, button: 0, buttons: 1 }));
+		window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerId: pid, clientX: cx + 60, clientY: cy + 20, button: 0, buttons: 0 }));
+		return { dx: T.hudState.x - before.x, dy: T.hudState.y - before.y, cursor: getComputedStyle(ball).cursor, drag: ball.classList.contains('ttn-drag') };
+	}
+	gForceVisible(T);
+	var child = dragOnce(101);
+	/* 跑一轮完整 G 隐藏→显示，再拖 */
+	gKeyPress(); T._ballVisFinishGlow(); T._ballVisFinishShrink();
+	gKeyPress(); T._ballVisFinishGrow(); T._ballVisFinishShow();
+	var afterG = dragOnce(102);
+	window.__G_DRAG_CASES__ = { child: child, afterG: afterG, phase: T._ballVis.phase, display: getComputedStyle(ball).display, panel: getComputedStyle(root).display };
+	ck('drag-child-target-works',
+		child.dx >= 40 && child.dy >= 15 && child.cursor === 'pointer' && child.drag === false,
+		'pointerdown 命中球内文字子元素时也能拖: ' + JSON.stringify(window.__G_DRAG_CASES__));
+	ck('drag-after-g-animation',
+		afterG.dx >= 40 && afterG.dy >= 15 && afterG.cursor === 'pointer' && afterG.drag === false &&
+		T._ballVis.phase === 'idle' && getComputedStyle(ball).display !== 'none' && !ball.classList.contains('ttn-ballvis'),
+		'G 动画（含 .ttn-ballvis）结束、球恢复可见后仍能拖: ' + JSON.stringify(window.__G_DRAG_CASES__));
+});
+
+step(function () {
+	/* 3) morph 动画途中连续 refreshHud/clampHud：动画不能被撤掉、不能被写成终点。 */
+	var T = window.__TTN__, ball = gBall();
+	gForceVisible(T);
+	T.hudState.ball = true; T.setHud(true); T._finishHudAnim();
+	T._hudAnimate(false);                       // 展开 morph
+	var a = gAnimWith(ball, 'transform') || gAnimWith(gRoot(), 'transform');
+	var dur = a ? (parseFloat(a.effect.getTiming().duration) || 300) : 300;
+	if (a) { a.pause(); a.currentTime = dur * 0.3; }
+	void ball.offsetWidth;
+	var t0 = a ? (typeof a.currentTime === 'number' ? a.currentTime : a.currentTime.value) : null;
+	var before = a ? gNormCss(getComputedStyle(ball).transform) : '';
+	T.refreshHud(); T.refreshHud(); T.clampHud(); T.refreshHud();
+	var t1 = a ? (typeof a.currentTime === 'number' ? a.currentTime : a.currentTime.value) : null;
+	var after = a ? gNormCss(getComputedStyle(ball).transform) : '';
+	if (a) a.currentTime = dur * 0.6;
+	T.refreshHud();
+	var t2 = a ? (typeof a.currentTime === 'number' ? a.currentTime : a.currentTime.value) : null;
+	window.__G_MORPH_LAND__ = {
+		phase: T._hudAnim.phase, inList: !!(a && T._hudAnim.anims && T._hudAnim.anims.indexOf(a) >= 0),
+		t0: t0, t1: t1, t2: t2, before: before, after: after, skipped: gTraceHas('skipped-writer', 'refreshHud')
+	};
+	ck('no-instant-land-during-morph',
+		!!a && T._hudAnim.phase === 'expanding' && window.__G_MORPH_LAND__.inList &&
+		t0 != null && t1 != null && t2 != null && t1 >= t0 && t2 > t1 &&
+		before === after && window.__G_MORPH_LAND__.skipped,
+		'morph 途中 refreshHud/clampHud 必须跳过（trace 记 skipped-writer），动画仍在、currentTime 单调、computed 不被瞬写成终点: ' +
+		JSON.stringify(window.__G_MORPH_LAND__));
+	T._finishHudAnim();
+});
+
+step(function () {
+	/* 4) ballVis 途中连续 refreshHud/clampHud/setHudHidden(false)：动画不能被撤掉。 */
+	var T = window.__TTN__, ball = gBall();
+	gForceVisible(T);
+	T.hudState.ballHiddenFromPanel = false; T._saveHudState();
+	gKeyPress();
+	var a = gAnimWith(ball, 'filter') || gAnimWith(ball, 'transform');
+	var dur = a ? (parseFloat(a.effect.getTiming().duration) || 486) : 486;
+	if (a) { a.pause(); a.currentTime = dur * 0.3; }
+	void ball.offsetWidth;
+	var t0 = a ? (typeof a.currentTime === 'number' ? a.currentTime : a.currentTime.value) : null;
+	var before = a ? gNormCss(getComputedStyle(ball).filter) : '';
+	var phase0 = T._ballVis.phase;
+	T.refreshHud(); T.refreshHud(); T.clampHud(); T.setHudHidden(false); T.refreshHud();
+	var t1 = a ? (typeof a.currentTime === 'number' ? a.currentTime : a.currentTime.value) : null;
+	var after = a ? gNormCss(getComputedStyle(ball).filter) : '';
+	window.__G_BALLVIS_LAND__ = {
+		phase: phase0, phaseNow: T._ballVis.phase, t0: t0, t1: t1,
+		before: before, after: after, inList: !!(a && T._ballVis.anims && T._ballVis.anims.indexOf(a) >= 0),
+		skippedRefresh: gTraceHas('skipped-writer', 'refreshHud'), skippedClamp: gTraceHas('skipped-writer', 'clampHud')
+	};
+	ck('no-instant-land-during-ballvis',
+		!!a && phase0 === 'hiding-glow' && window.__G_BALLVIS_LAND__.phaseNow === 'hiding-glow' &&
+		window.__G_BALLVIS_LAND__.inList && t0 != null && t1 != null && t1 >= t0 &&
+		before === after && window.__G_BALLVIS_LAND__.skippedRefresh && window.__G_BALLVIS_LAND__.skippedClamp,
+		'ballVis 途中 refreshHud/clampHud/setHudHidden(false) 不得撤动画或瞬写终点；trace 有 skipped-writer: ' +
+		JSON.stringify(window.__G_BALLVIS_LAND__));
+	T._ballVisFinishGlow(); T._ballVisFinishShrink();
+});
+
+step(function () {
+	/* 5) trace 必须记录创建/取消/被抢占。 */
+	var T = window.__TTN__;
+	gForceVisible(T);
+	var start = (T._animTrace || []).length;
+	T._hudAnimate(false);
+	var created = gTraceHas('create', 'morph') || gTraceTail(30).some(function (r) { return r.family === 'morph' && r.kind === 'create'; });
+	T._finishHudAnim();
+	var preempt = gTraceTail(60).some(function (r) { return r.kind === 'preempt' || r.kind === 'cancel'; });
+	/* ballVis 取消/接管也留痕 */
+	gKeyPress();
+	T._ballVisFinishGlow();
+	var ballPreempt = gTraceTail(80).some(function (r) { return (r.kind === 'preempt' || r.kind === 'cancel') && (r.family === 'ballvis' || r.ballPhase); });
+	T._ballVisFinishShrink();
+	var tail = gTraceTail(6);
+	window.__G_TRACE__ = { start: start, created: created, preempt: preempt, ballPreempt: ballPreempt, tail: tail };
+	ck('trace-records-preemption',
+		created && preempt && ballPreempt && tail.length > 0,
+		'trace 必须记录 morph/ballVis 的 create 与 cancel/preempt；__TTN__.trace()/report().animTrace 可回传: ' +
+		JSON.stringify(window.__G_TRACE__));
+});
+
+step(function () {
+	/* 6) 拖动中按 G：G 必须让位（trace skipped-writer），松手后状态与 hudState 一致。 */
+	var T = window.__TTN__, ball = gBall();
+	gForceVisible(T);
+	var r = ball.getBoundingClientRect();
+	var cx = Math.round(r.left + r.width / 2), cy = Math.round(r.top + r.height / 2);
+	ball.dispatchEvent(new PointerEvent('pointerenter', { bubbles: false, pointerId: 201, clientX: cx, clientY: cy }));
+	ball.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 201, clientX: cx, clientY: cy, button: 0, buttons: 1 }));
+	window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, cancelable: true, pointerId: 201, clientX: cx + 50, clientY: cy + 20, button: 0, buttons: 1 }));
+	var moved = { x: T.hudState.x, y: T.hudState.y };
+	gKeyPress();
+	var during = { phase: T._ballVis.phase, hidden: T.hudState.ballHidden, skipped: gTraceHas('skipped-writer', 'g-while-drag'), dragging: !!ball.__ttnDragging };
+	window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerId: 201, clientX: cx + 50, clientY: cy + 20, button: 0, buttons: 0 }));
+	var after = { x: T.hudState.x, y: T.hudState.y, drag: ball.classList.contains('ttn-drag'), dragging: !!ball.__ttnDragging, hidden: T.hudState.ballHidden, phase: T._ballVis.phase };
+	window.__G_DRAG_G__ = { moved: moved, during: during, after: after };
+	ck('ballvis-during-drag',
+		during.phase === 'idle' && during.hidden === false && during.skipped === true && during.dragging === true &&
+		Math.abs(after.x - moved.x) < 30 && after.drag === false && after.dragging === false && after.phase === 'idle',
+		'拖动中按 G 不并发启动 ballVis（trace:g-while-drag），拖动照常结束、无残留、hudState 自洽: ' +
+		JSON.stringify(window.__G_DRAG_G__));
+	/* G 动画中尝试拖：应该被 takeover 跳过，不能产生残留拖动状态 */
+	gKeyPress();
+	var gPhase = T._ballVis.phase;
+	ball.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 202, clientX: cx, clientY: cy, button: 0, buttons: 1 }));
+	window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, cancelable: true, pointerId: 202, clientX: cx + 50, clientY: cy + 20, button: 0, buttons: 1 }));
+	window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerId: 202, clientX: cx + 50, clientY: cy + 20, button: 0, buttons: 0 }));
+	window.__G_DRAG_G__.duringG = { gPhase: gPhase, dragging: !!ball.__ttnDragging, skipped: gTraceHas('skipped-writer', 'drag-takeover'), phase: T._ballVis.phase };
+	ck('no-drag-during-ballvis',
+		gPhase !== 'idle' && window.__G_DRAG_G__.duringG.dragging === false &&
+		window.__G_DRAG_G__.duringG.skipped === true && window.__G_DRAG_G__.duringG.phase === gPhase,
+		'G 动画进行中不启动拖动（trace:drag-takeover），不能留下 ttn-drag/拖动标志: ' + JSON.stringify(window.__G_DRAG_G__.duringG));
+	T._ballVisFinishGlow(); T._ballVisFinishShrink();
+	gKeyPress(); T._ballVisFinishGrow(); T._ballVisFinishShow();
+});
+
+step(function () {
+	/* 7) 颜色对应：动画途中改分级色，球 color/border/dot/box-shadow 必须要么全冻结、要么全跟随。 */
+	var T = window.__TTN__, ball = gBall(), dot = q('ttn-dot');
+	gForceVisible(T);
+	/* 先造一个绿色档：清空样本后灌 30ms */
+	T.ping.samples.length = 0;
+	for (var i = 0; i < 24; i++) T.pushLatency(30, null, 'probe');
+	T.refreshHud();
+	var oldTint = T._hudTint.last;
+	var s0 = gColorSnap(ball);
+	var sync0 = s0.color === s0.border && s0.dot === s0.color && gShadowHasColor(s0.shadow, s0.color);
+	/* 开始隐藏；动画途中把指标换成红色档并刷新（应被跳过） */
+	T.hudState.ballHiddenFromPanel = false; T._saveHudState();
+	gKeyPress();
+	T.ping.samples.length = 0;
+	for (var j = 0; j < 24; j++) T.pushLatency(220, null, 'probe');
+	T.refreshHud(); T.refreshHud(); T.clampHud();
+	var s1 = gColorSnap(ball);
+	var sync1 = s1.color === s1.border && s1.dot === s1.color && gShadowHasColor(s1.shadow, s1.color) && s1.color === s0.color;
+	/* 走完隐藏/显示，刷新后再看最新色 */
+	T._ballVisFinishGlow(); T._ballVisFinishShrink();
+	gKeyPress(); T._ballVisFinishGrow(); T._ballVisFinishShow();
+	T.refreshHud();
+	var newTint = T._hudTint.last;
+	var s2 = gColorSnap(ball);
+	var sync2 = s2.color === s2.border && s2.dot === s2.color && gShadowHasColor(s2.shadow, s2.color);
+	window.__G_COLORS__ = { oldTint: oldTint, newTint: newTint, s0: s0, s1: s1, s2: s2, sync0: sync0, sync1: sync1, sync2: sync2 };
+	ck('halo-rim-colors-stay-in-sync',
+		sync0 && sync1 && sync2 && s1.color === s0.color && s2.color !== s0.color,
+		'动画中改档：球 color/border、box-shadow currentColor、圆点 background 必须同步冻结；结束后一起切到新色: ' +
+		JSON.stringify(window.__G_COLORS__));
+});
 step(function () {
 	ck('report-ok', (function () {
 		try {

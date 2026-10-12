@@ -1738,6 +1738,13 @@ T.ballVis.slow = slow0;
 ok(Math.abs(scaled - Math.round(100 * slow0)) <= 1 && normal === 100,
 	'__TTN__.ballVis.slow 只乘时长：默认 100ms→' + scaled + 'ms，设 1 后→' + normal + 'ms',
 	JSON.stringify({ scaled: scaled, normal: normal, slow: slow0 }));
+/* 新增：动画证据通道 trace / report().animTrace */
+ok(typeof T.trace === 'function' && Array.isArray(T._animTrace),
+	'动画证据通道存在：__TTN__.trace(n) 返回环形缓冲数组、_animTrace 可读',
+	JSON.stringify({ trace: typeof T.trace, len: T._animTrace && T._animTrace.length }));
+ok(Array.isArray(T.report().animTrace),
+	'report() 带 animTrace 字段（用户遇到瞬变可直接把最近 40 条发回来）',
+	JSON.stringify({ animTrace: Array.isArray(T.report().animTrace), n: T.report().animTrace.length }));
 /* 收尾：恢复测试前的状态，不影响后面的报告断言 */
 T.hudState.x = 8; T.hudState.y = 8; T.hudState.ball = false; T.hudState.ballHidden = false; T.hudState.ballHiddenFromPanel = false; T.hudState.hidden = false;
 sandbox.localStorage.removeItem('ttn.hud.v4');
