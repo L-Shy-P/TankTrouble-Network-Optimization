@@ -2678,6 +2678,7 @@ function gForceVisible(T) {
 	}
 	T.hudState.hidden = false;
 	T.hudState.ballHidden = false;
+	T.hudState.ballHiddenFromPanel = false;
 	T.hudState.ball = true;
 	T.setHud(true); T._finishHudAnim();
 	if (T._ballVis.phase !== 'idle') T._ballVisFinishShow();
@@ -2918,6 +2919,241 @@ step(function () {
 		'收起途中第二次按 G = 取消隐藏，反向展开回面板（不会 collapsing 中途开球缩小动画）: ' + JSON.stringify(window.__G_DOUBLE__));
 });
 
+/* ---------- v0.6.1：影子/变暗/G 提示/恢复到原状态 ---------- */
+function gBrightness(v) {
+	var m = /brightness\(([-\d.]+)\)/.exec(String(v || ''));
+	return m ? parseFloat(m[1]) : 1;
+}
+function gSaturation(v) {
+	var m = /saturate\(([-\d.]+)\)/.exec(String(v || ''));
+	return m ? parseFloat(m[1]) : 1;
+}
+function gNormCss(v) { return String(v || '').replace(/\s+/g, '').toLowerCase(); }
+
+step(function () {
+	/* 1) 球自身的 box-shadow 必须跟着 shrink 淡出；落 display:none 那一帧不能跳。 */
+	var T = window.__TTN__, ball = gBall();
+	gForceVisible(T);
+	T.hudState.ballHiddenFromPanel = false; T._saveHudState();
+	gKeyPress();
+	var stage1Shadow = gCountProp(ball, 'boxShadow');
+	T._ballVisFinishGlow();                       // 进入 hiding-shrink
+	var sa = gAnimWith(ball, 'boxShadow');
+	var kf = sa ? sa.effect.getKeyframes() : null;
+	if (sa) { sa.pause(); sa.currentTime = 110; }
+	void ball.offsetWidth;
+	var midShadow = gNormCss(getComputedStyle(ball).boxShadow);
+	if (sa) { sa.currentTime = 215; }
+	void ball.offsetWidth;
+	var nearShadow = gNormCss(getComputedStyle(ball).boxShadow);
+	T._ballVisFinishShrink();
+	var hiddenInlineShadow = gNormCss(ball.style.boxShadow);
+	var hiddenAnims = gCountProp(ball, 'boxShadow');
+	window.__G_SHADOW__ = {
+		stage1Shadow: stage1Shadow,
+		from: kf && kf[0] && kf[0].boxShadow, to: kf && kf[kf.length - 1] && kf[kf.length - 1].boxShadow,
+		mid: midShadow, near: nearShadow, hiddenInline: hiddenInlineShadow, hiddenAnims: hiddenAnims,
+		display: getComputedStyle(ball).display
+	};
+	ck('hide-animates-own-shadow',
+		stage1Shadow === 0 && !!sa && !!kf &&
+		gNormCss(kf[0].boxShadow) !== gNormCss(kf[kf.length - 1].boxShadow) &&
+		midShadow !== gNormCss(kf[0].boxShadow) && midShadow !== gNormCss(kf[kf.length - 1].boxShadow) &&
+		hiddenInlineShadow.indexOf('rgba(0,0,0,0)') >= 0 && hiddenAnims === 0,
+		'球自身 box-shadow 在 hiding-shrink 全程有且只有一条 WAAPI 动画（中点 computed 处于插值中），隐藏终态内联全透明: ' +
+		JSON.stringify(window.__G_SHADOW__));
+	ck('hide-shadow-no-jump-at-display-none',
+		getComputedStyle(ball).display === 'none' &&
+		nearShadow.indexOf('rgba(0,0,0,0)') >= 0 && hiddenInlineShadow.indexOf('rgba(0,0,0,0)') >= 0,
+		'display:none 之前的阴影已经接近全透明，落终态/隐藏那一帧没有可见突变: ' + JSON.stringify(window.__G_SHADOW__));
+	/* 显示方向：showing-glow 阶段阴影从透明淡回隐藏前 live 值 */
+	gKeyPress();
+	T._ballVisFinishGrow();
+	var sa2 = gAnimWith(ball, 'boxShadow');
+	var kf2 = sa2 ? sa2.effect.getKeyframes() : null;
+	var showShadowOk = !!sa2 && gNormCss(kf2[0].boxShadow) !== gNormCss(kf2[kf2.length - 1].boxShadow) &&
+		gCountProp(ball, 'boxShadow') === 1;
+	T._ballVisFinishShow();
+	window.__G_SHADOW__.show = { ok: showShadowOk, display: getComputedStyle(ball).display, phase: T._ballVis.phase };
+	ck('show-animates-own-shadow',
+		showShadowOk && getComputedStyle(ball).display !== 'none' && T._ballVis.phase === 'idle',
+		'显示时 box-shadow 也走 WAAPI 从透明淡回 live 值: ' + JSON.stringify(window.__G_SHADOW__.show));
+});
+
+step(function () {
+	/* 2) 隐藏时整颗球逐步变暗去色；显示反向；filter 同属性 ≤1 条 WAAPI。 */
+	var T = window.__TTN__, ball = gBall();
+	gForceVisible(T);
+	T.hudState.ballHiddenFromPanel = false; T._saveHudState();
+	var beforeFilter = getComputedStyle(ball).filter;
+	gKeyPress();
+	var cntStart = gCountProp(ball, 'filter');
+	var fa = gAnimWith(ball, 'filter');
+	var kf = fa ? fa.effect.getKeyframes() : null;
+	if (fa) { fa.pause(); fa.currentTime = 90; }
+	void ball.offsetWidth;
+	var midFilter = getComputedStyle(ball).filter;
+	var stage1Ok = !!fa && kf && gBrightness(kf[0].filter) > gBrightness(kf[kf.length - 1].filter) &&
+		gSaturation(kf[0].filter) > gSaturation(kf[kf.length - 1].filter) && gCountProp(ball, 'filter') === 1;
+	T._ballVisFinishGlow();
+	var cntStage2 = gCountProp(ball, 'filter');
+	var fa2 = gAnimWith(ball, 'filter');
+	var kf2 = fa2 ? fa2.effect.getKeyframes() : null;
+	if (fa2) { fa2.pause(); fa2.currentTime = 110; }
+	void ball.offsetWidth;
+	var mid2 = getComputedStyle(ball).filter;
+	T._ballVisFinishShrink();
+	var hiddenFilter = ball.style.filter;
+	window.__G_DIM__ = {
+		before: beforeFilter, stage1From: kf && kf[0].filter, stage1To: kf && kf[kf.length - 1].filter, mid: midFilter,
+		stage2From: kf2 && kf2[0].filter, stage2To: kf2 && kf2[kf2.length - 1].filter, mid2: mid2,
+		cntStart: cntStart, cntStage2: cntStage2,
+		hidden: hiddenFilter, hiddenBright: gBrightness(hiddenFilter), hiddenSat: gSaturation(hiddenFilter)
+	};
+	ck('hide-dims-colors',
+		stage1Ok && !!fa2 && cntStart === 1 && cntStage2 === 1 &&
+		gBrightness(kf2[0].filter) >= gBrightness(kf2[kf2.length - 1].filter) &&
+		gSaturation(kf2[kf2.length - 1].filter) < gSaturation(beforeFilter || kf2[0].filter),
+		'隐藏两段 filter 都从亮到暗（stage1 亮→中暗、stage2 中暗→更暗），每个时刻同属性只有 1 条 WAAPI: ' +
+		JSON.stringify(window.__G_DIM__));
+	ck('hide-dims-lands-dim',
+		getComputedStyle(ball).display === 'none' &&
+		gBrightness(hiddenFilter) <= 0.26 && gSaturation(hiddenFilter) <= 0.16,
+		'隐藏终态确实是"关机"暗色（saturate(.15) brightness(.25) 量级）: ' + JSON.stringify(window.__G_DIM__));
+	/* 显示：先长大（仍暗），showing-glow 才从暗→亮；同属性 ≤1 */
+	gKeyPress();
+	var growFilterAnims = gCountProp(ball, 'filter');
+	var growInlineFilter = ball.style.filter;
+	T._ballVisFinishGrow();
+	var fa3 = gAnimWith(ball, 'filter');
+	var kf3 = fa3 ? fa3.effect.getKeyframes() : null;
+	var showDimOk = !!fa3 && gBrightness(kf3[kf3.length - 1].filter) > gBrightness(kf3[0].filter) && gCountProp(ball, 'filter') === 1;
+	T._ballVisFinishShow();
+	var afterFilter = getComputedStyle(ball).filter;
+	window.__G_DIM__.show = { growFilterAnims: growFilterAnims, growInline: growInlineFilter, from: kf3 && kf3[0].filter, to: kf3 && kf3[kf3.length - 1].filter, after: afterFilter, afterBright: gBrightness(afterFilter) };
+	ck('show-dims-colors-reverse',
+		growFilterAnims === 0 && gBrightness(growInlineFilter) <= 0.26 && showDimOk &&
+		gBrightness(afterFilter) >= 1,
+		'显示时先长大且仍暗（grow 阶段 filter 无动画/仍为 DIM_FINAL），showing-glow 才从暗→亮，且同属性只有 1 条: ' +
+		JSON.stringify(window.__G_DIM__.show));
+});
+
+step(function () {
+	/* 3) 面板里必须有常驻 G 提示；11 语言逐个扫描无截断/无换行。 */
+	var T = window.__TTN__, bad = [], lastText = '';
+	T.hudState.ball = false; T.hudState.ballHidden = false; T.hudState.ballHiddenFromPanel = false;
+	T.setHud(true); T._finishHudAnim();
+	T.langs.forEach(function (l) {
+		T.setLang(l[0]);
+		var h = q('ttn-gkey');
+		var cs = h ? getComputedStyle(h) : null;
+		var txt = h ? String(h.textContent || '') : '';
+		lastText = txt;
+		if (!h || txt.indexOf('G') < 0) { bad.push(l[0] + ':missing'); return; }
+		if (h.scrollWidth > h.clientWidth + 1) bad.push(l[0] + ':clip ' + h.scrollWidth + '>' + h.clientWidth + ' ' + txt);
+		if (cs.whiteSpace !== 'nowrap') bad.push(l[0] + ':wrap');
+		if (h.getBoundingClientRect().height > parseFloat(cs.fontSize) * 1.75) bad.push(l[0] + ':height');
+	});
+	var hint = q('ttn-gkey');
+	var foot = q('ttn-root').querySelector('.ttn-foot');
+	var below = hint && foot ? hint.getBoundingClientRect().top >= foot.getBoundingClientRect().bottom - 1 : false;
+	window.__G_HINT__ = { bad: bad, text: lastText, below: below, width: hint ? Math.round(hint.getBoundingClientRect().width) : -1 };
+	T.setLang('zh');
+	ck('panel-shows-g-hint', bad.length === 0 && below && /G/.test(lastText),
+		'面板底部的 G 常驻提示存在、11 国语言都不截断/不换行、位于按钮行下方: ' + JSON.stringify(window.__G_HINT__));
+});
+
+step(function () {
+	/* 4) 隐藏前是面板 → 恢复时先球、同一拍接力展开回面板。 */
+	var T = window.__TTN__, ball = gBall(), root = gRoot();
+	gForceVisible(T);
+	T.hudState.ballHiddenFromPanel = false; T.hudState.ballHidden = false;
+	T.hudState.ball = false; T.setHud(true); T._finishHudAnim();
+	gKeyPress();
+	T._finishHudAnim();                             // 收起完成 + pendingHide 接力
+	T._ballVisFinishGlow(); T._ballVisFinishShrink();
+	var hiddenState = { fromPanel: T.hudState.ballHiddenFromPanel, hidden: T.hudState.ballHidden, display: getComputedStyle(ball).display };
+	gKeyPress();
+	T._ballVisFinishGrow();
+	T._ballVisFinishShow();                         // 同一函数里 handoff 到 hudAnimate(false)
+	var handoff = {
+		phase: T._hudAnim.phase, ball: T.hudState.ball, fromPanel: T.hudState.ballHiddenFromPanel,
+		shownAt: T._ballVis.debug.shownAt || 0, panelHandoffAt: T._ballVis.debug.panelHandoffAt || 0,
+		hudHandoffAt: T._hudAnim.debug.handoffAt || 0
+	};
+	T._finishHudAnim();
+	var finalState = {
+		panel: getComputedStyle(root).display, ball: getComputedStyle(ball).display,
+		ballHidden: T.hudState.ballHidden, fromPanel: T.hudState.ballHiddenFromPanel,
+		phase: T._hudAnim.phase
+	};
+	window.__G_RESTORE_PANEL__ = { hidden: hiddenState, handoff: handoff, final: finalState };
+	ck('restore-returns-to-panel-when-it-was-panel',
+		hiddenState.fromPanel === true && hiddenState.hidden === true && hiddenState.display === 'none' &&
+		handoff.phase === 'expanding' && handoff.ball === false && handoff.fromPanel === false &&
+		Math.abs(handoff.panelHandoffAt - handoff.shownAt) <= 2 &&
+		Math.abs(handoff.hudHandoffAt - handoff.panelHandoffAt) <= 2 &&
+		finalState.panel !== 'none' && finalState.ball === 'none' &&
+		finalState.ballHidden === false && finalState.fromPanel === false,
+		'面板态隐藏后恢复：球先长回来，然后在同一拍接力 hudAnimate(false) 展开；最终是面板态: ' +
+		JSON.stringify(window.__G_RESTORE_PANEL__));
+});
+
+step(function () {
+	/* 5) 隐藏前是悬浮球 → 恢复后仍是悬浮球（不展开）。 */
+	var T = window.__TTN__, ball = gBall(), root = gRoot();
+	gForceVisible(T);
+	T.hudState.ballHiddenFromPanel = false; T.hudState.ball = true;
+	T.setHud(true); T._finishHudAnim();
+	gKeyPress(); T._ballVisFinishGlow(); T._ballVisFinishShrink();
+	gKeyPress(); T._ballVisFinishGrow(); T._ballVisFinishShow();
+	window.__G_RESTORE_BALL__ = {
+		phase: T._hudAnim.phase, visPhase: T._ballVis.phase, ball: T.hudState.ball,
+		ballHidden: T.hudState.ballHidden, fromPanel: T.hudState.ballHiddenFromPanel,
+		ballDisplay: getComputedStyle(ball).display, panelDisplay: getComputedStyle(root).display
+	};
+	ck('restore-returns-to-ball-when-it-was-ball',
+		T._hudAnim.phase === 'idle' && T._ballVis.phase === 'idle' && T.hudState.ball === true &&
+		T.hudState.ballHidden === false && T.hudState.ballHiddenFromPanel === false &&
+		getComputedStyle(ball).display !== 'none' && getComputedStyle(root).display === 'none',
+		'球态隐藏后恢复：只播球长大/发光淡入，最终仍是收起悬浮球（不展开面板）: ' + JSON.stringify(window.__G_RESTORE_BALL__));
+});
+
+step(function () {
+	/* 6) ballHiddenFromPanel 写档/读档；隐藏状态刷新后仍按来源恢复。 */
+	var T = window.__TTN__, ball = gBall(), root = gRoot();
+	T.hudState.x = 320; T.hudState.y = 320;
+	T.hudState.ball = true; T.hudState.ballHidden = true; T.hudState.ballHiddenFromPanel = true;
+	T._saveHudState();
+	var raw = localStorage.getItem('ttn.hud.v4') || '';
+	T.hudState.ballHidden = false; T.hudState.ballHiddenFromPanel = false;
+	T._loadHudState();
+	var loaded = { hidden: T.hudState.ballHidden, fromPanel: T.hudState.ballHiddenFromPanel, ball: T.hudState.ball };
+	/* 从"刷新后仍隐藏"的状态按 G：应回面板 */
+	T._startBallShow(); T._ballVisFinishGrow(); T._ballVisFinishShow();
+	T._finishHudAnim();
+	window.__G_PERSIST2__ = {
+		raw: raw.indexOf('"ballHiddenFromPanel":true') >= 0,
+		loaded: loaded,
+		afterPanelDisplay: getComputedStyle(root).display, afterBallDisplay: getComputedStyle(ball).display,
+		afterHidden: T.hudState.ballHidden, afterFromPanel: T.hudState.ballHiddenFromPanel
+	};
+	ck('ballHiddenFromPanel-persists',
+		window.__G_PERSIST2__.raw && loaded.hidden === true && loaded.fromPanel === true && loaded.ball === true &&
+		window.__G_PERSIST2__.afterPanelDisplay !== 'none' && window.__G_PERSIST2__.afterBallDisplay === 'none' &&
+		window.__G_PERSIST2__.afterHidden === false && window.__G_PERSIST2__.afterFromPanel === false,
+		'ballHiddenFromPanel 写入/读出 ttn.hud.v4；刷新后仍隐藏时按 G 会按来源恢复到面板: ' + JSON.stringify(window.__G_PERSIST2__));
+	/* 老档没有这个字段 → 默认 false（不能凭空展开） */
+	localStorage.setItem('ttn.hud.v4', JSON.stringify({ x: 8, y: 8, ball: true, ballHidden: true }));
+	T.hudState.ballHiddenFromPanel = true;
+	T._loadHudState();
+	ck('ballHiddenFromPanel-old-archive-default', T.hudState.ballHiddenFromPanel === false,
+		'老存档没有 ballHiddenFromPanel → 读成 false，恢复时仍落悬浮球',
+		String(T.hudState.ballHiddenFromPanel));
+	T.hudState.ballHidden = false; T.hudState.ballHiddenFromPanel = false; T.hudState.ball = false; T.hudState.hidden = false;
+	localStorage.removeItem('ttn.hud.v4');
+	T.setHud(true); T._finishHudAnim();
+});
 step(function () {
 	ck('report-ok', (function () {
 		try {

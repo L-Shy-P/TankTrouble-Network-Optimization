@@ -1696,8 +1696,39 @@ T.hudState.ballHidden = true;
 T._loadHudState();
 ok(T.hudState.ballHidden === false,
 	'老存档没有 ballHidden 字段 → 读成 false（保持默认，不凭空隐藏）', String(T.hudState.ballHidden));
+/* 新增：ballHiddenFromPanel 写档/读档（隐藏前是面板还是球） */
+T.hudState.x = 321; T.hudState.y = 123;
+T.hudState.ball = true; T.hudState.ballHidden = true; T.hudState.ballHiddenFromPanel = true;
+T._saveHudState();
+const gSavedRaw2 = sandbox.localStorage.getItem('ttn.hud.v4') || '';
+ok(gSavedRaw2.indexOf('"ballHiddenFromPanel":true') >= 0,
+	'ballHiddenFromPanel=true 写进同一个 localStorage 存档', gSavedRaw2.slice(0, 180));
+sandbox.localStorage.setItem('ttn.hud.v4', gSavedRaw2);
+T.hudState.ballHidden = false; T.hudState.ballHiddenFromPanel = false; T.hudState.ball = false;
+T._loadHudState();
+ok(T.hudState.ballHiddenFromPanel === true && T.hudState.ballHidden === true && T.hudState.ball === true,
+	'重新载入后 ballHiddenFromPanel=true 恢复（仍隐藏、收起姿势、记住从面板来）',
+	JSON.stringify({ fromPanel: T.hudState.ballHiddenFromPanel, hidden: T.hudState.ballHidden, ball: T.hudState.ball }));
+/* 老存档没有 ballHiddenFromPanel 字段 → 默认 false */
+sandbox.localStorage.setItem('ttn.hud.v4', JSON.stringify({ x: 8, y: 8, ball: true, ballHidden: true }));
+T.hudState.ballHiddenFromPanel = true;
+T._loadHudState();
+ok(T.hudState.ballHiddenFromPanel === false,
+	'老存档没有 ballHiddenFromPanel → 读成 false（恢复时落悬浮球，不凭空展开）',
+	String(T.hudState.ballHiddenFromPanel));
+/* 面板态按 G：来源必须记成 true，并进入 pendingHide（先收起） */
+T.hudState.hidden = false; T.hudState.ballHidden = false; T.hudState.ballHiddenFromPanel = false;
+T.hudState.ball = false;
+T.setHud(true); T._finishHudAnim();
+const gPanelHandled = T._handleBallHiddenKey({ code: 'KeyG', target: null });
+ok(gPanelHandled === true && T.hudState.ballHiddenFromPanel === true && T.hudState.ball === true && T._ballVis.pendingHide === true,
+	'面板展开时按 G：先记 ballHiddenFromPanel=true，再 pendingHide 走"先收起"路径',
+	JSON.stringify({ handled: gPanelHandled, fromPanel: T.hudState.ballHiddenFromPanel, ball: T.hudState.ball, pending: T._ballVis.pendingHide }));
+T._ballVis.pendingHide = false;
+T.hudState.ball = false; T.hudState.ballHidden = false; T.hudState.ballHiddenFromPanel = false;
+T._finishHudAnim();
 /* 收尾：恢复测试前的状态，不影响后面的报告断言 */
-T.hudState.x = 8; T.hudState.y = 8; T.hudState.ball = false; T.hudState.ballHidden = false; T.hudState.hidden = false;
+T.hudState.x = 8; T.hudState.y = 8; T.hudState.ball = false; T.hudState.ballHidden = false; T.hudState.ballHiddenFromPanel = false; T.hudState.hidden = false;
 sandbox.localStorage.removeItem('ttn.hud.v4');
 
 /* ---------------- 汇总 ---------------- */

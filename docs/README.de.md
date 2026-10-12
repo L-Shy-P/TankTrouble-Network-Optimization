@@ -122,7 +122,7 @@ Wenn du schon per Ziehen installieren kannst, **reicht Methode A — du brauchst
 | `Ctrl+Shift+L` | HUD aus-/einblenden |
 | `Ctrl+Shift+E` | Diagnosebericht exportieren (auch in die Zwischenablage) |
 | `Ctrl+Shift+P` | alle 7 Regionen testen und ranken |
-| `G` | schwebende Kugel ausblenden / einblenden |
+| `G` | schwebende Kugel aus-/einblenden (kehrt zur vorherigen Ansicht zurück) |
 
 Der **⚡**-Button im Panel entspricht `Ctrl+Shift+S`. Im Panel gibt es **11 Sprachen**; Sprache, Schalter und Kugelposition werden in `localStorage` gespeichert.
 
