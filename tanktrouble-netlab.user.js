@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.5.4
+// @version      0.5.5
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,12 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.5.4';
+	const VERSION = '0.5.5';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.5.5', '修"连点悬浮球时展开/收起过渡一团糟"（用户实测）—— 真因：反向连点时 hudAnimate() 先 cancelMorph() 撤销旧 WAAPI 动画，之后才读当前值，而这时新方向的终点已经写进了内联样式；getComputedStyle 于是读到"新方向终点"，反向动画从终点重新开始（球/面板瞬跳、颜色断层），旧发光/阴影冻结定时器和 tint 也可能跨轮残留。',
+			'修法：① 反向时在 cancelMorph() 之前先捕获当前实时值（面板/球的 transform、面板 opacity、球 backgroundColor/boxShadow、三行文字 opacity、tint），新动画从这些值接着走；② 反向时背景不再停在当前中间色，终点取新方向的目标色；③ cancelMorph() 同时清 hudAnim.timer / glowTimer / glowTimer2 / tint；每次 hudAnimate() 都在写起点/终点前重新加 .ttn-morphing，连点期间始终压住会抢属性的 CSS 过渡；④ 连点结束后 phase / display / transform / opacity / hover / 定时器全部回到静止态。',
+			'新增回归：rapid-reverse-starts-from-current（暂停 50% 反向，起点=当前 computed 值、背景继续走向目标色、同属性仅一条 WAAPI）、rapid-click-no-duplicate-properties（10 连点过程中球/面板 transform/opacity/backgroundColor 与三行文字 opacity 均最多一条 WAAPI，且 .ttn-morphing 全程在）、rapid-click-10-final-consistent（连点 10 次后 phase idle、display 与 hudState.ball 一致、transform/opacity=静止态、无 .ttn-morphing、hover 保持、动画列表空）、rapid-click-no-residual-timers（220ms 冻结定时器清空、无 .ttn-morphing 残留）。四条都做了"撤回 → 回归变红"的反例验证。'],
 		['0.5.4', '修"控制台反复出现 WebSocket connection to wss://asia-central1-mp1.tanktrouble.com/ failed"（用户实测，疑似游戏更新后出现）—— 真因：脚本自己的 ping 探测只从游戏连接 URL 里正则取了**主机名**，然后硬拼 `wss://主机名:443`：游戏一旦用非 443 端口或带路径（本次更新很可能如此），探测连的就是错误的 URL，握手必然失败；而浏览器对失败的 WebSocket 握手**总会**打一行红字，脚本无法静音。更糟的是失败后每 4 秒无限重连：一条游戏会话被反作弊/限流拒绝时，控制台就会被刷满。',
 			'修法：① 探测**原样复用游戏自己的连接 URL**（scheme+host+port+path 一个都不改，用 new URL 解析但用原始字符串建连），换服判定也改成按完整 URL 比较；`connHost()` 保留，仅用于报告/展示，不再拿来拼连接串。② 新增失败预算：连续 3 次"从未 onopen 就失败"→ `ping.giveUp` 停止自动重连，只打一条英文日志，延迟改用游戏自己的 `_typeId:15→28` 探测帧；"曾 open 过再断"（协议/路径是对的，只是被踢）单独计数并按 2s→4s→8s…上限 30s 退避重连；换到不同完整 URL 时计数归零。③ 指标优雅降级：HUD「实时延迟」行点明当前来源（自建探测 / 游戏探测），面板/悬浮球不会卡在"等待连接…"或一直灰；报告新增 `pingProbe: { url, everOpened, neverOpenedStreak, giveUp, lastErr, lastClose, src }`。④ `probeRegions`（Ctrl+Shift+P）优先用观测到的游戏连接 URL 作 host+port+path 模板，完全没有观测才退回兜底主机表；同一 host 连续失败 2 次即短路，不再每轮重试。',
 			'新增回归：probe-uses-full-game-url（非 443 端口+路径原样复用）、probe-gives-up-after-failures（3 次失败后不再重连、只记一条日志）、ping-falls-back-to-game-probe（giveUp 后 netMetrics 仍从游戏帧拿到 game 来源延迟且抖动/稳定度不空）、probe-region-uses-observed-shape（区域探测用观测到的 host+port+path，不写死 :443）。四条都做了"撤回 → 对应回归变红"的反例验证。'],
@@ -3655,7 +3658,11 @@
 	function cancelMorph() {
 		(hudAnim.anims || []).forEach(function (a) { try { a.cancel(); } catch (e) {} });
 		hudAnim.anims = [];
+		if (hudAnim.timer) { clearTimeout(hudAnim.timer); hudAnim.timer = null; }
 		if (hudAnim.fadeTimer) { clearTimeout(hudAnim.fadeTimer); hudAnim.fadeTimer = null; }
+		/* tint 属于"这一次变形"的冻结色：撤销后必须清掉，否则连点时会拿着旧色调
+		 * 去开新动画（配合 reverse 起点捕获，颜色/姿态都从当前值接上）。 */
+		hudAnim.tint = '';
 		/* 发光冻结的 220ms 定时器也一起收掉：连点/反向时旧定时器若是晚一步触发，
 		 * 会把新交接刚写好的内联值提前清掉 → 那一下就是"极细微瞬变"。 */
 		if (hudAnim.glowTimer) { clearTimeout(hudAnim.glowTimer); hudAnim.glowTimer = null; }
@@ -3701,19 +3708,36 @@
 		if (!hud) return;
 		const token = ++hudAnim.token;
 		if (hudAnim.timer) { clearTimeout(hudAnim.timer); hudAnim.timer = null; }
+		const fromScratch = hudAnim.phase === 'idle';
+		const dotMorph = hud.querySelector('#ttn-dot');
+
+		/* 反向（连点）必须在 cancelMorph() 之前读"当前实时值"：
+		 * cancelMorph() 会撤销旧 WAAPI 动画，之后 getComputedStyle 会回落到内联值；
+		 * 而下一步马上会把新方向的终点写进内联 —— 先 cancel 再读 = 从终点重新开始，
+		 * 这就是"连点悬浮球，过渡一团糟"的主因。 */
+		const live = fromScratch ? null : {
+			panelT: currentTransform(hud, ''),
+			panelO: cssOf(hud, 'opacity'),
+			ballT: hudBall ? currentTransform(hudBall, '') : '',
+			ballBg: hudBall ? cssOf(hudBall, 'backgroundColor') : '',
+			ballShadow: hudBall ? cssOf(hudBall, 'boxShadow') : '',
+			tint: hudAnim.tint || cssOf(dotMorph, 'backgroundColor'),
+			rows: hudBall ? Array.prototype.map.call(hudBall.querySelectorAll('.t, .m, .b'), function (el) {
+				try { return parseFloat(getComputedStyle(el).opacity) || 0; } catch (e) { return 0; }
+			}) : []
+		};
+
 		cancelMorph();
 		cancelGlide();                           // 回弹让位给展开/收起动画（从当前位置接着走）
 		closeLangMenu();                         // 菜单挂在面板外，收起来时必须一起关
 		hideTip();
 
-		const fromScratch = hudAnim.phase === 'idle';
 		hudAnim.phase = collapse ? 'collapsing' : 'expanding';
 		hudAnimating = true;
 		/* 先用 class 压制 CSS 过渡，再写终点/起点内联值 —— 否则写值的这一步就会派生
 		 * 一个和 WAAPI 抢同一属性的 CSSTransition（规范里过渡优先级更高），终点前必然跳。 */
 		try { hud.classList.add('ttn-morphing'); } catch (e) {}
 		try { if (hudBall) hudBall.classList.add('ttn-morphing'); } catch (e) {}
-		const dotMorph = hud.querySelector('#ttn-dot');
 		/* 圆点自己的 background/color 也有 .4s 过渡：变形期间先压掉，防止它带着
 		 * 上一拍的过渡值去交接（球已经到 tint 了，圆点还没有 = 一帧异色闪）。 */
 		if (dotMorph) dotMorph.classList.add('ttn-morphing');
@@ -3743,7 +3767,7 @@
 		 * 交接那一帧就会出现"有时候黑、有时候接近本色"的闪。这里把两端的颜色钉死成
 		 * 同一个 tint，动画起止、交接、落终态都用它；变形结束后再让 refreshHud 正常更新
 		 * （圆点有 background .4s 过渡，是渐变不是闪）。 */
-		const frozenTint = cssOf(dotMorph, 'backgroundColor') || hudTint.last || BALL_SURFACE;
+		const frozenTint = (live && live.tint) || cssOf(dotMorph, 'backgroundColor') || hudTint.last || BALL_SURFACE;
 		hudAnim.tint = frozenTint;
 		if (dotMorph) {
 			if (dotMorph.style.background !== frozenTint) dotMorph.style.background = frozenTint;
@@ -3800,12 +3824,10 @@
 		if (hudBall) hudBall.style.transform = ballEnd;
 
 		/* 起点：从静止起步就用理论起点；反向则从"当前实时值"接上 */
-		const curPanelT = fromScratch ? panelStart : currentTransform(hud, panelStart);
-		const curBallT = fromScratch ? ballStart : currentTransform(hudBall, ballStart);
+		const curPanelT = fromScratch ? panelStart : (live.panelT || panelStart);
+		const curBallT = fromScratch ? ballStart : (live.ballT || ballStart);
 		let curPanelO = panelOpStart;
-		if (!fromScratch) {
-			try { curPanelO = getComputedStyle(hud).opacity || panelOpStart; } catch (e) {}
-		}
+		if (!fromScratch && live.panelO) curPanelO = live.panelO;
 
 		/* 先把**起始态**写成内联值：元素可能刚从 display:none 变可见，
 		 * 动画的 fill 在首帧不一定生效 → 会闪一帧基础样式（用户看到的"灰一下"）。 */
@@ -3813,10 +3835,10 @@
 		hud.style.opacity = curPanelO;
 		if (hudBall) {
 			hudBall.style.transform = curBallT;
-			const bg0 = collapse ? frozenTint
-				: (cssOf(hudBall, 'backgroundColor') || frozenTint);
+			const bg0 = (live && live.ballBg) || (collapse ? frozenTint
+				: (cssOf(hudBall, 'backgroundColor') || frozenTint));
 			hudBall.style.backgroundColor = bg0;
-			const sh0 = cssOf(hudBall, 'boxShadow');
+			const sh0 = (live && live.ballShadow) || cssOf(hudBall, 'boxShadow');
 			if (sh0) hudBall.style.boxShadow = sh0;
 		}
 
@@ -3833,15 +3855,15 @@
 			 * 球身上冻结的内联色是旧的（用户实测"过渡的颜色是错的，不是最新颜色"）。 */
 			const liveTint = hudAnim.tint || cssOf(dotMorph, 'backgroundColor') || hudTint.last || BALL_SURFACE;
 
-			const curBg = collapse ? liveTint : (cssOf(hudBall, 'backgroundColor') || liveTint);
+			const curBg = (live && live.ballBg) || (collapse ? liveTint : (cssOf(hudBall, 'backgroundColor') || liveTint));
 			const wantBg = collapse ? BALL_SURFACE : liveTint;
-			const bgEnd = fromScratch ? wantBg : curBg;   // 反向时按当前色接着走
+			const bgEnd = wantBg;   // 反向时从当前色继续走到新方向的目标色，不能停在中间
 			/* 阴影也要对齐圆点：交接那一帧球的阴影必须已经等于圆点的阴影，
 			 * 否则球带着落地阴影消失、圆点没有 → "过渡末尾闪一下"。 */
 			/* 阴影的**终点**取"球自己当前的"（含 hover 状态）。
 			 * 以前取圆点的 —— 圆点被球挡着不算 hovered，于是变形过程中 hover 的外发光/内描边
 			 * 被插值抹掉，到终点才回来 = 用户看到的"过渡结束后才出现光晕"。 */
-			const curShadow = cssOf(hudBall, 'boxShadow');
+			const curShadow = (live && live.ballShadow) || cssOf(hudBall, 'boxShadow');
 			const dotShadow = curShadow;
 			const shadowEnd = curShadow;
 			const shadowFrom = curShadow;
@@ -3852,9 +3874,10 @@
 			/* 球里的文字/数字也走 WAAPI（别指望 CSS 过渡，见函数头注释） */
 			const rows = hudBall.querySelectorAll('.t, .m, .b');
 			const rowTo = collapse ? 1 : 0;
-			Array.prototype.forEach.call(rows, function (el) {
+			Array.prototype.forEach.call(rows, function (el, idx) {
 				let from0 = 1;
-				try { from0 = parseFloat(getComputedStyle(el).opacity) || 0; } catch (e) {}
+				if (live && live.rows && live.rows.length > idx) from0 = live.rows[idx];
+				else { try { from0 = parseFloat(getComputedStyle(el).opacity) || 0; } catch (e) {} }
 				const a = animAt(el, [{ opacity: from0 }, { opacity: rowTo }], collapse ? DUR : 200);
 				if (a) hudAnim.anims.push(a);
 			});

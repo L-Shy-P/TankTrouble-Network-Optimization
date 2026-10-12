@@ -2442,6 +2442,177 @@ step(function () {
 
 
 step(function () {
+	/* 连点真因回归：反向必须在 cancelMorph() 之前捕获"当前实时值"。
+	 * 把展开动画暂停在 50%，再反向收起；新动画的起点关键帧必须等于暂停时的
+	 * computed transform / opacity，而不是新方向的终点。 */
+	var T = window.__TTN__, ball = q('ttn-ball'), root = q('ttn-root');
+	function animWith(el, key) {
+		var list = el.getAnimations ? el.getAnimations() : [];
+		for (var i = 0; i < list.length; i++) {
+			try {
+				var k = list[i].effect.getKeyframes();
+				if (k.length >= 2 && k.some(function (f) { return f[key]; })) return list[i];
+			} catch (e) {}
+		}
+		return null;
+	}
+	function countAnims(el, key) {
+		var list = el.getAnimations ? el.getAnimations() : [], n = 0;
+		for (var i = 0; i < list.length; i++) {
+			try {
+				var k = list[i].effect.getKeyframes();
+				if (k.some(function (f) { return f[key]; })) n++;
+			} catch (e) {}
+		}
+		return n;
+	}
+	function pose(s) {
+		s = String(s || '');
+		var m = /matrix\(([^)]+)\)/.exec(s);
+		if (m) { var v = m[1].split(',').map(parseFloat); return { s: v[0], x: v[4], y: v[5] }; }
+		var t = /translate\(([-\d.]+)px,\s*([-\d.]+)px\)\s*scale\(([-\d.]+)\)/.exec(s);
+		return t ? { s: parseFloat(t[3]), x: parseFloat(t[1]), y: parseFloat(t[2]) } : null;
+	}
+	T.hudState.hidden = false; T.hudState.ball = true; T.hudState.x = 320; T.hudState.y = 320;
+	T.setHud(true); T._finishHudAnim();
+	T._hudAnimate(false);                                  // 展开
+	var ab = animWith(ball, 'transform'), ap = animWith(root, 'transform');
+	if (ab) { ab.pause(); ab.currentTime = 150; }
+	if (ap) { ap.pause(); ap.currentTime = 150; }
+	void ball.offsetWidth; void root.offsetWidth;
+	var beforeBall = getComputedStyle(ball).transform, beforePanel = getComputedStyle(root).transform;
+	var beforePanelO = getComputedStyle(root).opacity;
+	var beforeBallBg = getComputedStyle(ball).backgroundColor;
+	var beforeRows = [];
+	ball.querySelectorAll('.t, .m, .b').forEach(function (el) { beforeRows.push(getComputedStyle(el).opacity); });
+	T._hudAnimate(true);                                   // 反向收起（连点核心场景）
+	var nb = animWith(ball, 'transform'), np = animWith(root, 'transform');
+	var kbg = nb ? nb.effect.getKeyframes() : null;
+	var kb = kbg ? kbg[0] : null, kp = np ? np.effect.getKeyframes()[0] : null;
+	var pb = pose(kb && kb.transform), pp = pose(kp && kp.transform);
+	var p0 = pose(beforeBall), p1 = pose(beforePanel);
+	var rowStarts = [];
+	ball.querySelectorAll('.t, .m, .b').forEach(function (el) {
+		var a = animWith(el, 'opacity');
+		rowStarts.push(a ? a.effect.getKeyframes()[0].opacity : null);
+	});
+	window.__REVERSE_START__ = {
+		beforeBall: beforeBall, beforePanel: beforePanel, newBall: kb && kb.transform, newPanel: kp && kp.transform,
+		beforePanelO: beforePanelO, newPanelO: kp && kp.opacity, beforeRows: beforeRows, rowStarts: rowStarts,
+		beforeBallBg: beforeBallBg, newBgFrom: kbg && kbg[0].backgroundColor, newBgTo: kbg && kbg[1].backgroundColor,
+		ballAnims: countAnims(ball, 'transform'), panelAnims: countAnims(root, 'transform')
+	};
+	ck('rapid-reverse-starts-from-current',
+		!!pb && !!pp && !!p0 && !!p1 &&
+		Math.abs(pb.s - p0.s) < 1e-3 && Math.abs(pb.x - p0.x) <= 0.6 && Math.abs(pb.y - p0.y) <= 0.6 &&
+		Math.abs(pp.s - p1.s) < 1e-3 && Math.abs(pp.x - p1.x) <= 0.6 && Math.abs(pp.y - p1.y) <= 0.6 &&
+		Math.abs(parseFloat(kp.opacity) - parseFloat(beforePanelO)) < 1e-3 &&
+		String(kbg && kbg[0].backgroundColor).replace(/\s+/g, '').toLowerCase() === String(beforeBallBg).replace(/\s+/g, '').toLowerCase() &&
+		String(kbg && kbg[1].backgroundColor).replace(/\s+/g, '').toLowerCase() !== String(beforeBallBg).replace(/\s+/g, '').toLowerCase() &&
+		rowStarts.every(function (v, i) { return v != null && Math.abs(parseFloat(v) - parseFloat(beforeRows[i])) < 1e-3; }) &&
+		countAnims(ball, 'transform') === 1 && countAnims(root, 'transform') === 1,
+		'反向连点必须从暂停时的 computed 值接着走（球/面板 transform、面板 opacity、三行文字 opacity），且同一属性只能有一条 WAAPI 动画: ' +
+		JSON.stringify(window.__REVERSE_START__));
+	T._finishHudAnim();
+	T.setSmoothing(true);
+});
+
+step(function () {
+	/* 模拟球上 10 次连点（每次把当前动画推进 40ms）。过程中每个元素同一属性
+	 * 只能有一条 WAAPI 动画；结束后 phase/display/transform/opacity/hover/动画列表
+	 * 必须与静止态完全一致。 */
+	var T = window.__TTN__, ball = q('ttn-ball'), root = q('ttn-root'), dot = q('ttn-dot');
+	function countProp(el, key) {
+		var list = el && el.getAnimations ? el.getAnimations() : [], n = 0;
+		for (var i = 0; i < list.length; i++) {
+			try {
+				var k = list[i].effect.getKeyframes();
+				if (k.some(function (f) { return f[key]; })) n++;
+			} catch (e) {}
+		}
+		return n;
+	}
+	function vis(el) { return getComputedStyle(el).display !== 'none'; }
+	function poseInline(v) {
+		v = String(v || '');
+		var t = /translate\(([-\d.]+)px,\s*([-\d.]+)px\)/.exec(v);
+		if (!t) return null;
+		var sc = /scale\(([-\d.]+)\)/.exec(v);
+		return { s: sc ? parseFloat(sc[1]) : 1, x: parseFloat(t[1]), y: parseFloat(t[2]) };
+	}
+	T.hudState.hidden = false;
+	T.hudState.ball = true; T.setHud(true); T._finishHudAnim();
+	/* 模拟鼠标停在圆点上：.ttn-hover 跨交接必须保持。 */
+	dot.dispatchEvent(new PointerEvent('pointerenter', { bubbles: false, pointerId: 88 }));
+	var dup = [], states = [];
+	for (var i = 0; i < 10; i++) {
+		ball.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, clientX: 420, clientY: 260, pointerId: 100 + i }));
+		ball.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, clientX: 420, clientY: 260, pointerId: 100 + i }));
+		(T._hudAnim.anims || []).forEach(function (a) {
+			try { if (a && a.playState !== 'idle') a.currentTime = (+a.currentTime || 0) + 40; } catch (e) {}
+		});
+		states.push(!!T.hudState.ball);
+		var rowMaxO = 0;
+		ball.querySelectorAll('.t, .m, .b').forEach(function (el) {
+			var c = countProp(el, 'opacity');
+			if (c > rowMaxO) rowMaxO = c;
+		});
+		dup.push({
+			i: i, ballT: countProp(ball, 'transform'), panelT: countProp(root, 'transform'),
+			panelO: countProp(root, 'opacity'), ballBg: countProp(ball, 'backgroundColor'), rowMaxO: rowMaxO,
+			morphing: ball.classList.contains('ttn-morphing') && root.classList.contains('ttn-morphing') && dot.classList.contains('ttn-morphing')
+		});
+	}
+	var dupOk = dup.every(function (d) {
+		return d.ballT <= 1 && d.panelT <= 1 && d.panelO <= 1 && d.ballBg <= 1 && d.rowMaxO <= 1 && d.morphing === true;
+	});
+	T._finishHudAnim();
+	var collapsed = !!T.hudState.ball;
+	var bp = T.ballAt();
+	var s0 = T.DOT_SIZE / T.hudCache.BALL;
+	var wantBall = 'translate(' + Math.round(bp.x) + 'px,' + Math.round(bp.y) + 'px) scale(' + (collapsed ? 1 : s0) + ')';
+	var wantPanel = 'translate(' + Math.round(T.hudState.x) + 'px,' + Math.round(T.hudState.y) + 'px) scale(' + (collapsed ? 0.03 : 1) + ')';
+	var noMorph = !ball.classList.contains('ttn-morphing') && !root.classList.contains('ttn-morphing') && !dot.classList.contains('ttn-morphing');
+	var hoverBoth = ball.classList.contains('ttn-hover') === true && dot.classList.contains('ttn-hover') === true;
+	window.__RAPID_CHAIN__ = {
+		states: states, dup: dup, collapsed: collapsed,
+		ballVisible: vis(ball), rootVisible: vis(root),
+		ballTransform: String(ball.style.transform), panelTransform: String(root.style.transform),
+		wantBall: wantBall, wantPanel: wantPanel,
+		phase: T._hudAnim.phase, animating: T.isHudAnimating(),
+		timer: !!T._hudAnim.timer, glowTimer: !!T._hudAnim.glowTimer, glowTimer2: !!T._hudAnim.glowTimer2,
+		ballOpacity: String(ball.style.opacity), panelOpacity: String(root.style.opacity),
+		ballBg: getComputedStyle(ball).backgroundColor, animsLeft: (T._hudAnim.anims || []).length,
+		noMorph: noMorph, hoverBoth: hoverBoth
+	};
+	ck('rapid-click-no-duplicate-properties', dupOk,
+		'连点过程中同一元素同一属性不能出现两条 WAAPI 动画: ' + JSON.stringify(dup));
+	ck('rapid-click-10-final-consistent',
+		T._hudAnim.phase === 'idle' && T.isHudAnimating() === false &&
+		collapsed === true && vis(ball) === true && vis(root) === false &&
+		(function () { var p = poseInline(ball.style.transform); return !!p && Math.abs(p.s - (collapsed ? 1 : s0)) < 1e-3 && Math.abs(p.x - Math.round(bp.x)) <= 0.6 && Math.abs(p.y - Math.round(bp.y)) <= 0.6; })() &&
+		(function () { var p = poseInline(root.style.transform); return !!p && Math.abs(p.s - (collapsed ? 0.03 : 1)) < 1e-3 && Math.abs(p.x - Math.round(T.hudState.x)) <= 0.6 && Math.abs(p.y - Math.round(T.hudState.y)) <= 0.6; })() &&
+		String(ball.style.opacity) === '1' && String(root.style.opacity) === '0' &&
+		(T._hudAnim.anims || []).length === 0 && !T._hudAnim.timer &&
+		noMorph && hoverBoth,
+		'连点 10 次后完全自洽（phase idle、display 与 hudState.ball 一致、transform/opacity 恰等于静止态、无 .ttn-morphing、hover 保持、动画列表空）: ' +
+		JSON.stringify(window.__RAPID_CHAIN__));
+});
+
+step(function () {
+	/* 连点后的 220ms 发光/阴影冻结定时器也必须自行清掉，不能留下残留状态。 */
+	var T = window.__TTN__, ball = q('ttn-ball'), root = q('ttn-root'), dot = q('ttn-dot');
+	window.__RAPID_CHAIN__.after = {
+		timer: !!T._hudAnim.timer, glow: !!T._hudAnim.glowTimer, glow2: !!T._hudAnim.glowTimer2,
+		morphing: ball.classList.contains('ttn-morphing') || root.classList.contains('ttn-morphing') || dot.classList.contains('ttn-morphing')
+	};
+	ck('rapid-click-no-residual-timers',
+		!T._hudAnim.timer && !T._hudAnim.glowTimer && !T._hudAnim.glowTimer2 && !window.__RAPID_CHAIN__.after.morphing,
+		'连点结束后 220ms 的发光冻结定时器必须已清，且没有 .ttn-morphing 残留: ' + JSON.stringify(window.__RAPID_CHAIN__.after));
+	T.hudState.ball = false; T.setHud(true); T._finishHudAnim(); T.setSmoothing(true);
+});
+
+step(function () {
 	ck('report-ok', (function () {
 		try {
 			var rep = window.__TTN__.report();
