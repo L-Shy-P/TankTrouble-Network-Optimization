@@ -122,6 +122,7 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 | `Ctrl+Shift+L` | HUD の表示 / 非表示 |
 | `Ctrl+Shift+E` | 診断レポートを出力（クリップボードにもコピー） |
 | `Ctrl+Shift+P` | 7 つの地域サーバーを測定して順位付け |
+| `G` | 浮遊ボールを隠す / 表示 |
 
 パネルの **⚡** は `Ctrl+Shift+S` と同じです。パネルでは **11 言語**から選べ、言語・最適化スイッチ・ボール位置は `localStorage` に保存されます。
 

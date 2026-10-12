@@ -2612,6 +2612,312 @@ step(function () {
 	T.hudState.ball = false; T.setHud(true); T._finishHudAnim(); T.setSmoothing(true);
 });
 
+/* ---------- 悬浮球隐藏/显示（G）回归 ---------- */
+function gKeyPress() {
+	var ev = new KeyboardEvent('keydown', { code: 'KeyG', key: 'g', bubbles: true, cancelable: true });
+	window.dispatchEvent(ev);
+	return ev;
+}
+function gCountProp(el, key) {
+	var list = el && el.getAnimations ? el.getAnimations() : [], n = 0;
+	for (var i = 0; i < list.length; i++) {
+		try {
+			var k = list[i].effect.getKeyframes();
+			if (k.some(function (f) { return f[key]; })) n++;
+		} catch (e) {}
+	}
+	return n;
+}
+function gAnimWith(el, key) {
+	var list = el && el.getAnimations ? el.getAnimations() : [];
+	for (var i = 0; i < list.length; i++) {
+		try {
+			var k = list[i].effect.getKeyframes();
+			if (k.some(function (f) { return f[key]; })) return list[i];
+		} catch (e) {}
+	}
+	return null;
+}
+function gBall() { return q('ttn-ball'); }
+function gRoot() { return q('ttn-root'); }
+function gRows() { var b = gBall(); return b ? b.querySelectorAll('.t, .m, .b') : []; }
+function gRowOps() { var a = []; gRows().forEach(function (el) { a.push(getComputedStyle(el).opacity); }); return a; }
+function gScale(ball) {
+	ball = ball || gBall();
+	var inline = String(ball.style.transform || '');
+	var m = /scale\(([-\d.]+)\)/.exec(inline);
+	if (m) return parseFloat(m[1]);
+	try {
+		var c = getComputedStyle(ball).transform;
+		if (!c || c === 'none') return 1;
+		var mm = /matrix\(([^)]+)\)/.exec(c);
+		if (mm) return parseFloat(mm[1].split(',')[0]);
+		var m3 = /matrix3d\(([^)]+)\)/.exec(c);
+		if (m3) return parseFloat(m3[1].split(',')[0]);
+	} catch (e) {}
+	return 1;
+}
+function gPose(s) {
+	s = String(s || '');
+	var mt = /matrix\(([^)]+)\)/.exec(s);
+	if (mt) {
+		var v = mt[1].split(',').map(parseFloat);
+		return { x: v[4], y: v[5], s: v[0] };
+	}
+	var t = /translate\(([-\d.]+)px,\s*([-\d.]+)px\)/.exec(s);
+	if (!t) return null;
+	var sc = /scale\(([-\d.]+)\)/.exec(s);
+	return { x: parseFloat(t[1]), y: parseFloat(t[2]), s: sc ? parseFloat(sc[1]) : 1 };
+}
+function gForceVisible(T) {
+	var p = T._ballVis.phase;
+	if (p === 'hiding-glow' || p === 'hiding-shrink') {
+		T._ballVisFinishGlow(); T._ballVisFinishShrink();
+	} else if (p === 'showing-grow' || p === 'showing-glow') {
+		T._ballVisFinishGrow(); T._ballVisFinishShow();
+	}
+	T.hudState.hidden = false;
+	T.hudState.ballHidden = false;
+	T.hudState.ball = true;
+	T.setHud(true); T._finishHudAnim();
+	if (T._ballVis.phase !== 'idle') T._ballVisFinishShow();
+	T.setHud(true); T._finishHudAnim();
+}
+function gForceHidden(T) {
+	gForceVisible(T);
+	T._startBallHide(0);
+	T._ballVisFinishGlow();
+	T._ballVisFinishShrink();
+}
+
+step(function () {
+	/* 需求第 1 条：按 G 先淡出发光/文字，之后才缩小球；结束时 display:none 且存档 ballHidden。 */
+	var T = window.__TTN__, ball = gBall();
+	gForceVisible(T);
+	var ev = gKeyPress();
+	var rowAnims = 0;
+	gRows().forEach(function (el) { if (gCountProp(el, 'opacity') > 0) rowAnims++; });
+	window.__G_HIDE__ = {
+		phase: T._ballVis.phase, hidden: T.hudState.ballHidden, display: getComputedStyle(ball).display,
+		scale: gScale(ball), rowAnims: rowAnims, ballMoves: gCountProp(ball, 'transform'),
+		prevented: ev.defaultPrevented, glowAt: T._ballVis.debug.glowStartedAt || 0,
+		shrinkAt: T._ballVis.debug.shrinkStartedAt || 0
+	};
+	ck('g-key-hides-ball-in-order',
+		ev.defaultPrevented === false && T._ballVis.phase === 'hiding-glow' &&
+		T.hudState.ballHidden === true && getComputedStyle(ball).display !== 'none' &&
+		rowAnims >= 3 && gCountProp(ball, 'transform') === 0 && Math.abs(gScale(ball) - 1) < 1e-3,
+		'按 G 必须先进 hiding-glow：发光/文字 opacity 在动、球 transform 仍 =1（没有提前缩小）、不 preventDefault: ' +
+		JSON.stringify(window.__G_HIDE__));
+	T._ballVisFinishGlow();
+	window.__G_HIDE__.afterGlow = {
+		phase: T._ballVis.phase, shrinkAt: T._ballVis.debug.shrinkStartedAt || 0,
+		transformAnims: gCountProp(ball, 'transform')
+	};
+	ck('g-key-hide-shrink-after-glow',
+		T._ballVis.phase === 'hiding-shrink' &&
+		gCountProp(ball, 'transform') === 1 &&
+		(T._ballVis.debug.shrinkStartedAt || 0) >= (T._ballVis.debug.glowStartedAt || 0),
+		'淡出结束后才切到 hiding-shrink，并且球 transform 此刻才开始动: ' + JSON.stringify(window.__G_HIDE__.afterGlow));
+	T._ballVisFinishShrink();
+	window.__G_HIDE__.afterShrink = {
+		phase: T._ballVis.phase, display: getComputedStyle(ball).display,
+		hidden: T.hudState.ballHidden, rows: gRowOps(), storage: (localStorage.getItem('ttn.hud.v4') || '')
+	};
+	ck('g-key-hide-lands-hidden',
+		T._ballVis.phase === 'idle' && getComputedStyle(ball).display === 'none' &&
+		T.hudState.ballHidden === true && window.__G_HIDE__.afterShrink.storage.indexOf('"ballHidden":true') >= 0,
+		'隐藏结束：球 display:none、hudState.ballHidden=true 且写入 localStorage: ' + JSON.stringify(window.__G_HIDE__.afterShrink));
+});
+
+step(function () {
+	/* 需求第 2 条：展开态按 G 必须先收起，收起结束同一拍才进隐藏阶段，禁止边收边缩。 */
+	var T = window.__TTN__, ball = gBall(), root = gRoot();
+	gForceVisible(T);
+	T.hudState.ballHidden = false;
+	T.hudState.ball = false;
+	T.setHud(true); T._finishHudAnim();
+	window.__G_PANEL__ = { panelDisplay: getComputedStyle(root).display, ballDisplay: getComputedStyle(ball).display };
+	var ev = gKeyPress();
+	window.__G_PANEL__.pressed = {
+		hasPending: T._ballVis.pendingHide, hidePhase: T._ballVis.phase,
+		morphPhase: T._hudAnim.phase, ballMoves: gCountProp(ball, 'transform'),
+		panelDisplay: getComputedStyle(root).display
+	};
+	ck('g-from-panel-collapses-first',
+		ev.defaultPrevented === false && T._ballVis.pendingHide === true &&
+		T._ballVis.phase === 'idle' && T._hudAnim.phase === 'collapsing' &&
+		(T._ballVis.anims || []).length === 0,
+		'展开态按 G：先进入 collapsing，隐藏阶段还没开始（pendingHide=true，ballVis=idle，球没有额外收缩动画）: ' +
+		JSON.stringify(window.__G_PANEL__.pressed));
+	T._finishHudAnim();
+	window.__G_PANEL__.handoff = {
+		morphPhase: T._hudAnim.phase, hidePhase: T._ballVis.phase,
+		pending: T._ballVis.pendingHide,
+		finishedAt: T._hudAnim.debug.finishedAt || 0,
+		handoffAt: T._ballVis.debug.handoffAt || 0,
+		ballScale: gScale(ball), hidden: T.hudState.ballHidden
+	};
+	ck('g-from-panel-handoff-same-tick',
+		T._hudAnim.phase === 'idle' && T._ballVis.phase === 'hiding-glow' &&
+		T._ballVis.pendingHide === false && T.hudState.ballHidden === true &&
+		Math.abs((window.__G_PANEL__.handoff.handoffAt || 0) - (window.__G_PANEL__.handoff.finishedAt || 0)) <= 2 &&
+		Math.abs(gScale(ball) - 1) < 1e-3,
+		'收起结束同一拍接力到 hiding-glow（handoffAt≈finishedAt，球在开始淡出前已是完整悬浮球姿势）: ' +
+		JSON.stringify(window.__G_PANEL__.handoff));
+	T._ballVisFinishGlow(); T._ballVisFinishShrink();
+});
+
+step(function () {
+	/* 需求第 3 条：隐藏态按 G 显示顺序相反——先球 scale 0→1，之后发光/文字才淡入。 */
+	var T = window.__TTN__, ball = gBall();
+	gForceHidden(T);
+	var ev = gKeyPress();
+	window.__G_SHOW__ = {
+		phase: T._ballVis.phase, hidden: T.hudState.ballHidden,
+		display: getComputedStyle(ball).display, rows: gRowOps(),
+		rowAnims: gCountProp(gRows()[0], 'opacity'), glowInAt: T._ballVis.debug.glowInStartedAt || 0,
+		prevented: ev.defaultPrevented
+	};
+	ck('g-key-shows-ball-in-reverse-order',
+		ev.defaultPrevented === false && T._ballVis.phase === 'showing-grow' &&
+		T.hudState.ballHidden === false && getComputedStyle(ball).display !== 'none' &&
+		gCountProp(gRows()[0], 'opacity') === 0 && window.__G_SHOW__.rowAnims === 0,
+		'隐藏态按 G：先 showing-grow（球已经在长大、发光/文字还没有淡入动画）: ' + JSON.stringify(window.__G_SHOW__));
+	T._ballVisFinishGrow();
+	window.__G_SHOW__.afterGrow = {
+		phase: T._ballVis.phase, rowAnims: gCountProp(gRows()[0], 'opacity'),
+		glowInAt: T._ballVis.debug.glowInStartedAt || 0,
+		growAt: T._ballVis.debug.growStartedAt || 0
+	};
+	ck('g-key-show-glow-after-grow',
+		T._ballVis.phase === 'showing-glow' && gCountProp(gRows()[0], 'opacity') === 1 &&
+		(T._ballVis.debug.glowInStartedAt || 0) >= (T._ballVis.debug.growStartedAt || 0),
+		'球长大后阶段才切到 showing-glow，发光/文字 opacity 动画此刻才出现: ' + JSON.stringify(window.__G_SHOW__.afterGrow));
+	T._ballVisFinishShow();
+	window.__G_SHOW__.afterShow = {
+		phase: T._ballVis.phase, display: getComputedStyle(ball).display, hidden: T.hudState.ballHidden,
+		scale: gScale(ball), rows: gRowOps(), cls: ball.classList.contains('ttn-ballvis'),
+		timer: !!T._ballVis.timer, anims: (T._ballVis.anims || []).length
+	};
+	ck('g-key-show-lands-visible',
+		T._ballVis.phase === 'idle' && getComputedStyle(ball).display !== 'none' &&
+		T.hudState.ballHidden === false && Math.abs(gScale(ball) - 1) < 1e-3 &&
+		!ball.classList.contains('ttn-ballvis') && !T._ballVis.timer && (T._ballVis.anims || []).length === 0,
+		'显示结束：球回到 scale 1、display 恢复、无 .ttn-ballvis/定时器/动画残留: ' + JSON.stringify(window.__G_SHOW__.afterShow));
+});
+
+step(function () {
+	/* 需求第 4 条：隐藏动画播到一半再按 G，必须从当前实时值反向，同属性 ≤1 条 WAAPI。 */
+	var T = window.__TTN__, ball = gBall();
+	gForceVisible(T);
+	gKeyPress();
+	T._ballVisFinishGlow();                       // 进入 hiding-shrink
+	var a = gAnimWith(ball, 'transform');
+	if (a) { a.pause(); a.currentTime = 110; }
+	void ball.offsetWidth;
+	var before = getComputedStyle(ball).transform;
+	var ev = gKeyPress();
+	var na = gAnimWith(ball, 'transform');
+	var fromPose = na ? gPose(na.effect.getKeyframes()[0].transform) : null;
+	var beforePose = gPose(before);
+	window.__G_REVERSE__ = {
+		before: before, from: na && na.effect.getKeyframes()[0].transform,
+		phase: T._ballVis.phase, transforms: gCountProp(ball, 'transform'), prevented: ev.defaultPrevented
+	};
+	ck('g-reverse-mid-flight',
+		T._ballVis.phase === 'showing-grow' && !!fromPose && !!beforePose &&
+		Math.abs(fromPose.s - beforePose.s) < 1e-3 &&
+		Math.abs(fromPose.x - beforePose.x) <= 0.6 && Math.abs(fromPose.y - beforePose.y) <= 0.6 &&
+		gCountProp(ball, 'transform') === 1,
+		'hiding-shrink 中途反向：新 showing-grow 起点 = 反向瞬间 computed transform，同属性仅 1 条 WAAPI: ' +
+		JSON.stringify(window.__G_REVERSE__));
+	T._ballVisFinishGrow(); T._ballVisFinishShow();
+	/* 再测一遍 hiding-glow 中途反向：发光/文字的起点也要接当前值。 */
+	gKeyPress();
+	var row = gRows()[0];
+	var ra = gAnimWith(row, 'opacity');
+	if (ra) { ra.pause(); ra.currentTime = 70; }
+	void row.offsetWidth;
+	var opBefore = getComputedStyle(row).opacity;
+	gKeyPress();
+	var rna = gAnimWith(row, 'opacity');
+	var opFrom = rna ? parseFloat(rna.effect.getKeyframes()[0].opacity) : null;
+	window.__G_REVERSE__.glow = {
+		phase: T._ballVis.phase, before: opBefore, from: rna && rna.effect.getKeyframes()[0].opacity,
+		rowAnims: gCountProp(row, 'opacity')
+	};
+	ck('g-reverse-mid-flight-glow',
+		T._ballVis.phase === 'showing-glow' && opFrom != null &&
+		Math.abs(opFrom - parseFloat(opBefore)) < 1e-3 && gCountProp(row, 'opacity') === 1,
+		'hiding-glow 中途反向：淡入动画起点 = 反向瞬间 computed opacity，同属性仅 1 条 WAAPI: ' +
+		JSON.stringify(window.__G_REVERSE__.glow));
+	T._ballVisFinishShow();
+});
+
+step(function () {
+	/* 需求第 5 条：隐藏后 refresh/clamp/resize/Ctrl+Shift+L 都不能把球偷偷显示回来；
+	 * 恢复后姿势/可见性自洽。 */
+	var T = window.__TTN__, ball = gBall(), root = gRoot();
+	gForceHidden(T);
+	var checks = [];
+	function snapshot(tag) {
+		checks.push({ tag: tag, display: getComputedStyle(ball).display, hidden: T.hudState.ballHidden, phase: T._ballVis.phase });
+	}
+	T.refreshHud(); T.clampHud(); window.dispatchEvent(new Event('resize'));
+	snapshot('refresh-clamp-resize');
+	T.refreshHud(); T.clampHud();
+	snapshot('again');
+	function pressL() {
+		window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyL', key: 'l', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true }));
+	}
+	pressL(); snapshot('ctrlL-hide');
+	pressL(); snapshot('ctrlL-show');
+	var hiddenOk = checks.every(function (c) { return c.display === 'none' && c.hidden === true && c.phase === 'idle'; });
+	window.__G_PERSIST__ = { checks: checks };
+	ck('hidden-ball-stays-hidden', hiddenOk,
+		'隐藏态经过 refresh/clamp/resize/Ctrl+Shift+L 来回后仍不得显示，ballHidden 必须保持: ' + JSON.stringify(checks));
+	var ev = gKeyPress();
+	T._ballVisFinishGrow(); T._ballVisFinishShow();
+	var bp = T.ballAt();
+	var inline = String(ball.style.transform || '');
+	var p = gPose(inline);
+	window.__G_PERSIST__.restored = {
+		phase: T._ballVis.phase, display: getComputedStyle(ball).display,
+		hidden: T.hudState.ballHidden, inline: inline, wantX: Math.round(bp.x), wantY: Math.round(bp.y),
+		panelDisplay: getComputedStyle(root).display, cls: ball.classList.contains('ttn-ballvis'),
+		timer: !!T._ballVis.timer, anims: (T._ballVis.anims || []).length
+	};
+	ck('hidden-ball-restores-consistent',
+		ev.defaultPrevented === false && T._ballVis.phase === 'idle' &&
+		getComputedStyle(ball).display !== 'none' && T.hudState.ballHidden === false &&
+		!!p && Math.abs(p.x - Math.round(bp.x)) <= 1 && Math.abs(p.y - Math.round(bp.y)) <= 1 &&
+		getComputedStyle(root).display === 'none' &&
+		!ball.classList.contains('ttn-ballvis') && !T._ballVis.timer && (T._ballVis.anims || []).length === 0,
+		'恢复显示后：球回锚点静止姿势、面板保持收起、ballHidden=false、无动画/定时器残留: ' +
+		JSON.stringify(window.__G_PERSIST__.restored));
+});
+step(function () {
+	/* 展开态连按两次 G：第一次先收起并挂 pendingHide，第二次必须取消隐藏意图、
+	 * 反向展开回面板，而不是在 collapsing 中途开始缩小球。 */
+	var T = window.__TTN__, ball = gBall(), root = gRoot();
+	gForceVisible(T);
+	T.hudState.ballHidden = false; T.hudState.ball = false;
+	T.setHud(true); T._finishHudAnim();
+	gKeyPress();
+	var a = { phase: T._hudAnim.phase, pending: T._ballVis.pendingHide, hide: T._ballVis.phase, ball: T.hudState.ball };
+	gKeyPress();
+	var b = { phase: T._hudAnim.phase, pending: T._ballVis.pendingHide, hide: T._ballVis.phase, ball: T.hudState.ball };
+	T._finishHudAnim();
+	var c = { phase: T._hudAnim.phase, pending: T._ballVis.pendingHide, hide: T._ballVis.phase, ballHidden: T.hudState.ballHidden, panel: getComputedStyle(root).display, ballDisplay: getComputedStyle(ball).display };
+	window.__G_DOUBLE__ = { first: a, second: b, after: c };
+	ck('g-press-again-during-collapse-cancels',
+		a.pending === true && a.phase === 'collapsing' &&
+		b.pending === false && b.phase === 'expanding' && b.ball === false &&
+		c.pending === false && c.ballHidden === false && c.panel !== 'none',
+		'收起途中第二次按 G = 取消隐藏，反向展开回面板（不会 collapsing 中途开球缩小动画）: ' + JSON.stringify(window.__G_DOUBLE__));
+});
+
 step(function () {
 	ck('report-ok', (function () {
 		try {

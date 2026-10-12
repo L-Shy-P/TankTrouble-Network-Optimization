@@ -122,6 +122,7 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 | `Ctrl+Shift+L` | إخفاء / إظهار الواجهة |
 | `Ctrl+Shift+E` | تصدير تقرير التشخيص (ويُنسخ أيضًا) |
 | `Ctrl+Shift+P` | فحص 7 مناطق وترتيبها |
+| `G` | إخفاء / إظهار الكرة العائمة |
 
 زر **⚡** في اللوحة يعمل مثل `Ctrl+Shift+S`. ويمكنك اختيار واحدة من **11 لغات**؛ تُحفظ اللغة والمفتاح وموضع الكرة في `localStorage`.
 

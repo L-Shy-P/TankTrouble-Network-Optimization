@@ -122,6 +122,7 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 | `Ctrl+Shift+L` | HUD 숨기기 / 표시 |
 | `Ctrl+Shift+E` | 진단 보고서 내보내기(클립보드에도 복사) |
 | `Ctrl+Shift+P` | 7개 지역 서버를 측정해 순위 표시 |
+| `G` | 떠 있는 공 숨기기 / 표시 |
 
 패널의 **⚡** 버튼은 `Ctrl+Shift+S`와 같습니다. 패널에서 **11개 언어**를 고를 수 있고, 언어·최적화 스위치·공 위치는 `localStorage`에 저장됩니다.
 

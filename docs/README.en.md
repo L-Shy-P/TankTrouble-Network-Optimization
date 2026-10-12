@@ -122,6 +122,7 @@ If you already know how to drag-install, **Method A is enough — you don't need
 | `Ctrl+Shift+L` | hide / show the HUD |
 | `Ctrl+Shift+E` | export the diagnostic report (also copied to clipboard) |
 | `Ctrl+Shift+P` | probe all 7 server regions and rank them |
+| `G` | hide / show the floating ball |
 
 The **⚡** button in the panel does the same as `Ctrl+Shift+S`. The panel also lets you pick one of **11 languages**; language, optimization switch and floating-ball position are cached in `localStorage`.
 

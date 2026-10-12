@@ -122,6 +122,7 @@ Si vous savez déjà installer par glisser-déposer, **la Méthode A suffit — 
 | `Ctrl+Shift+L` | masquer / afficher le HUD |
 | `Ctrl+Shift+E` | exporter le rapport de diagnostic (aussi copié) |
 | `Ctrl+Shift+P` | tester les 7 régions et les classer |
+| `G` | masquer / afficher la boule flottante |
 
 Le bouton **⚡** du panneau équivaut à `Ctrl+Shift+S`. Le panneau propose **11 langues** ; langue, interrupteur et position du ballon sont mémorisés dans `localStorage`.
 

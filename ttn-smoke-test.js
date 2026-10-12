@@ -1648,6 +1648,58 @@ ok(!!repPing && ['url', 'everOpened', 'neverOpenedStreak', 'giveUp', 'lastErr', 
 	'报告含 pingProbe: { url, everOpened, neverOpenedStreak, giveUp, lastErr, lastClose, src }',
 	JSON.stringify(repPing));
 
+/* ---- 回归 5：G 隐藏/显示悬浮球（快捷键分支 + localStorage 持久化） ----
+ * 浏览器交互动画由 _ui_harness.js 验；这里只测纯逻辑：G 的修饰键/输入框/repeat 分支、
+ * preventDefault 不调用、ballHidden 存取后再载入。 */
+const gEditable = { code: 'KeyG', target: { tagName: 'INPUT' } };
+ok(T._isEditableTarget({ tagName: 'INPUT' }) === true && T._isEditableTarget({ tagName: 'DIV' }) === false,
+	'G 分支：isEditableTarget 只拦输入框/文本域/下拉框', JSON.stringify({ input: T._isEditableTarget({ tagName: 'INPUT' }), div: T._isEditableTarget({ tagName: 'DIV' }) }));
+ok(T._handleBallHiddenKey(gEditable) === false,
+	'G 在输入框内被忽略（不会抢游戏/表单的按键）');
+ok(T._handleBallHiddenKey({ code: 'KeyG', ctrlKey: true }) === false &&
+	T._handleBallHiddenKey({ code: 'KeyG', shiftKey: true }) === false &&
+	T._handleBallHiddenKey({ code: 'KeyG', altKey: true }) === false &&
+	T._handleBallHiddenKey({ code: 'KeyG', metaKey: true }) === false,
+	'G 只认无修饰键（Ctrl/Shift/Alt/Meta 组合都不触发）');
+ok(T._handleBallHiddenKey({ code: 'KeyG', repeat: true }) === false,
+	'长按 repeat 不重复触发隐藏/显示');
+T.setHud(true); T._finishHudAnim();
+T.hudState.hidden = false; T.hudState.ball = true; T.hudState.ballHidden = false;
+let gPrevented = false;
+const gHandled = T._handleBallHiddenKey({ code: 'KeyG', target: null, preventDefault() { gPrevented = true; } });
+const gBallSmoke = findEl(sandbox.document.documentElement, 'ttn-ball');
+ok(gHandled === true && gPrevented === false && T.hudState.ballHidden === true &&
+	!!gBallSmoke && gBallSmoke.style.display === 'none',
+	'G 有效分支：切到 ballHidden=true 且球 display:none，不调用 preventDefault',
+	JSON.stringify({ handled: gHandled, prevented: gPrevented, hidden: T.hudState.ballHidden, display: gBallSmoke && gBallSmoke.style.display }));
+const gHandled2 = T._handleBallHiddenKey({ code: 'KeyG', target: null });
+ok(gHandled2 === true && T.hudState.ballHidden === false &&
+	!!gBallSmoke && gBallSmoke.style.display === 'flex',
+	'再按 G：反向恢复显示，ballHidden=false 且球 display:flex',
+	JSON.stringify({ handled: gHandled2, hidden: T.hudState.ballHidden, display: gBallSmoke && gBallSmoke.style.display }));
+
+/* 持久化：ballHidden 写进同一个 ttn.hud.v4 存档，重新载入后保持 */
+T.hudState.x = 321; T.hudState.y = 123; T.hudState.ball = true; T.hudState.ballHidden = true;
+T._saveHudState();
+const gSavedRaw = sandbox.localStorage.getItem('ttn.hud.v4') || '';
+ok(gSavedRaw.indexOf('"ballHidden":true') >= 0,
+	'ballHidden=true 写进 localStorage（和 x/y/ball 同一个存档）', gSavedRaw.slice(0, 140));
+sandbox.localStorage.setItem('ttn.hud.v4', gSavedRaw);
+T.hudState.ballHidden = false; T.hudState.ball = false;
+T._loadHudState();
+ok(T.hudState.ballHidden === true && T.hudState.ball === true,
+	'重新载入后 ballHidden=true 恢复，且自动归一到"收起成球"姿势（不会出现展开+隐藏的矛盾态）',
+	JSON.stringify({ ballHidden: T.hudState.ballHidden, ball: T.hudState.ball }));
+/* 老存档没有 ballHidden 字段 → 默认 false，不能把内存里的值冲成 true */
+sandbox.localStorage.setItem('ttn.hud.v4', JSON.stringify({ x: 11, y: 22, ball: false }));
+T.hudState.ballHidden = true;
+T._loadHudState();
+ok(T.hudState.ballHidden === false,
+	'老存档没有 ballHidden 字段 → 读成 false（保持默认，不凭空隐藏）', String(T.hudState.ballHidden));
+/* 收尾：恢复测试前的状态，不影响后面的报告断言 */
+T.hudState.x = 8; T.hudState.y = 8; T.hudState.ball = false; T.hudState.ballHidden = false; T.hudState.hidden = false;
+sandbox.localStorage.removeItem('ttn.hud.v4');
+
 /* ---------------- 汇总 ---------------- */
 console.log('\n' + '='.repeat(58));
 if (failures.length) {

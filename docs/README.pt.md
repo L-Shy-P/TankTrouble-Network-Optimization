@@ -122,6 +122,7 @@ Se você já sabe instalar arrastando, **o Método A basta — não precisa do Z
 | `Ctrl+Shift+L` | ocultar / mostrar o HUD |
 | `Ctrl+Shift+E` | exportar o relatório de diagnóstico (também copiado) |
 | `Ctrl+Shift+P` | testar as 7 regiões e classificá-las |
+| `G` | ocultar / mostrar a bola flutuante |
 
 O botão **⚡** do painel equivale a `Ctrl+Shift+S`. O painel permite escolher entre **11 idiomas**; idioma, chave e posição da bola ficam no `localStorage`.
 

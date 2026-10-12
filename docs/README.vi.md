@@ -122,6 +122,7 @@ Nếu bạn đã biết cách cài bằng kéo thả thì **Cách A là đủ �
 | `Ctrl+Shift+L` | ẩn / hiện HUD |
 | `Ctrl+Shift+E` | xuất báo cáo chẩn đoán (đồng thời sao chép vào clipboard) |
 | `Ctrl+Shift+P` | dò 7 khu vực máy chủ và xếp hạng |
+| `G` | ẩn / hiện bóng nổi |
 
 Nút **⚡** trong bảng tương đương `Ctrl+Shift+S`. Bảng cho chọn một trong **11 ngôn ngữ**; ngôn ngữ, công tắc tối ưu và vị trí bóng được lưu trong `localStorage`.
 

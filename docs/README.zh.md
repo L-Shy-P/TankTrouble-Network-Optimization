@@ -122,6 +122,7 @@ https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/
 | `Ctrl+Shift+L` | 隐藏 / 显示 HUD |
 | `Ctrl+Shift+E` | 导出诊断报告（同时复制到剪贴板） |
 | `Ctrl+Shift+P` | 探测 7 个服务器区域并排名 |
+| `G` | 隐藏 / 显示悬浮球 |
 
 面板里的 **⚡** 按钮和 `Ctrl+Shift+S` 等价。面板里还能选 **11 国语言**，语言 / 优化开关 / 悬浮球位置都会缓存在 `localStorage`。
 
