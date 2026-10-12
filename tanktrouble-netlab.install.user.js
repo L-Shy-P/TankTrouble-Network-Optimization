@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.6.1
+// @version      0.6.2
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,9 +38,11 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.6.1';
+	const VERSION = '0.6.2';
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.6.2', '修用户实测 3 条：① 面板 #ttn-gkey 提示 9px 太小 → 提到 11px、颜色 #9aa3b2；11 语言逐个实测都放得下（最宽法语 146px，可用宽度 270px），无需缩短文案；② 悬浮球出现末尾仍有一处硬切：把 showing-glow 钉到 99% 与交接后静止态逐项对比，发现 box-shadow 终点仍是隐藏前的非 hover 值（0 0 7px），而静止态是 hover 配方（0 0 20px -3px + inset），同时 .halo 终点 0 / .hover-glow 终点 0，静止态实际是 0.34 / 0.62 → 终点改为按交接时 CSS 目标计算：halo 用呼吸循环起点 0.34、hover-glow 用当前 hover 态、shadow/filter 用清掉内联后的 computed，交接那一拍完全对齐；③ 收缩只有 transform/filter/shadow、没有透明度 → hiding-shrink 同一条 WAAPI 加 opacity live→0，隐藏终态内联 opacity:0；显示 grow 从 opacity 0→live，再在 showing-glow 恢复亮度/阴影/发光。',
+			'新增回归：panel-shows-g-hint 追加 11px/#9aa3b2 断言；show-end-matches-static（showing-glow 钉 99% 与静止态的 boxShadow/filter/opacity/.halo/.hover-glow/三行 opacity 逐项相等）；hide-fades-opacity / hide-opacity-lands-zero（stage② keyframes 含 opacity 1→0，钉 50% 严格在 (0,1)，终态内联 0）；show-grows-from-transparent（grow keyframes opacity 0→1，钉 50% 在 (0,1)）。每条都做了"撤回修复 → 回归变红"的反例验证。'],
 		['0.6.1', '修用户实测的 4 条悬浮球隐藏体验：① 球自身 box-shadow 在 display:none 硬切 → 隐藏时改为随缩小用 WAAPI 淡到全透明（stage ② 与 transform 同一条动画），显示时随发光淡回隐藏前 live 值；② 消失时"亮着缩没" → 整颗球两段逐步变暗去色：stage ① filter 亮→saturate(.55) brightness(.55)，stage ② 继续→saturate(.15) brightness(.25)，最后 display:none；显示严格反向：先长大（仍暗）再 filter 暗→live；同一时刻球上 filter 只保留一条 WAAPI，隐藏前会先取消 applyGlow 的 filter 动画；③ 面板 UI 一直没有 G 键提示 → 按钮行下方新增常驻 #ttn-gkey（11 语言 i18n、nowrap、不改变按钮/语言按钮宽度）；④ 不记隐藏前是面板还是球 → 新增 hudState.ballHiddenFromPanel 持久化字段：面板态隐藏恢复时球先长回/亮起，再在同一拍接力 hudAnimate(false) 展开回面板；球态隐藏恢复时仍只落悬浮球。',
 			'回归：hide-animates-own-shadow / hide-shadow-no-jump-at-display-none / show-animates-own-shadow、hide-dims-colors / hide-dims-lands-dim / show-dims-colors-reverse、panel-shows-g-hint、restore-returns-to-panel-when-it-was-panel / restore-returns-to-ball-when-it-was-ball、ballHiddenFromPanel-persists / old-archive-default；smoke 增加 4 条来源存档/分支断言。每条都做了"撤回修复 → 对应回归变红"的反例验证。'],
 		['0.6.0', '新增"按 G 隐藏/显示悬浮球"（需求）：隐藏时 ① 180ms 淡出球的所有发光（.halo / .hover-glow / box-shadow）和三行数字及标签(.pre)，② 220ms 让球 scale→0 并 display:none；显示严格反向：① 220ms 球 scale 0→1，② 180ms 发光/文字淡入。展开面板时按 G 先复用 hudAnimate(true) 收起，finishHudAnim() 用 pendingHide 在同一拍接力进入隐藏阶段，绝不边收边缩。',
@@ -2281,7 +2283,7 @@
 
 		/* ---------- 底部按钮 ---------- */
 		'.ttn-foot{display:flex;gap:6px;margin-top:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,.08)}',
-		'#ttn-gkey{font-size:9px;line-height:1.3;color:#8b93a1;margin-top:5px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr;unicode-bidi:isolate}',
+		'#ttn-gkey{font-size:11px;line-height:1.3;color:#9aa3b2;margin-top:5px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr;unicode-bidi:isolate}',
 		'.ttn-btn{cursor:pointer;flex:1 1 0;min-width:0;border:1px solid rgba(255,255,255,.13);',
 		'background:rgba(255,255,255,.06);color:#e4e8ef;border-radius:8px;padding:6px 4px;font-size:12px;line-height:1.2;',
 		'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr;unicode-bidi:isolate;',
@@ -4140,7 +4142,8 @@
 			dotHalo: ballOpacityOf(dot && dot.querySelector('.halo')),
 			dotGlow: ballOpacityOf(dot && dot.querySelector('.hover-glow')),
 			shadow: ballShadowOf(hudBall),
-			filter: cssOf(hudBall, 'filter') || 'none'
+			filter: cssOf(hudBall, 'filter') || 'none',
+			opacity: parseFloat(cssOf(hudBall, 'opacity')) || 1
 		};
 	}
 	/** 清掉某个内联属性后读 CSS 目标值，再原样放回（filter/box-shadow 的"隐藏前 live 值"回退用） */
@@ -4154,8 +4157,10 @@
 			return v;
 		} catch (e) { return ''; }
 	}
+	/** 显示结束时的"静止态目标"：必须逐项等于 finish 那一刻 CSS/循环实际呈现的值。
+	 *  halo 用呼吸循环的起点 0.34（不是隐藏前的中间相位），这样 applyGlow 重建循环时
+	 *  不会从 0.34 突然跳起；hover-glow/shadow/filter 都直接取当前 CSS 目标。 */
 	function ballVisTargets() {
-		if (ballVis.saved) return ballVis.saved;
 		const rows = [];
 		ballRowEls().forEach(function () { rows.push(1); });
 		return {
@@ -4165,7 +4170,8 @@
 			ballGlow: hudHoverLike(hudBall) ? 0.62 : 0,
 			dotHalo: 0, dotGlow: 0,
 			shadow: ballCssTarget('boxShadow') || 'none',
-			filter: ballCssTarget('filter') || 'none'
+			filter: ballCssTarget('filter') || 'none',
+			opacity: 1
 		};
 	}
 	function stopBallGlowLoops() {
@@ -4213,7 +4219,7 @@
 		ballVisStopTimer();
 		ballVisCancelAnims();
 		try { hudBall.style.transform = ballVisPose(0); } catch (e) {}
-		try { hudBall.style.opacity = '1'; } catch (e) {}
+		try { hudBall.style.opacity = '0'; } catch (e) {}
 		try { hudBall.style.filter = BALLVIS.DIM_FINAL; } catch (e) {}
 		try { hudBall.style.boxShadow = hiddenShadowValue(); } catch (e) {}
 		Array.prototype.forEach.call(ballRowEls(), function (el) { el.style.opacity = '0'; });
@@ -4228,6 +4234,7 @@
 		try { hudBall.style.transform = ''; } catch (e) {}
 		try { hudBall.style.boxShadow = ''; } catch (e) {}
 		try { hudBall.style.filter = ''; } catch (e) {}
+		try { hudBall.style.opacity = ''; } catch (e) {}
 		Array.prototype.forEach.call(ballRowEls(), function (el) { el.style.opacity = ''; });
 		const dot = hud && hud.querySelector('#ttn-dot');
 		[hudBall.querySelector('.halo'), hudBall.querySelector('.hover-glow'),
@@ -4314,9 +4321,10 @@
 		if (typeof hudBall.animate !== 'function') { ballVisFinalHidden(); return; }
 		const fromT = currentTransform(hudBall, ballVisPose(1));
 		const toShadow = transparentShadow((ballVis.saved && ballVis.saved.shadow) || midShadow);
+		const liveOpacity = (ballVis.saved && ballVis.saved.opacity != null) ? ballVis.saved.opacity : 1;
 		const a = ballVisAnimate(hudBall, [
-			{ transform: fromT, filter: midFilter, boxShadow: midShadow },
-			{ transform: ballVisPose(0), filter: BALLVIS.DIM_FINAL, boxShadow: toShadow }
+			{ transform: fromT, filter: midFilter, boxShadow: midShadow, opacity: liveOpacity },
+			{ transform: ballVisPose(0), filter: BALLVIS.DIM_FINAL, boxShadow: toShadow, opacity: 0 }
 		], BALLVIS.SHRINK);
 		if (!a) { ballVisFinalHidden(); return; }
 		ballVis.timer = setTimeout(ballVisFinalHidden, BALLVIS.SHRINK);
@@ -4356,13 +4364,17 @@
 		saveHudState();
 		if (hud) { hud.style.display = 'none'; hud.style.opacity = '0'; }
 		hudBall.style.display = 'flex';
-		hudBall.style.opacity = '1';
+		hudBall.style.opacity = '0';
 		ballVis.phase = 'showing-grow';
 		ballVis.debug = { growStartedAt: now(), glowInStartedAt: 0 };
 		if (typeof hudBall.animate !== 'function') { ballVisFinishShow(); return; }
 		ballVisSetClass(true);
 		const from = currentTransform(hudBall, ballVisPose(0));
-		const a = ballVisAnimate(hudBall, [{ transform: from }, { transform: ballVisPose(1) }], BALLVIS.GROW);
+		const toOpacity = (ballVis.saved && ballVis.saved.opacity != null) ? ballVis.saved.opacity : 1;
+		const a = ballVisAnimate(hudBall, [
+			{ transform: from, opacity: 0 },
+			{ transform: ballVisPose(1), opacity: toOpacity }
+		], BALLVIS.GROW);
 		if (!a) { ballVisFinishShow(); return; }
 		ballVis.timer = setTimeout(ballVisGrowDone, BALLVIS.GROW);
 	}
@@ -4380,6 +4392,7 @@
 			try { hudBall.style.transform = ballVisPose(1); } catch (e) {}
 			try { hudBall.style.filter = ''; } catch (e) {}
 			try { hudBall.style.boxShadow = ''; } catch (e) {}
+			try { hudBall.style.opacity = ''; } catch (e) {}
 		}
 		Array.prototype.forEach.call(ballRowEls(), function (el) { el.style.opacity = ''; });
 		const dot = hud && hud.querySelector('#ttn-dot');
@@ -4428,7 +4441,11 @@
 			try { hudBall.style.transform = fromT; hudBall.style.filter = fromF; hudBall.style.boxShadow = fromS; } catch (e) {}
 			ballVis.phase = 'showing-grow';
 			ballVis.debug = { growStartedAt: now(), glowInStartedAt: 0 };
-			const a = ballVisAnimate(hudBall, [{ transform: fromT }, { transform: ballVisPose(1) }], BALLVIS.GROW);
+			const toOpacity = (ballVis.saved && ballVis.saved.opacity != null) ? ballVis.saved.opacity : 1;
+			const a = ballVisAnimate(hudBall, [
+				{ transform: fromT, opacity: live.opacity != null ? live.opacity : 1 },
+				{ transform: ballVisPose(1), opacity: toOpacity }
+			], BALLVIS.GROW);
 			if (!a) { ballVisFinishShow(); return; }
 			ballVis.timer = setTimeout(ballVisGrowDone, BALLVIS.GROW);
 			return;
@@ -4458,8 +4475,8 @@
 			ballVis.debug = { glowStartedAt: 0, shrinkStartedAt: now() };
 			const toShadow = transparentShadow((ballVis.saved && ballVis.saved.shadow) || fromS);
 			const a = ballVisAnimate(hudBall, [
-				{ transform: fromT, filter: fromF, boxShadow: fromS },
-				{ transform: ballVisPose(0), filter: BALLVIS.DIM_FINAL, boxShadow: toShadow }
+				{ transform: fromT, filter: fromF, boxShadow: fromS, opacity: live.opacity != null ? live.opacity : 1 },
+				{ transform: ballVisPose(0), filter: BALLVIS.DIM_FINAL, boxShadow: toShadow, opacity: 0 }
 			], BALLVIS.SHRINK);
 			if (!a) { ballVisFinalHidden(); return; }
 			ballVis.timer = setTimeout(ballVisFinalHidden, BALLVIS.SHRINK);

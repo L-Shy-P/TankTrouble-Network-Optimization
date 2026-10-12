@@ -3053,11 +3053,17 @@ step(function () {
 		if (h.scrollWidth > h.clientWidth + 1) bad.push(l[0] + ':clip ' + h.scrollWidth + '>' + h.clientWidth + ' ' + txt);
 		if (cs.whiteSpace !== 'nowrap') bad.push(l[0] + ':wrap');
 		if (h.getBoundingClientRect().height > parseFloat(cs.fontSize) * 1.75) bad.push(l[0] + ':height');
+		if (parseFloat(cs.fontSize) < 11) bad.push(l[0] + ':font ' + cs.fontSize);
+		if (cs.color === 'rgb(139, 147, 161)') bad.push(l[0] + ':old-color ' + cs.color);
 	});
 	var hint = q('ttn-gkey');
 	var foot = q('ttn-root').querySelector('.ttn-foot');
 	var below = hint && foot ? hint.getBoundingClientRect().top >= foot.getBoundingClientRect().bottom - 1 : false;
-	window.__G_HINT__ = { bad: bad, text: lastText, below: below, width: hint ? Math.round(hint.getBoundingClientRect().width) : -1 };
+	var hintCs = hint ? getComputedStyle(hint) : null;
+	window.__G_HINT__ = {
+		bad: bad, text: lastText, below: below, width: hint ? Math.round(hint.getBoundingClientRect().width) : -1,
+		font: hintCs && hintCs.fontSize, color: hintCs && hintCs.color
+	};
 	T.setLang('zh');
 	ck('panel-shows-g-hint', bad.length === 0 && below && /G/.test(lastText),
 		'面板底部的 G 常驻提示存在、11 国语言都不截断/不换行、位于按钮行下方: ' + JSON.stringify(window.__G_HINT__));
@@ -3153,6 +3159,132 @@ step(function () {
 	T.hudState.ballHidden = false; T.hudState.ballHiddenFromPanel = false; T.hudState.ball = false; T.hudState.hidden = false;
 	localStorage.removeItem('ttn.hud.v4');
 	T.setHud(true); T._finishHudAnim();
+});
+/* ---------- v0.6.2：透明度 / showing-glow 终点对齐 ---------- */
+function gCloseNum(a, b, eps) {
+	return Math.abs(parseFloat(a) - parseFloat(b)) <= (eps == null ? 0.02 : eps);
+}
+function gCanonShadow(s) {
+	s = String(s || '').replace(/\s+/g, '');
+	s = s.replace(/rgb\(([^)]+)\)/g, 'rgba($1,1)');
+	s = s.replace(/([-\d.]+)px/g, function (m, n) { return Math.round(parseFloat(n)) + 'px'; });
+	return s;
+}
+function gFilterParts(v) {
+	var b = /brightness\(([-\d.]+)\)/.exec(String(v || ''));
+	var s = /saturate\(([-\d.]+)\)/.exec(String(v || ''));
+	return { brightness: b ? parseFloat(b[1]) : 1, saturation: s ? parseFloat(s[1]) : 1 };
+}
+function gStateSnap(ball) {
+	var halo = ball.querySelector('.halo'), glow = ball.querySelector('.hover-glow'), rows = [];
+	ball.querySelectorAll('.t, .m, .b').forEach(function (el) { rows.push(getComputedStyle(el).opacity); });
+	return {
+		boxShadow: getComputedStyle(ball).boxShadow,
+		filter: getComputedStyle(ball).filter,
+		opacity: getComputedStyle(ball).opacity,
+		halo: halo ? getComputedStyle(halo).opacity : '0',
+		glow: glow ? getComputedStyle(glow).opacity : '0',
+		rows: rows
+	};
+}
+function gPinAllAt(ball, ratio) {
+	var list = [ball, ball.querySelector('.halo'), ball.querySelector('.hover-glow')];
+	ball.querySelectorAll('.t, .m, .b').forEach(function (el) { list.push(el); });
+	list.forEach(function (el) {
+		if (!el || !el.getAnimations) return;
+		el.getAnimations().forEach(function (a) {
+			try {
+				a.pause();
+				var t = a.effect.getTiming();
+				a.currentTime = (parseFloat(t.duration) || 180) * ratio;
+			} catch (e) {}
+		});
+	});
+}
+
+step(function () {
+	/* 隐藏 stage② 必须与 shrink 同一条 WAAPI 里 opacity live→0；落 display:none 时已是 0。 */
+	var T = window.__TTN__, ball = gBall();
+	gForceVisible(T);
+	T.hudState.ballHiddenFromPanel = false; T._saveHudState();
+	gKeyPress();
+	T._ballVisFinishGlow();                       // 进入 hiding-shrink
+	var stageCount = gCountProp(ball, 'opacity');
+	var a = gAnimWith(ball, 'opacity');
+	var kf = a ? a.effect.getKeyframes() : null;
+	if (a) { a.pause(); a.currentTime = 110; }
+	void ball.offsetWidth;
+	var mid = getComputedStyle(ball).opacity;
+	if (a) { a.currentTime = 215; }
+	void ball.offsetWidth;
+	var near = getComputedStyle(ball).opacity;
+	T._ballVisFinishShrink();
+	window.__G_OPACITY_HIDE__ = {
+		from: kf && kf[0].opacity, to: kf && kf[kf.length - 1].opacity, mid: mid, near: near,
+		hiddenInline: ball.style.opacity, display: getComputedStyle(ball).display,
+		count: stageCount
+	};
+	ck('hide-fades-opacity',
+		!!a && !!kf && gCloseNum(kf[0].opacity, 1, 0.001) && gCloseNum(kf[kf.length - 1].opacity, 0, 0.001) &&
+		parseFloat(mid) > 0 && parseFloat(mid) < 1 && stageCount === 1,
+		'hiding-shrink 的 keyframes 必须含 opacity 1→0，钉 50% 时 opacity 严格在 (0,1) 之间: ' +
+		JSON.stringify(window.__G_OPACITY_HIDE__));
+	ck('hide-opacity-lands-zero',
+		parseFloat(near) < 0.05 && ball.style.opacity === '0' && getComputedStyle(ball).display === 'none',
+		'收缩末尾 opacity 已接近 0，终态内联 opacity:0 + display:none（无硬切）: ' +
+		JSON.stringify(window.__G_OPACITY_HIDE__));
+});
+
+step(function () {
+	/* 显示 grow 必须从 opacity 0 淡入到 live；showing-glow 再做亮度/阴影/发光。 */
+	var T = window.__TTN__, ball = gBall();
+	gForceHidden(T);
+	gKeyPress();                                  // showing-grow
+	var a = gAnimWith(ball, 'opacity');
+	var kf = a ? a.effect.getKeyframes() : null;
+	if (a) { a.pause(); a.currentTime = 110; }
+	void ball.offsetWidth;
+	var mid = getComputedStyle(ball).opacity;
+	var count = gCountProp(ball, 'opacity');
+	if (a) { a.currentTime = 110; }               // 保持在 50% 再走完
+	T._ballVisFinishGrow();
+	T._ballVisFinishShow();
+	window.__G_OPACITY_SHOW__ = {
+		from: kf && kf[0].opacity, to: kf && kf[kf.length - 1].opacity, mid: mid, count: count,
+		after: getComputedStyle(ball).opacity, display: getComputedStyle(ball).display
+	};
+	ck('show-grows-from-transparent',
+		!!a && !!kf && gCloseNum(kf[0].opacity, 0, 0.001) && gCloseNum(kf[kf.length - 1].opacity, 1, 0.001) &&
+		parseFloat(mid) > 0 && parseFloat(mid) < 1 && count === 1 &&
+		gCloseNum(getComputedStyle(ball).opacity, 1, 0.02) && getComputedStyle(ball).display !== 'none',
+		'grow 阶段同一条 WAAPI 里 opacity 0→1，钉 50% 时严格在 (0,1)，结束为完全不透明: ' +
+		JSON.stringify(window.__G_OPACITY_SHOW__));
+});
+
+step(function () {
+	/* showing-glow 钉到 99% 必须逐项等于交接后的静止态：boxShadow / filter /
+	 * ball opacity / .halo opacity / .hover-glow opacity / 三行 opacity。 */
+	var T = window.__TTN__, ball = gBall();
+	gForceHidden(T);
+	gKeyPress();
+	T._ballVisFinishGrow();                        // showing-glow 动画开始
+	gPinAllAt(ball, 0.99);
+	void ball.offsetWidth;
+	var pin = gStateSnap(ball);
+	T._ballVisFinishShow();
+	void ball.offsetWidth;
+	var after = gStateSnap(ball);
+	var shadowOk = gCanonShadow(pin.boxShadow) === gCanonShadow(after.boxShadow);
+	var fp = gFilterParts(pin.filter), fa = gFilterParts(after.filter);
+	var filterOk = gCloseNum(fp.saturation, fa.saturation, 0.02) && gCloseNum(fp.brightness, fa.brightness, 0.02);
+	var rowsOk = pin.rows.length === after.rows.length && pin.rows.every(function (v, i) { return gCloseNum(v, after.rows[i], 0.02); });
+	window.__G_SHOW_END__ = { pin: pin, after: after, shadowOk: shadowOk, filterOk: filterOk, rowsOk: rowsOk };
+	ck('show-end-matches-static',
+		shadowOk && filterOk && gCloseNum(pin.opacity, after.opacity) &&
+		gCloseNum(pin.halo, after.halo) && gCloseNum(pin.glow, after.glow) && rowsOk,
+		'showing-glow 钉 99% 的 boxShadow/filter/opacity/.halo/.hover-glow/行 opacity 必须全部等于交接后的静止态: ' +
+		JSON.stringify(window.__G_SHOW_END__));
+	T.setSmoothing(true);
 });
 step(function () {
 	ck('report-ok', (function () {
