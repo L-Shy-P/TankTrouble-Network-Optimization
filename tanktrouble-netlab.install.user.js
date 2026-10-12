@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.6.4
+// @version      0.6.5
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -38,7 +38,7 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.6.4';
+	const VERSION = '0.6.5';
 	/* ==================== 动画证据通道（animTrace） ====================
 	 * 用户遇到"闪一下直接到终点"时，直接把 __TTN__.trace() 的输出发回来。
 	 * 每条记录：时间 / create|cancel|finish|preempt|skipped-writer / family / name /
@@ -110,7 +110,9 @@
 		const origCancel = a.cancel;
 		try {
 			a.cancel = function () {
-				traceAnim('cancel', Object.assign({}, base, { currentTime: traceNow(a), playState: a.playState, inline: traceInline() }));
+				if (a.playState !== 'finished' && a.playState !== 'idle') {
+					traceAnim('cancel', Object.assign({}, base, { currentTime: traceNow(a), playState: a.playState, inline: traceInline() }));
+				}
 				try { return origCancel.apply(a, arguments); } catch (e) {}
 			};
 		} catch (e) {}
@@ -123,6 +125,8 @@
 	}
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.6.5', '用户实测第 3 轮仍"球拖不了、还会闪"：① 拖动换成最朴素的 window 捕获状态机 —— window 上捕获 pointerdown/move/up/cancel，pointerdown 命中球/子元素即记录起点，move 超过 4px 才开始拖动（防手抖），全程不用 setPointerCapture/元素级 pointermove/document 兜底，pointerId 去重，拖动期间只 preventDefault 这一条球事件；点击路径保留（<4px 松手 = 点击）。② 用 animTrace 定位到"闪"的来源是 morph 进行中被 _finishHudAnim() 提前收尾：trace 里是 preempt/cancel:morph:cancelMorph，而不是动画自己的 finish；现在 finishHudAnim() 若动画仍在飞先把每条 morph 动画 finish() 到设计终点再走同一条收尾路径，trace 记 finish-request，终点值严格等于动画最后一帧。③ __TTN__.ballVis.slow 默认从 2.7 调回 1（保留旋钮和启动日志提示）。',
+			'证据通道用法：__TTN__.trace(120) 或 copy(JSON.stringify(__TTN__.trace(120), null, 2))；report().animTrace 含最近 40 条。回归：simple-drag-window-capture（敌意监听下仍能拖）、simple-drag-3px-is-click、simple-drag-60px-throw（trace:throw-check）、finish-never-jumps-while-animating（trace:finish-request，无 morph preempt）；smoke 拖动路径已按 window 捕获实现改写。'],
 		['0.6.4', '用户实测三类：① 小球拖不动 → 真因：游戏/页面可能在 window/document 捕获阶段就 stopPropagation/preventDefault，球元素冒泡阶段的 pointerdown 根本收不到（之前 document 兜底也来不及）→ userscript 在 document-start 就用 window+document capture 注册 takeover：命中球/子元素才接管，stopPropagation + preventDefault 避免触发游戏，按 pointerId 去重；另加 window capture 的 move/up 兜底，去掉 capture 后对应回归变红；② "过渡偶尔混乱、闪一下直接到终点" → 新增 animTrace 证据通道（create/cancel/finish/preempt/skipped-writer，环形 240 条，__TTN__.trace(n) 与 report().animTrace 可导出）；审计并发写入者：refreshHud 在 morph/ballVis 期间直接跳过，clampHud/applyAnchorNow/applyHudVisibility 同样跳过并记 skipped-writer，防止周期代码写 transform/opacity/filter/backgroundColor/boxShadow/halo/glow；③ 光晕/光圈颜色不对应 → 真因：ballVis 期间 refreshHud 仍会分别写球 color/borderColor、圆点 background/文字，CSS 过渡时序不同 → 现在 ballVis 起手把球 color/borderColor（box-shadow currentColor 来源）与圆点 background/color 冻结成同一 tint，动画期间不刷新；显示结束保持 .ttn-ballvis 压制过渡时一次性刷新颜色，再摘 class，保证同一 tick 切到新色。',
 			'回归：drag-survives-game-capturing-pointerdown、drag-child-target-works、drag-after-g-animation、no-instant-land-during-morph、no-instant-land-during-ballvis、trace-records-preemption、ballvis-during-drag、no-drag-during-ballvis、halo-rim-colors-stay-in-sync；smoke 新增 trace/trace.animTrace 断言。每条都做了反例验证。'],
 		['0.6.3', '用户实测 3 条：① 需要肉眼观察 G 动画 → ballVis 全流程新增 __TTN__.ballVis.slow 倍率，默认 2.7×（每段时长都乘它），控制台加一行英文提示，设 1 即可恢复原速；② 影子不应该消失 → 撤掉 box-shadow 的 WAAPI 动画与透明内联：transform:scale() 会带着元素渲染（含 box-shadow）整体缩放，opacity 淡出时影子也一起淡，所以影子始终和球一一对应；③ hover 时悬浮球拖不动 → 真因：installHudDrag 只把 pointermove 绑在球元素上，hover 时 pointerdown 命中球里的文字/数字子元素，一旦 setPointerCapture 没生效/被抢走，后续 pointermove 落在 document/其它元素上球就收不到 → 增加 document 捕获兜底 pointermove（目标本来就在球内则跳过，避免双处理），hover 观感保留、cursor 仍是 pointer。',
@@ -3269,176 +3273,112 @@
 	}
 
 	function installHudDrag(el, isPanel) {
-		let dragging = false, moved = false, pendingMorphFinish = false, sx = 0, sy = 0, ox = 0, oy = 0;
-		const track = [];          // 最近几次"球的位置 + 时刻"：用来算松手速度
-		/** 事件 target 可能是 window/document（不是 Node），contains 必须先兜住 */
-		function isInsideEl(t) {
-			try { return t === el || !!(el && el.contains && t && el.contains(t)); } catch (e) { return false; }
-		}
+		/* 极简拖动状态机：全部在 window 捕获阶段处理，不用 setPointerCapture、
+		 * 不依赖元素级 pointermove。点击能用说明 pointerdown/up 能到，问题只在
+		 * move 被抢走 —— window capture 先手 + 全局监听就不会再丢。 */
+		let dragging = false, moved = false, pointerId = null;
+		let sx = 0, sy = 0, ox = 0, oy = 0, pendingMorphFinish = false, justDragged = false;
+		const track = [];          // 最近几次"球的位置 + 时刻"：松手算速度
 
-		/** 记一次"球自己"的位置（必须在夹取之后调用） */
 		function pushTrack() {
 			track.push({ x: hudState.x, y: hudState.y, t: now() });
 			if (track.length > 12) track.shift();
 		}
+		function isExcluded(t) {
+			try {
+				return !!(t && t.classList && (t.classList.contains('ttn-btn') || t.id === 'ttn-dot'));
+			} catch (e) { return false; }
+		}
+		function resetLocal() {
+			dragging = false;
+			moved = false;
+			pointerId = null;
+			pendingMorphFinish = false;
+			el.__ttnDragging = false;
+			try { el.classList.remove('ttn-drag'); } catch (e) {}
+			if (activeDrag && activeDrag.el === el) activeDrag = null;
+			if (dragWatchdog) { clearTimeout(dragWatchdog); dragWatchdog = null; }
+		}
 
-		let dragPointerId = null;
-		/** 统一起手：元素监听和 window/document 捕获接管共用，保证同一 pointerId 只处理一次 */
-		function beginDrag(ev) {
-			if (dragging) return;
+		function onDown(ev) {
+			if (dragging || activeDrag) return;
+			if (!el || !el.contains || !ev || !ev.target) return;
+			try { if (!el.contains(ev.target)) return; } catch (e) { return; }
+			if (isExcluded(ev.target)) return;                 // 圆点/按钮走自己的 click
+			if (ballVisAnimating() || hudState.ballHidden || hudState.hidden) { traceSkipped('simple-drag', ballVisAnimating() ? 'ballvis' : 'hidden'); return; }
 			if (ev.button != null && ev.button !== 0) return;
-			pendingMorphFinish = hudAnimating;
-			ballVis.pendingHide = false;   // 用户亲自抓住球 = 取消"收起后消失"的意图
-			dragging = true; moved = false;
-			dragPointerId = ev.pointerId;
-			closeLangMenu();
-			hideTip();
-			el.__ttnDragging = true;
-			el.__ttnDownTarget = ev.target;
-			cancelGlide();                 // 抓住它就别再自己滑了，接下来跟手指
+			dragging = true; moved = false; pointerId = ev.pointerId;
 			sx = ev.clientX; sy = ev.clientY;
 			ox = hudState.x; oy = hudState.y;
+			pendingMorphFinish = hudAnimating;
+			ballVis.pendingHide = false;
+			closeLangMenu(); hideTip();
+			el.__ttnDragging = true;
+			el.__ttnDownTarget = ev.target;
+			cancelGlide();
 			track.length = 0;
-			pushTrack();                   // 记的是"球的位置"，不是指针位置
-			el.classList.add('ttn-drag');       // 用 class 关掉过渡（内联 transition 会漏，卡住就永远瞬变）
-			activeDrag = { el: el, isPanel: !!isPanel };
-			clearTimeout(dragWatchdog);          // 兜底：无论指针事件丢没丢，都必须能收拾干净
-			dragWatchdog = setTimeout(cleanupDrag, 4000);
-			try { el.setPointerCapture(ev.pointerId); } catch (e) {}
-			traceAnim('drag-start', { family: 'drag', name: isPanel ? 'panel' : 'ball', pointerId: ev.pointerId });
-		}
-		el.addEventListener('pointerdown', function (ev) {
-			// 按钮和左上角圆点都不参与拖拽：
-			// 一旦对标题栏 setPointerCapture，click 会被重定向到标题栏，
-			// 圆点上的收起监听就永远不会触发（这就是"根本无法收起"的原因）。
-			if (ev.target && ev.target.classList.contains &&
-				(ev.target.classList.contains('ttn-btn') || ev.target.id === 'ttn-dot')) return;
-			if (dragging) return;
-			if (ev.__ttnDragTaken) return;      // window/document 捕获接管已处理
-			beginDrag(ev);
-		});
-		/* 捕获阶段优先接管球上的 pointerdown：游戏可能在 window/document 捕获阶段
-		 * stopPropagation/preventDefault，冒泡到球元素时事件已经不存在。
-		 * window 捕获（document-start 注册，通常早于游戏监听）先手，document 捕获兜底；
-		 * 命中球/子元素才接管，且只接管这一条事件。 */
-		if (!isPanel) {
-			const takeover = function (ev) {
-				if (dragging || ev.__ttnDragTaken) return;
-				if (!hudBall || el !== hudBall) return;
-				const t = ev.target;
-				if (!isInsideEl(t)) return;
-				if (ballVisAnimating() || hudState.ballHidden || hudState.hidden) {
-					traceSkipped('drag-takeover', ballVisAnimating() ? 'ballvis' : 'hidden');
-					return;
-				}
-				if (ev.button != null && ev.button !== 0) return;
-				ev.__ttnDragTaken = true;
-				beginDrag(ev);
-				try { ev.stopPropagation(); } catch (e) {}
-				try { ev.preventDefault(); } catch (e) {}
-			};
-			window.addEventListener('pointerdown', takeover, true);
-			document.addEventListener('pointerdown', takeover, true);
+			pushTrack();
+			el.classList.add('ttn-drag');
+			activeDrag = { el: el, isPanel: !!isPanel, pointerId: pointerId };
+			clearTimeout(dragWatchdog);
+			dragWatchdog = setTimeout(function () { traceSkipped('drag-watchdog', 'timeout'); resetLocal(); }, 4000);
+			traceAnim('drag-start', { family: 'drag', name: isPanel ? 'panel' : 'ball', pointerId: pointerId });
 		}
 
-		/* 拖动跟手逻辑抽出来，元素自身和 document 兜底共用。
-		 * 只绑在球上有风险：hover 时 pointerdown 命中球里的数字/文字子元素，
-		 * 一旦 setPointerCapture 没生效（扩展/游戏监听、合成事件、捕获被抢走），
-		 * 后续 pointermove 落在 document/其它元素上，球就永远收不到 → "悬停时拖不动"。
-		 * 所以 document 上再加一层捕获兜底；事件目标本来就在球内时跳过，避免双处理。 */
-		const onMove = function (ev) {
-			if (!dragging) return;
+		function onMove(ev) {
+			if (!dragging || ev.pointerId !== pointerId) return;
 			const dx = ev.clientX - sx, dy = ev.clientY - sy;
 			if (!moved && Math.abs(dx) + Math.abs(dy) > 4) {
 				moved = true;
-				/* 真开始拖了才落终态：锚点接着按 pointer 走，不会错位。 */
 				if (pendingMorphFinish && hudAnimating) { pendingMorphFinish = false; finishHudAnim(); }
 			}
 			if (!moved) return;
 			hudState.x = ox + dx; hudState.y = oy + dy;
-			clampHud(true);                // 拖动中必须跟手，不走回弹
-			// 拖动过程仍然 1:1 跟手（要精确摆放时不能飘），
-			// 但把"球的位置"记下来 —— 松手时按球自己最近 120ms 的位移算速度。
-			// 注意是夹取之后再记：球被边界夹住没动，采样就是同一个点，速度自然是 0。
-			pushTrack()
-			ev.preventDefault();
-		};
-		el.addEventListener('pointermove', onMove);
-		/* window 捕获优先兜底，document 再兜一层；目标本来在球内时交给元素自身，
-		 * 避免同一 move 被处理两次。 */
-		window.addEventListener('pointermove', function (ev) {
-			if (!dragging || ev.__ttnHandledDrag) return;
-			if (isInsideEl(ev.target)) return;
-			ev.__ttnHandledDrag = true;
-			onMove(ev);
-		}, true);
-		document.addEventListener('pointermove', function (ev) {
-			if (!dragging || ev.__ttnHandledDrag) return;
-			if (isInsideEl(ev.target)) return;
-			ev.__ttnHandledDrag = true;
-			onMove(ev);
-		}, true);
+			clampHud(true);                 // 跟手，不走回弹
+			pushTrack();
+			try { ev.preventDefault(); } catch (e) {}
+		}
 
-		const end = function (ev) {
-			if (!dragging) return;
-			dragging = false;
-			dragPointerId = null;
-			pendingMorphFinish = false;
-			el.__ttnDragging = false;
-			el.classList.remove('ttn-drag');
-			if (activeDrag && activeDrag.el === el) activeDrag = null;
-			clearTimeout(dragWatchdog);
-			dragWatchdog = null;
-			if (moved) {
-				// 松手带惯性：只有悬浮球甩，面板保持"放哪儿是哪儿"（面板要精确摆位读数）
+		function onUp(ev) {
+			if (!dragging || ev.pointerId !== pointerId) return;
+			const wasMoved = moved;
+			resetLocal();
+			if (wasMoved) {
+				// 悬浮球按现有惯性甩动；面板放哪儿是哪儿
 				if (!isPanel && (!ev || ev.type !== 'pointercancel')) {
-					// 松手那一刻补一个采样点，把"球此刻到底在哪儿"记进去。
-					// （真正兜住"停住再松手"的是 throwVelocity 里以松手时刻为准的窗口；
-					//   这里再补一个点是防御性的：万一以后球在拖动中会被别的机制挪动，
-					//   没有这个点就会漏掉最后那段位移。）
 					pushTrack();
 					const v = throwVelocity(track, now());
+					traceAnim('throw-check', { family: 'drag', hasVelocity: !!v, vx: v && Math.round(v.vx * 1000) / 1000, vy: v && Math.round(v.vy * 1000) / 1000 });
 					if (v) throwHud(v.vx, v.vy);
 					else saveHudState();
 				} else {
 					saveHudState();
 				}
-				// 拖动结束时把"刚刚在拖"记下来，吞掉浏览器补发的那次 click
+				justDragged = true;
 				el.__ttnJustDragged = true;
-				setTimeout(function () { el.__ttnJustDragged = false; }, 60);
+				setTimeout(function () { justDragged = false; el.__ttnJustDragged = false; }, 80);
 				return;
-			} else {
-				track.length = 0;
 			}
+			track.length = 0;
 			if (!isPanel) {
-				// 悬浮球：按下不移动 = 切换。
-				// 动画途中再点它 = 反向（展开到一半又收回去），而不是重播或继续展开。
+				// 没动 = 点击：切换展开/收起（动画中点击会反向）
 				hudState.ball = !hudState.ball;
 				hudAnimate(hudState.ball);
-			} else if (el.__ttnDownTarget && el.__ttnDownTarget.id === 'ttn-dot') {
-				// 兜底：即使 click 被指针捕获吞掉，这里也能收起
-				if (!hudState.ball) { hudState.ball = true; hudAnimate(true); }
 			}
-			if (ev) ev.preventDefault();
-		};
-		el.addEventListener('pointerup', end);
-		el.addEventListener('pointercancel', end);
-		el.addEventListener('lostpointercapture', end);        // capture 被抢走也要收拾干净
-		/* 关键：松手发生在元素之外时，元素上收不到 pointerup → 拖动状态会永久卡住，
-		 * 之后 hover 全部瞬变（用户实测的"卡出 bug"）。所以在 document 上兜底收一次。 */
-		window.addEventListener('pointerup', function (ev) {
-			if (dragging) { try { el.releasePointerCapture(ev.pointerId); } catch (e) {} end(ev); }
+			if (ev) { try { ev.preventDefault(); } catch (e) {} }
+		}
+
+		window.addEventListener('pointerdown', onDown, true);
+		window.addEventListener('pointermove', onMove, true);
+		window.addEventListener('pointerup', onUp, true);
+		window.addEventListener('pointercancel', onUp, true);
+		window.addEventListener('blur', function () { if (dragging) resetLocal(); }, true);
+		window.addEventListener('click', function (ev) {
+			if (justDragged && el.contains && el.contains(ev.target)) {
+				ev.stopPropagation(); ev.preventDefault();
+				justDragged = false; el.__ttnJustDragged = false;
+			}
 		}, true);
-		window.addEventListener('pointercancel', function (ev) { if (dragging) end(ev); }, true);
-		document.addEventListener('pointerup', function (ev) {
-			if (dragging) { try { el.releasePointerCapture(ev.pointerId); } catch (e) {} end(ev); }
-		}, true);
-		document.addEventListener('pointercancel', function (ev) { if (dragging) end(ev); }, true);
-		window.addEventListener('blur', function () { if (el.__ttnDragging) end(null); }, true);
-		// 兜底：万一根 pointerup 丢了，也不要把拖动当成点击
-		el.addEventListener('click', function (ev) {
-			if (el.__ttnJustDragged || moved) { ev.stopPropagation(); ev.preventDefault(); }
-		});
 	}
 
 	/** 圆点圆心相对面板左上角的偏移（渲染时量一次并缓存） */
@@ -3803,7 +3743,7 @@
 	const BALLVIS = { GLOW: 180, SHRINK: 220, GROW: 220, GLOW_IN: 180,
 		DIM_MID: 'saturate(.55) brightness(.55)', DIM_FINAL: 'saturate(.15) brightness(.25)' };
 	/* 临场观察用倍率：__TTN__.ballVis.slow 默认 2.7，设 1 恢复原速；只乘时长，不改顺序/终态。 */
-	const ballVisTune = { slow: 2.7 };
+	const ballVisTune = { slow: 1 };
 	function ballVisDur(ms) {
 		const s = parseFloat(ballVisTune.slow);
 		return Math.max(30, Math.round(ms * (isFinite(s) && s > 0 ? s : 1)));
@@ -3859,7 +3799,9 @@
 
 	function cancelMorph() {
 		(hudAnim.anims || []).forEach(function (a) {
-			traceAnim('preempt', { family: 'morph', reason: 'cancelMorph', phase: hudAnim.phase, currentTime: traceNow(a), playState: a && a.playState });
+			if (a && a.playState !== 'idle' && a.playState !== 'finished') {
+				traceAnim('preempt', { family: 'morph', reason: 'cancelMorph', phase: hudAnim.phase, currentTime: traceNow(a), playState: a.playState });
+			}
 			try { a.cancel(); } catch (e) {}
 		});
 		hudAnim.anims = [];
@@ -4106,6 +4048,16 @@
 	 */
 	function finishHudAnim() {
 		if (hudAnim.timer) { clearTimeout(hudAnim.timer); hudAnim.timer = null; }
+		/* 动画还在飞时被提前调用：不要 cancel 后硬写终点（那会出现"闪一下到终点"）。
+		 * 先让每条 morph 动画 finish() 到它自己的设计终点，再走同一条收尾路径；
+		 * 这样终点值一定等于动画最后一帧，而不是任何中间帧被直接替换。 */
+		if (hudAnim.phase !== 'idle' && hudAnim.anims && hudAnim.anims.length) {
+			let requested = false;
+			hudAnim.anims.forEach(function (a) {
+				try { if (a && a.playState !== 'idle' && a.playState !== 'finished') { requested = true; a.finish(); } } catch (e) {}
+			});
+			if (requested) traceAnim('finish-request', { family: 'morph', phase: hudAnim.phase, reason: 'finishHudAnim' });
+		}
 		/* 先落"动画结束"这个状态：clampHud 在 hudAnimating 为真时会直接跳过，
 		 * 顺序写反的话收尾的越界回弹就没了（vm 测试当场抓到）。 */
 		hudAnim.phase = 'idle';
@@ -4257,7 +4209,9 @@
 	}
 	function ballVisCancelAnims() {
 		(ballVis.anims || []).forEach(function (a) {
-			traceAnim('preempt', { family: 'ballvis', reason: 'ballVisCancelAnims', ballPhase: ballVis.phase, currentTime: traceNow(a), playState: a && a.playState });
+			if (a && a.playState !== 'idle' && a.playState !== 'finished') {
+				traceAnim('preempt', { family: 'ballvis', reason: 'ballVisCancelAnims', ballPhase: ballVis.phase, currentTime: traceNow(a), playState: a.playState });
+			}
 			try { a.cancel(); } catch (e) {}
 		});
 		ballVis.anims = [];

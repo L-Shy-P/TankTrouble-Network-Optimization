@@ -80,6 +80,7 @@ function el(tag) {
 		setPointerCapture() {}, releasePointerCapture() {},
 		click() { this.clicked = true; },
 		querySelector(sel) { if (!this._q[sel]) this._q[sel] = el('div'); return this._q[sel]; },
+		contains(c) { return c === this; },
 		querySelectorAll() { return []; },
 		getAttribute() { return null; }, setAttribute() {}, hasAttribute() { return false; }
 	};
@@ -1370,8 +1371,10 @@ T.hudState.x = 300; T.hudState.y = 300;
 T.clampHud(true);
 const ballEl = findEl(sandbox.document.documentElement, 'ttn-ball');
 function peEv(el, type, x, y) {
-	el.fire(type, { type: type, target: el, clientX: x, clientY: y, pointerId: 1,
-		preventDefault() {}, stopPropagation() {} });
+	/* v0.6.5：拖动改成 window 捕获阶段状态机，所以测试也派发到 window 监听表。 */
+	const ev = { type: type, target: el, clientX: x, clientY: y, pointerId: 1, button: 0,
+		buttons: type === 'pointerup' ? 0 : 1, preventDefault() {}, stopPropagation() {} };
+	sandboxEvents.slice().forEach(function (e) { if (e.t === type && e.fn) e.fn(ev); });
 }
 peEv(ballEl, 'pointerdown', 300, 300);
 clock += 20; peEv(ballEl, 'pointermove', 305, 300);     // 前半段很慢
@@ -1728,16 +1731,15 @@ T._ballVis.pendingHide = false;
 T.hudState.ball = false; T.hudState.ballHidden = false; T.hudState.ballHiddenFromPanel = false;
 T._finishHudAnim();
 /* 新增：ballVis 调试倍率（只乘时长，不改顺序/终态） */
-ok(!!T.ballVis && typeof T.ballVis.slow === 'number' && T.ballVis.slow >= 2.5 && T.ballVis.slow <= 3,
-	'ballVis.slow 默认 2.5~3×（临时放慢便于肉眼观察）', String(T.ballVis && T.ballVis.slow));
-const slow0 = T.ballVis.slow;
+ok(!!T.ballVis && T.ballVis.slow === 1,
+	'ballVis.slow 默认已调回 1（正常速度），保留可调旋钮', String(T.ballVis && T.ballVis.slow));
+const normal = T._ballVisDur(100);
+T.ballVis.slow = 2.7;
 const scaled = T._ballVisDur(100);
 T.ballVis.slow = 1;
-const normal = T._ballVisDur(100);
-T.ballVis.slow = slow0;
-ok(Math.abs(scaled - Math.round(100 * slow0)) <= 1 && normal === 100,
-	'__TTN__.ballVis.slow 只乘时长：默认 100ms→' + scaled + 'ms，设 1 后→' + normal + 'ms',
-	JSON.stringify({ scaled: scaled, normal: normal, slow: slow0 }));
+ok(normal === 100 && Math.abs(scaled - 270) <= 1,
+	'__TTN__.ballVis.slow 只乘时长：1×→100ms，2.7×→' + scaled + 'ms（改回 1 仍是 100ms）',
+	JSON.stringify({ normal: normal, scaled: scaled }));
 /* 新增：动画证据通道 trace / report().animTrace */
 ok(typeof T.trace === 'function' && Array.isArray(T._animTrace),
 	'动画证据通道存在：__TTN__.trace(n) 返回环形缓冲数组、_animTrace 可读',

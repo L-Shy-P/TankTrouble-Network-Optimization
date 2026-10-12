@@ -3514,7 +3514,7 @@ step(function () {
 	ball.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 202, clientX: cx, clientY: cy, button: 0, buttons: 1 }));
 	window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, cancelable: true, pointerId: 202, clientX: cx + 50, clientY: cy + 20, button: 0, buttons: 1 }));
 	window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerId: 202, clientX: cx + 50, clientY: cy + 20, button: 0, buttons: 0 }));
-	window.__G_DRAG_G__.duringG = { gPhase: gPhase, dragging: !!ball.__ttnDragging, skipped: gTraceHas('skipped-writer', 'drag-takeover'), phase: T._ballVis.phase };
+	window.__G_DRAG_G__.duringG = { gPhase: gPhase, dragging: !!ball.__ttnDragging, skipped: gTraceHas('skipped-writer', 'simple-drag'), phase: T._ballVis.phase };
 	ck('no-drag-during-ballvis',
 		gPhase !== 'idle' && window.__G_DRAG_G__.duringG.dragging === false &&
 		window.__G_DRAG_G__.duringG.skipped === true && window.__G_DRAG_G__.duringG.phase === gPhase,
@@ -3554,6 +3554,121 @@ step(function () {
 		sync0 && sync1 && sync2 && s1.color === s0.color && s2.color !== s0.color,
 		'动画中改档：球 color/border、box-shadow currentColor、圆点 background 必须同步冻结；结束后一起切到新色: ' +
 		JSON.stringify(window.__G_COLORS__));
+});
+/* ---------- v0.6.5：朴素 window-capture 拖动 / 提前 finish 不跳 ---------- */
+step(function () {
+	/* 敌意监听 + 朴素实现：hover + 命中 .m 子元素 + move 在 window 上，仍必须跟手。 */
+	var T = window.__TTN__, ball = gBall();
+	gForceVisible(T);
+	var pid = 301;
+	var badDown = function (ev) { if (ev.pointerId === pid) { ev.stopPropagation(); ev.preventDefault(); } };
+	var badMove = function (ev) { if (ev.pointerId === pid) { ev.stopPropagation(); ev.preventDefault(); } };
+	window.addEventListener('pointerdown', badDown, true);
+	window.addEventListener('pointermove', badMove, true);
+	var r = ball.getBoundingClientRect();
+	var cx = Math.round(r.left + r.width / 2), cy = Math.round(r.top + r.height / 2);
+	var before = { x: T.hudState.x, y: T.hudState.y };
+	ball.dispatchEvent(new PointerEvent('pointerenter', { bubbles: false, pointerId: pid, clientX: cx, clientY: cy }));
+	var hit = ball.querySelector('.m') || ball.querySelector('.t') || ball;
+	window.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: pid, clientX: cx, clientY: cy, button: 0, buttons: 1 }));
+	/* 真实 pointerdown 会从 hit 冒泡；window capture 监听不依赖 target，补一条从 hit 派发的路径 */
+	hit.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: pid, clientX: cx, clientY: cy, button: 0, buttons: 1 }));
+	window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, cancelable: true, pointerId: pid, clientX: cx + 60, clientY: cy + 20, button: 0, buttons: 1 }));
+	var mid = { x: T.hudState.x, y: T.hudState.y, hover: ball.classList.contains('ttn-hover'), cursor: getComputedStyle(ball).cursor, dragging: !!ball.__ttnDragging };
+	window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerId: pid, clientX: cx + 60, clientY: cy + 20, button: 0, buttons: 0 }));
+	window.removeEventListener('pointerdown', badDown, true);
+	window.removeEventListener('pointermove', badMove, true);
+	var after = { x: T.hudState.x, y: T.hudState.y, drag: ball.classList.contains('ttn-drag'), dragging: !!ball.__ttnDragging };
+	window.__G_SIMPLE_DRAG__ = { before: before, mid: mid, after: after };
+	ck('simple-drag-window-capture',
+		Math.abs(after.x - before.x) >= 40 && Math.abs(after.y - before.y) >= 15 &&
+		mid.hover === true && mid.cursor === 'pointer' && mid.dragging === true &&
+		after.drag === false && after.dragging === false,
+		'朴素 window-capture 实现：敌意监听 + hover + 命中 .m 子元素，move 60px 仍必须跟手；cursor=pointer、无残留: ' +
+		JSON.stringify(window.__G_SIMPLE_DRAG__));
+});
+
+step(function () {
+	/* 移动 <4px 必须按点击处理（状态翻转），而不是拖动。 */
+	var T = window.__TTN__, ball = gBall();
+	gForceVisible(T);
+	T.hudState.ball = true; T.setHud(true); T._finishHudAnim();
+	var beforeBall = !!T.hudState.ball;
+	var r = ball.getBoundingClientRect();
+	var cx = Math.round(r.left + r.width / 2), cy = Math.round(r.top + r.height / 2);
+	ball.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 302, clientX: cx, clientY: cy, button: 0, buttons: 1 }));
+	window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, cancelable: true, pointerId: 302, clientX: cx + 3, clientY: cy, button: 0, buttons: 1 }));
+	window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerId: 302, clientX: cx + 3, clientY: cy, button: 0, buttons: 0 }));
+	var toggled = !!T.hudState.ball !== beforeBall;
+	window.__G_SIMPLE_CLICK__ = { before: beforeBall, after: !!T.hudState.ball, toggled: toggled, drag: ball.classList.contains('ttn-drag'), dragging: !!ball.__ttnDragging };
+	ck('simple-drag-3px-is-click',
+		toggled && ball.classList.contains('ttn-drag') === false && !ball.__ttnDragging,
+		'移动 3px（<4px 阈值）松手必须当成点击：hudState.ball 翻转而不是拖动: ' + JSON.stringify(window.__G_SIMPLE_CLICK__));
+	T._finishHudAnim();
+	gForceVisible(T);
+});
+
+step(function () {
+	/* 移动 60px 松手：进入现有惯性甩动逻辑，且无 class/标志残留。 */
+	var T = window.__TTN__, ball = gBall();
+	gForceVisible(T);
+	var r = ball.getBoundingClientRect();
+	var cx = Math.round(r.left + r.width / 2), cy = Math.round(r.top + r.height / 2);
+	var before = { x: T.hudState.x, y: T.hudState.y };
+	ball.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 303, clientX: cx, clientY: cy, button: 0, buttons: 1 }));
+	window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, cancelable: true, pointerId: 303, clientX: cx + 60, clientY: cy + 20, button: 0, buttons: 1 }));
+	window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerId: 303, clientX: cx + 60, clientY: cy + 20, button: 0, buttons: 0 }));
+	var glide = !!(T._glide && (T._glide.active || T._glide.timer || T._glide.tx != null || T._glide.ty != null));
+	var throwCheck = (T._animTrace || []).some(function (r) { return r.kind === 'throw-check' && r.family === 'drag'; });
+	window.__G_SIMPLE_THROW__ = {
+		dx: T.hudState.x - before.x, dy: T.hudState.y - before.y, glide: glide, throwCheck: throwCheck,
+		drag: ball.classList.contains('ttn-drag'), dragging: !!ball.__ttnDragging, samples: !!ball.__ttnJustDragged
+	};
+	ck('simple-drag-60px-throw',
+		Math.abs(window.__G_SIMPLE_THROW__.dx) >= 40 && Math.abs(window.__G_SIMPLE_THROW__.dy) >= 15 &&
+		window.__G_SIMPLE_THROW__.throwCheck === true &&
+		ball.classList.contains('ttn-drag') === false && !ball.__ttnDragging,
+		'移动 60px 后松手：锚点已更新且进入 throwHud 惯性路径（active/timer/tx 任一），无 .ttn-drag/拖动标志残留: ' +
+		JSON.stringify(window.__G_SIMPLE_THROW__));
+	/* 清掉惯性，避免影响后续步骤 */
+	try { if (T._glide) { T._glide.tx = T._glide.ty = null; T._glide.active = false; } } catch (e) {}
+});
+
+step(function () {
+	/* 提前 _finishHudAnim()：必须先让 morph 动画 finish() 到自己的设计终点，再走收尾，
+	 * 不能 cancel 后把任意中间帧硬写成终点。 */
+	var T = window.__TTN__, ball = gBall(), root = gRoot();
+	gForceVisible(T);
+	T.hudState.ball = true; T.setHud(true); T._finishHudAnim();
+	if (T._animTrace) T._animTrace.length = 0;   // 环形缓冲可能已满，先清空再验这一段
+	var start = 0;
+	T.hudState.ball = false;
+	T._hudAnimate(false);
+	window.__G_FINISH_DBG__ = { phaseBefore: T._hudAnim.phase, animsLen: (T._hudAnim.anims || []).length, states: (T._hudAnim.anims || []).map(function (x) { try { return x.playState; } catch (e) { return 'err'; } }) };
+	var a = gAnimWith(root, 'transform');
+	var dur = a ? (parseFloat(a.effect.getTiming().duration) || 300) : 300;
+	if (a) { a.pause(); a.currentTime = dur * 0.3; }
+	void root.offsetWidth;
+	var mid = gNormCss(getComputedStyle(root).transform);
+	var endKf = a ? gPose(a.effect.getKeyframes()[a.effect.getKeyframes().length - 1].transform) : null;
+	T._finishHudAnim();
+	var nowState = getComputedStyle(root).transform;
+	var nowPose = gPose(nowState) || gPose(root.style.transform);
+	var tail = (T._animTrace || []).slice(start);
+	var hasFinishRequest = tail.some(function (r) { return r.kind === 'finish-request' && r.reason === 'finishHudAnim'; });
+	var morphPreempts = tail.filter(function (r) { return r.kind === 'preempt' && r.family === 'morph'; }).length;
+	window.__G_FINISH__ = {
+		phase: T._hudAnim.phase, phaseBefore: window.__G_FINISH_DBG__.phaseBefore, animsLen: window.__G_FINISH_DBG__.animsLen,
+		states: window.__G_FINISH_DBG__.states, tailKinds: tail.map(function (r) { return r.kind + ':' + (r.family || '') + ':' + (r.reason || r.name || ''); }),
+		hasFinishRequest: hasFinishRequest, morphPreempts: morphPreempts,
+		mid: mid, now: gNormCss(nowState), end: endKf, nowPose: nowPose
+	};
+	ck('finish-never-jumps-while-animating',
+		T._hudAnim.phase === 'idle' && hasFinishRequest && morphPreempts === 0 &&
+		!!endKf && !!nowPose && Math.abs(nowPose.s - endKf.s) < 1e-3 &&
+		Math.abs(nowPose.x - endKf.x) <= 1 && Math.abs(nowPose.y - endKf.y) <= 1,
+		'动画中途 _finishHudAnim() 必须先 finish() 到动画终点（trace:finish-request，无 morph cancel/preempt），属性落在动画 end keyframe: ' +
+		JSON.stringify(window.__G_FINISH__));
 });
 step(function () {
 	ck('report-ok', (function () {
