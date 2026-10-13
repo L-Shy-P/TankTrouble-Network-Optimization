@@ -1,6 +1,6 @@
 # 🇬🇧 TankTrouble Network Optimization
 
-<p align="right"><sub><b>🇬🇧 English</b> · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · [🇻🇳 Tiếng Việt](vi.md)</sub></p>
+<p align="right"><sub><b>🇬🇧 English</b> · [🇨🇳 中文](zh.md) · [🇧🇩 বাংলা](bn.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · [🇻🇳 Tiếng Việt](vi.md)</sub></p>
 
 <img src="img/v053/panel-en.png" width="440" alt="panel"> <img src="img/v053/ball-en.png" width="150" alt="floating ball">
 
@@ -124,7 +124,7 @@ If you already know how to drag-install, **Method A is enough — you don't need
 | `Ctrl+Shift+P` | probe all 7 server regions and rank them |
 | `G` | hide / show floating ball (restores previous view) |
 
-The **⚡** button in the panel does the same as `Ctrl+Shift+S`. The panel also lets you pick one of **11 languages**; language, optimization switch and floating-ball position are cached in `localStorage`.
+The **⚡** button in the panel does the same as `Ctrl+Shift+S`. The panel also lets you pick one of **12 languages**; language, optimization switch and floating-ball position are cached in `localStorage`.
 
 ## Troubleshooting
 
@@ -136,4 +136,4 @@ The **⚡** button in the panel does the same as `Ctrl+Shift+S`. The panel also 
 
 * [Repository](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) · [TECHNICAL.zh.md (中文)](TECHNICAL.zh.md)
 
-<p align="right"><sub><b>🇬🇧 English</b> · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · [🇻🇳 Tiếng Việt](vi.md)</sub></p>
+<p align="right"><sub><b>🇬🇧 English</b> · [🇨🇳 中文](zh.md) · [🇧🇩 বাংলা](bn.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · [🇻🇳 Tiếng Việt](vi.md)</sub></p>

@@ -4,7 +4,7 @@
 
 **Richer, more real-time and more accurate network display — plus real optimization.**
 
-[![version](https://img.shields.io/badge/version-0.6.5-blue)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
+[![version](https://img.shields.io/badge/version-0.7.0-blue)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![platform](https://img.shields.io/badge/Tampermonkey-userscript-orange)](https://raw.githubusercontent.com/L-Shy-P/TankTrouble-Network-Optimization/main/tanktrouble-netlab.user.js)
 
@@ -22,6 +22,7 @@
 |---|---|
 | 🇬🇧 | [English](docs/README.en.md) |
 | 🇨🇳 | [中文](docs/README.zh.md) |
+| 🇧🇩 | [বাংলা](docs/README.bn.md) |
 | 🇯🇵 | [日本語](docs/README.ja.md) |
 | 🇰🇷 | [한국어](docs/README.ko.md) |
 | 🇷🇺 | [Русский](docs/README.ru.md) |
@@ -48,7 +49,7 @@ the game server sees exactly the same bytes as before.
 
 ---
 
-## 📦 What it does (11 languages)
+## 📦 What it does (12 languages)
 
 <details>
 <summary><b>🇬🇧 English</b> — TankTrouble Network Optimization</summary>
@@ -66,6 +67,7 @@ The optimization only changes *what you see*: the position is smoothed at render
 
 </details>
 
+
 <details>
 <summary><b>🇨🇳 中文</b> — TankTrouble 网络优化</summary>
 
@@ -82,6 +84,18 @@ The optimization only changes *what you see*: the position is smoothed at render
 优化只改**你看到的东西**：渲染那一瞬间的位置被平滑，游戏逻辑 / 物理 / 服务端校验全程用真值；你自己的坦克以本地为准，断线重连不会被拉回去。
 
 👉 **[进入本语言页面（中文）](docs/README.zh.md)**
+
+
+</details>
+
+<details>
+<summary><b>🇧🇩 বাংলা</b> — TankTrouble নেটওয়ার্ক অপ্টিমাইজেশন</summary>
+
+<img src="docs/img/v053/panel-bn.png" width="440" alt="bn panel"> <img src="docs/img/v053/ball-bn.png" width="150" alt="floating ball">
+
+**tanktrouble.com**-এর জন্য একটি Tampermonkey ইউজারস্ক্রিপ্ট: আপনার সংযোগ আসলে কেমন কাজ করছে তা দেখায়, এবং TCP head-of-line blocking-এর ফলে হওয়া “জমে যাওয়া → টেলিপোর্ট” সমস্যাটিকে মসৃণ স্লাইডে বদলে দেয়।
+
+👉 **[বাংলা পেজ খুলুন](docs/README.bn.md)**
 
 
 </details>
@@ -270,7 +284,7 @@ Tối ưu hóa chỉ thay đổi *những gì bạn thấy*: vị trí được 
 
 ## 🔗 Links
 
-* [Language guides — 11 languages](docs/README.en.md)
+* [Language guides — 12 languages](docs/README.en.md)
 * [Technical notes — how it works & the dead ends (中文)](docs/TECHNICAL.zh.md)
 * [Changelog](tanktrouble-netlab.user.js) — see the `CHANGELOG` constant in the script
 * [License (MIT)](LICENSE)

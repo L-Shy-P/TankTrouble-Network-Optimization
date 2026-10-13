@@ -113,6 +113,63 @@
       ]
     ]
   },
+  "bn": {
+    "title": "নতুনদের জিজ্ঞাসা (বিভ্রান্ত হলে এটি পড়ুন)",
+    "qa": [
+      [
+        "এটি কি Chrome এক্সটেনশন? chrome://extensions-এ যোগ করব?",
+        "না। এটি একটি ইউজারস্ক্রিপ্ট। প্রথমে Tampermonkey ইনস্টল করুন; স্ক্রিপ্টটি Tampermonkey-এর ভিতরে ইনস্টল হয় — “Load unpacked” দিয়ে কখনও নয়।"
+      ],
+      [
+        "Tampermonkey কী? দেখতে সন্দেহজনক অ্যাপের মতো।",
+        "Tampermonkey হলো Chrome/Edge/Firefox-এর আদর্শ ইউজারস্ক্রিপ্ট ম্যানেজার, অফিসিয়াল স্টোর (tampermonkey.net) থেকে পাওয়া যায়। এই প্রকল্পটি GitHub-এ ওপেন সোর্স এবং এতে কোনো সার্ভার, VPN বা নেটওয়ার্ক সেটিংস লাগে না।"
+      ],
+      [
+        "ZIP ডাউনলোড করেছি। পুরো আনজিপ করা ফোল্ডারটি ড্র্যাগ করব?",
+        "না। Method A-তে ZIP-এর দরকারই নেই: শুধু `tanktrouble-netlab.install.user.js` ফাইলটি ডাউনলোড করুন (ধাপ ২) এবং Downloads ফোল্ডার থেকে শুধু সেই ফাইলটি Tampermonkey Dashboard-এ ড্র্যাগ করুন। পুরো ফোল্ডার স্ক্রিপ্ট নয়, ইনস্টল হবে না।"
+      ],
+      [
+        "Tampermonkey Dashboard কোথায়, কীভাবে খুলব?",
+        "ব্রাউজার টুলবারের **Tampermonkey আইকনে** ক্লিক করুন → **Dashboard**। আইকন না দেখলে পাজল/এক্সটেনশন বাটনে ক্লিক করে Tampermonkey পিন করুন। অন্য Tampermonkey পেজে থাকলে বাঁদিকের সাইডবারে **Installed scripts** ক্লিক করে তালিকায় ফিরুন। ⚠️ “**Add new script**” মেনু আইটেম ব্যবহার করবেন না — এটি এডিটর খোলে, ইনস্টল এন্ট্রি নয়।"
+      ],
+      [
+        "“Add new script” চেপে এডিটর এসেছে — এটাই ইনস্টল এন্ট্রি?",
+        "না। “Add new script” স্ক্রিপ্ট লেখার **এডিটর** খোলে; এখানে ইনস্টল হয় না। ইনস্টল এন্ট্রি হলো **Dashboard** তালিকা পেজ (“Installed scripts”): ডাউনলোড করা `tanktrouble-netlab.install.user.js` সেখানে ড্র্যাগ করুন, অথবা **Dashboard → Utilities → Install from URL**-এ গিয়ে `https://github.com/L-Shy-P/TankTrouble-Network-Optimization/raw/main/tanktrouble-netlab.install.user.js` পেস্ট করুন।"
+      ],
+      [
+        "ডাউনলোড লিংকে কোডের পেজ দেখাচ্ছে / Chrome বলছে এই সাইট থেকে ইনস্টল করা যাবে না।",
+        "Method A-এর জন্য এটি ঠিক আছে — লিংকটি শুধু ফাইল সেভ করার জন্য (Downloads ফোল্ডারে `tanktrouble-netlab.install.user.js` দেখুন)। তারপর ফাইলটি Tampermonkey **Dashboard** তালিকা পেজে ড্র্যাগ করুন। ফাইল ডাউনলোড না হলে লিংকে রাইট-ক্লিক → “Save link as…”, অথবা **Dashboard → Utilities → Install from URL** ব্যবহার করে একই লিংক পেস্ট করুন।"
+      ],
+      [
+        "ফাইল ড্র্যাগ করেছি কিন্তু কিছু হচ্ছে না।",
+        "ঠিক Tampermonkey **Dashboard** তালিকা পেজে (chrome://extensions বা সাধারণ ওয়েব পেজে নয়) ফেলুন, পেজটি খোলা ও সামনে রেখে। ড্র্যাগ-অ্যান্ড-ড্রপ ব্লক হলে **Dashboard → Utilities → Install from URL**-এ ডাউনলোড লিংক পেস্ট করুন।"
+      ],
+      [
+        "ইনস্টল করেছি, কিন্তু গেমে কিছু দেখছি না।",
+        "Ctrl+F5 দিয়ে গেম পেজ রিফ্রেশ করুন, Tampermonkey Dashboard-এ স্ক্রিপ্ট টগল ON কিনা দেখুন, এবং HUD দেখাতে Ctrl+Shift+L চাপুন। ইনস্টলের আগে খোলা পেজ রিফ্রেশ করতেই হবে।"
+      ],
+      [
+        "ইনস্টলের পরে ZIP/ফোল্ডার কি রাখতে হবে?",
+        "না। স্ক্রিপ্ট এখন Tampermonkey-এর ভিতরে থাকে; ZIP ও ফোল্ডার মুছে ফেলতে পারেন। পরে Tampermonkey থেকে বা raw লিংক দিয়ে আবার ইনস্টল করে আপডেট করবেন।"
+      ],
+      [
+        "Tampermonkey-তে “Import from file” / “Add file” বাটন আছে — সেখানেই আপলোড করব?",
+        "না। ওই বাটন Tampermonkey ব্যাকআপ `.zip` ফাইলের জন্য। এই স্ক্রিপ্ট ইনস্টল করতে Dashboard → Utilities → Install from URL ব্যবহার করুন, অথবা `.user.js` ফাইলটি Dashboard-এ ড্র্যাগ করুন।"
+      ],
+      [
+        "`.user.js` ফাইলটি আবার rename/edit/unzip করতে হবে?",
+        "না, ফাইলটি যেমন আছে তেমনই ব্যবহার করুন। ফাইলটিই স্ক্রিপ্টের টেক্সট; এটি chrome://extensions-এ দেবেন না এবং পুরো ফোল্ডার আপলোড করবেন না।"
+      ],
+      [
+        "এক-ক্লিক ইনস্টল লিংক (Method B) চেপেছি — ইনস্টল হয়েছে?",
+        "কাজ করলে **Tampermonkey নিজের ইনস্টল পেজ খোলে**: গাঢ় পেজে স্ক্রিপ্টের নাম “TankTrouble Network Optimization”, ভার্সন নম্বর ও **Install** বাটন দেখাবে — **Install** চাপলেই ইনস্টল হয়। যদি `// ==UserScript==` দিয়ে শুরু হওয়া পুরো কোডের পেজ দেখেন, বা ফাইল শুধু ডাউনলোড হয়, তাহলে ক্লিকটি Tampermonkey-তে পৌঁছায়নি: **Method A**-তে ফিরে ডাউনলোড করা `tanktrouble-netlab.install.user.js` **Dashboard** পেজে ড্র্যাগ করুন, অথবা **Dashboard → Utilities → Install from URL** ব্যবহার করুন।"
+      ],
+      [
+        "সত্যিই ইনস্টল ও চালু হয়েছে কিনা নিশ্চিত করব কীভাবে?",
+        "তিনটি যাচাই: ① Tampermonkey **Dashboard**-এর স্ক্রিপ্ট তালিকায় “TankTrouble Network Optimization” দেখাচ্ছে এবং টগল **ON**; ② `tanktrouble.com` পেজে Tampermonkey আইকনে নাম্বার ব্যাজ (**1**) দেখাচ্ছে; ③ **F12 → Console** চেপে `[TT NetLab vX.Y.Z] loaded...` লাইন দেখা যাচ্ছে। ③ না থাকলে আগে **Ctrl+F5** দিয়ে রিফ্রেশ করুন; তবুও না থাকলে স্ক্রিপ্ট বন্ধ বা অসম্পূর্ণ — **আবার ইনস্টল করুন**। ফাইলটি ১ম লাইন থেকে `// ==UserScript==` দিয়ে শুরু হতে হবে; `(function () {`-এর মতো মাঝখান থেকে শুরু হলে কাজ করবে না।"
+      ]
+    ]
+  },
   "ja": {
     "title": "初心者向け FAQ（わからない人はここ）",
     "qa": [

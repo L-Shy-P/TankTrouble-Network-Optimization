@@ -1,6 +1,6 @@
 # 🇻🇳 TankTrouble — tối ưu hóa mạng
 
-<p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · <b>🇻🇳 Tiếng Việt</b></sub></p>
+<p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇧🇩 বাংলা](bn.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · <b>🇻🇳 Tiếng Việt</b></sub></p>
 
 <img src="img/v053/panel-vi.png" width="440" alt="panel"> <img src="img/v053/ball-vi.png" width="150" alt="floating ball">
 
@@ -124,7 +124,7 @@ Nếu bạn đã biết cách cài bằng kéo thả thì **Cách A là đủ �
 | `Ctrl+Shift+P` | dò 7 khu vực máy chủ và xếp hạng |
 | `G` | ẩn / hiện bóng nổi (trở lại trạng thái trước khi ẩn) |
 
-Nút **⚡** trong bảng tương đương `Ctrl+Shift+S`. Bảng cho chọn một trong **11 ngôn ngữ**; ngôn ngữ, công tắc tối ưu và vị trí bóng được lưu trong `localStorage`.
+Nút **⚡** trong bảng tương đương `Ctrl+Shift+S`. Bảng cho chọn một trong **12 ngôn ngữ**; ngôn ngữ, công tắc tối ưu và vị trí bóng được lưu trong `localStorage`.
 
 ## Khắc phục sự cố
 
@@ -136,4 +136,4 @@ Nút **⚡** trong bảng tương đương `Ctrl+Shift+S`. Bảng cho chọn m�
 
 * [Repository](https://github.com/L-Shy-P/TankTrouble-Network-Optimization) · [TECHNICAL.zh.md (中文)](TECHNICAL.zh.md)
 
-<p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · <b>🇻🇳 Tiếng Việt</b></sub></p>
+<p align="right"><sub>[🇬🇧 English](en.md) · [🇨🇳 中文](zh.md) · [🇧🇩 বাংলা](bn.md) · [🇯🇵 日本語](ja.md) · [🇰🇷 한국어](ko.md) · [🇷🇺 Русский](ru.md) · [🇸🇦 العربية](ar.md) · [🇫🇷 Français](fr.md) · [🇪🇸 Español](es.md) · [🇩🇪 Deutsch](de.md) · [🇧🇷 Português](pt.md) · <b>🇻🇳 Tiếng Việt</b></sub></p>

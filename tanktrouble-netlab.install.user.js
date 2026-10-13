@@ -3,7 +3,7 @@
 // @name:zh-CN   TankTrouble 网络优化
 // @name:ja      TankTrouble ネットワーク最適化
 // @namespace    tt.network.optimization
-// @version      0.6.5
+// @version      0.7.0
 // @description  Richer, more real-time and more accurate network display + real optimization (render-time smoothing, local authority, dead reckoning). No server, no network config, not a VPN.
 // @description:zh-CN 更丰富、更实时、更准确的网络情况显示 + 真正的网络优化（渲染期平滑 / 本地权威 / 静默外推）。不用服务器、不用改网络配置、不是加速器。
 // @author       L-Shy-P
@@ -26,7 +26,7 @@
  *      拖标题栏或球本身可移动（带惯性）。
  *   3. Ctrl+Shift+S 或面板里的 ⚡ 开关网络优化，可实时 A/B 对比；
  *      Ctrl+Shift+L 隐藏/显示 HUD；Ctrl+Shift+E 导出诊断报告（同时进剪贴板）。
- *   4. 面板里可选 11 国语言；位置 / 语言 / 开关 / 收起状态都会缓存。
+ *   4. 面板里可选 12 国语言；位置 / 语言 / 开关 / 收起状态都会缓存。
  *   5. 控制台可用 window.__TTN__：report() / export() / conns / probeRegions(30) /
  *      langs / setLang('ja') / motion / setSmoothing(false) 等。
  *   6. 优化默认只动"画面"：游戏逻辑、物理、服务端校验全程用真值；自己的坦克以本地为准。
@@ -38,7 +38,7 @@
 
 	if (window.__TTN__) return;
 
-	const VERSION = '0.6.5';
+	const VERSION = '0.7.0';
 	/* ==================== 动画证据通道（animTrace） ====================
 	 * 用户遇到"闪一下直接到终点"时，直接把 __TTN__.trace() 的输出发回来。
 	 * 每条记录：时间 / create|cancel|finish|preempt|skipped-writer / family / name /
@@ -125,6 +125,7 @@
 	}
 	// 变更日志：只记"人看得懂的行为变化"，方便回退时对照
 	const CHANGELOG = [
+		['0.7.0', '新增孟加拉语（bn / বাংলা）全链路：脚本 LANGS + I18N.bn（37 个键与 en 完全一致，含全部 why* 状态原因 / 探测来源 / G 提示）、detectLang 支持 bn-BD / bn-IN、面板与悬浮球窄列改写；docs/langs.json、docs/install-faq.json（13 条）、docs/README.bn.md、docs/install/bn.md、仓库 README、12 语言切换行、docs/PUBLISH.md 与 docs/TECHNICAL.zh.md 同步；新增 panel-bn.png / ball-bn.png 截图。本版同时正式发布主代理手改的两项：拖动改为 pointer+mouse 双通道（元素级 + window/document 捕获，取消全局 activeDrag 早退；cleanupDrag 现在会同步复位拖动闭包，避免一次丢失 pointerup 后永久拖不动），G 发光段 GLOW/GLOW_IN 180→430（只放慢第一/最后一段，顺序与终态不变；ballVis.slow 仍默认 1）；测试 smoke 343 项、浏览器 236 项。'],
 		['0.6.5', '用户实测第 3 轮仍"球拖不了、还会闪"：① 拖动换成最朴素的 window 捕获状态机 —— window 上捕获 pointerdown/move/up/cancel，pointerdown 命中球/子元素即记录起点，move 超过 4px 才开始拖动（防手抖），全程不用 setPointerCapture/元素级 pointermove/document 兜底，pointerId 去重，拖动期间只 preventDefault 这一条球事件；点击路径保留（<4px 松手 = 点击）。② 用 animTrace 定位到"闪"的来源是 morph 进行中被 _finishHudAnim() 提前收尾：trace 里是 preempt/cancel:morph:cancelMorph，而不是动画自己的 finish；现在 finishHudAnim() 若动画仍在飞先把每条 morph 动画 finish() 到设计终点再走同一条收尾路径，trace 记 finish-request，终点值严格等于动画最后一帧。③ __TTN__.ballVis.slow 默认从 2.7 调回 1（保留旋钮和启动日志提示）。',
 			'证据通道用法：__TTN__.trace(120) 或 copy(JSON.stringify(__TTN__.trace(120), null, 2))；report().animTrace 含最近 40 条。回归：simple-drag-window-capture（敌意监听下仍能拖）、simple-drag-3px-is-click、simple-drag-60px-throw（trace:throw-check）、finish-never-jumps-while-animating（trace:finish-request，无 morph preempt）；smoke 拖动路径已按 window 捕获实现改写。'],
 		['0.6.4', '用户实测三类：① 小球拖不动 → 真因：游戏/页面可能在 window/document 捕获阶段就 stopPropagation/preventDefault，球元素冒泡阶段的 pointerdown 根本收不到（之前 document 兜底也来不及）→ userscript 在 document-start 就用 window+document capture 注册 takeover：命中球/子元素才接管，stopPropagation + preventDefault 避免触发游戏，按 pointerId 去重；另加 window capture 的 move/up 兜底，去掉 capture 后对应回归变红；② "过渡偶尔混乱、闪一下直接到终点" → 新增 animTrace 证据通道（create/cancel/finish/preempt/skipped-writer，环形 240 条，__TTN__.trace(n) 与 report().animTrace 可导出）；审计并发写入者：refreshHud 在 morph/ballVis 期间直接跳过，clampHud/applyAnchorNow/applyHudVisibility 同样跳过并记 skipped-writer，防止周期代码写 transform/opacity/filter/backgroundColor/boxShadow/halo/glow；③ 光晕/光圈颜色不对应 → 真因：ballVis 期间 refreshHud 仍会分别写球 color/borderColor、圆点 background/文字，CSS 过渡时序不同 → 现在 ballVis 起手把球 color/borderColor（box-shadow currentColor 来源）与圆点 background/color 冻结成同一 tint，动画期间不刷新；显示结束保持 .ttn-ballvis 压制过渡时一次性刷新颜色，再摘 class，保证同一 tick 切到新色。',
@@ -2476,7 +2477,7 @@
 	let hudAnimating = false;
 	const HUD_KEY = 'ttn.hud.v4';
 
-	/* ============================ 多语言（11 国） ============================
+	/* ============================ 多语言（12 国） ============================
 	 * 语言代码与显示名沿用 TankTrouble-Chat-Fix 的那一套（en/zh/ja/ko/ru/ar/fr/es/de/pt），
 	 * 这样同一台机器上两个插件的语言是一致的。
 	 * 选中的语言会和「优化开关」「悬浮球位置/收起状态」一起存进 localStorage（键 ttn.hud.v4，向后兼容）。
@@ -2484,6 +2485,7 @@
 	const LANGS = [
 		['en', 'English'],
 		['zh', '中文 (Chinese)'],
+		['bn', 'বাংলা (Bengali)'],
 		['ja', '日本語 (Japanese)'],
 		['ko', '한국어 (Korean)'],
 		['ru', 'Русский (Russian)'],
@@ -2521,6 +2523,19 @@
 			whyProbeSilent: '延迟探测 {n} 次无应答{types}', whyTypes: '（对方只发 {t}）', whyProbeGiveUp: "自建探测已放弃（连不上/被拦），改用游戏自带的探测",
 			whyLatThin: '延迟样本不足（{n}/3）',
 			whyFrameSparse: '帧样本不足（大厅/局间）'
+		},
+		bn: {
+			title: 'TankTrouble নেটওয়ার্ক', line: 'লাইন', live: 'লাইভ পিং', avg: 'গড় পিং', max: 'সর্বোচ্চ বিলম্ব', jit: 'জিটার',
+			stab: 'স্থিরতা', opt: 'অপ্টিমাইজ', status: 'অবস্থা', lang: 'ভাষা',
+			on: 'চালু', off: 'বন্ধ', btnOn: 'চালু', btnOff: 'বন্ধ', smoothed: 'স্মুথড', ignored: 'সংশোধন উপেক্ষিত',
+			rttJitter: '· RTT জিটার', ballAvg: 'গড়', ballStab: 'স্থির',
+			waitConn: 'সংযোগের অপেক্ষায়…', dotTip: 'ভাসমান বলে ভাঁজ করুন', copiedLine: 'লাইন কপি হয়েছে', latSrcProbe: 'নিজস্ব প্রোব', latSrcGame: 'গেম প্রোব', gHint: 'G · বল লুকান / দেখান',
+			optTip: 'অপ্টিমাইজেশন চালু/বন্ধ (লাইভ A/B)', reportBtn: '⤓ রিপোর্ট', reportTip: 'ডায়াগনস্টিক রিপোর্ট এক্সপোর্ট',
+			whyWaitGame: 'গেম সকেটের অপেক্ষায়…', whyProbeOff: 'লেটেন্সি প্রোব শুরু হয়নি',
+			whyProbeDown: 'লেটেন্সি প্রোব সংযুক্ত নয়{code}', whyClose: ' (বন্ধ কোড {code})',
+			whyProbeSilent: '{n} পিংয়ের পরও লেটেন্সি প্রোব নীরব{types}', whyTypes: ' (সার্ভার শুধু {t} পাঠায়)', whyProbeGiveUp: 'নিজস্ব প্রোব ছেড়ে দেওয়া হয়েছে (ব্লকড/পৌঁছায় না) - গেমের নিজস্ব প্রোব ব্যবহার হচ্ছে',
+			whyLatThin: 'যথেষ্ট লেটেন্সি নমুনা নেই ({n}/3)',
+			whyFrameSparse: 'যথেষ্ট ফ্রেম নমুনা নেই (লবি / রাউন্ডের মাঝে)'
 		},
 		ja: {
 			title: 'TankTrouble ネットワーク', line: '回線', live: 'リアルタイム遅延', avg: '平均遅延', max: '最大遅延', jit: 'ジッター',
@@ -3252,10 +3267,14 @@
 	 * 现在只用 class 表示"正在拖"，并且有超时兜底 + 每次刷新时的巡检。 */
 	let activeDrag = null, dragWatchdog = null;
 	function cleanupDrag() {
-		if (activeDrag && activeDrag.el) {
-			activeDrag.el.classList.remove('ttn-drag');
-			if (activeDrag.el.style) activeDrag.el.style.transition = '';
-			activeDrag.el.__ttnDragging = false;
+		/* 先让发起拖动的那套闭包自己复位（否则闭包里的 dragging=true 会一直挡住下一次拖动；
+		 * 旧实现只清全局 activeDrag/class，UI 测试里 T._cleanupDrag() 后仍然拖不动就是这个原因）。 */
+		const ad = activeDrag;
+		if (ad && typeof ad.reset === 'function') { try { ad.reset(); } catch (e) {} }
+		if (ad && ad.el) {
+			ad.el.classList.remove('ttn-drag');
+			if (ad.el.style) ad.el.style.transition = '';
+			ad.el.__ttnDragging = false;
 		}
 		activeDrag = null;
 		if (dragWatchdog) { clearTimeout(dragWatchdog); dragWatchdog = null; }
@@ -3319,7 +3338,7 @@
 			track.length = 0;
 			pushTrack();
 			el.classList.add('ttn-drag');
-			activeDrag = { el: el, isPanel: !!isPanel, pointerId: pointerId };
+			activeDrag = { el: el, isPanel: !!isPanel, pointerId: pointerId, reset: resetLocal };
 			clearTimeout(dragWatchdog);
 			dragWatchdog = setTimeout(function () { traceSkipped('drag-watchdog', 'timeout'); resetLocal(); }, 4000);
 			traceAnim('drag-start', { family: 'drag', name: isPanel ? 'panel' : 'ball', pointerId: pointerId });
@@ -5343,7 +5362,8 @@
 		setSmoothing(on) { SMOOTH.enabled = !!on; if (!SMOOTH.enabled) snapAllSmoothers(); saveHudState(); updateOptLabel(); refreshHud(); return SMOOTH.enabled; },
 		setLang: setLang,                  // 换语言：立刻生效 + 存档
 		getLang() { return LANG; },
-		langs: LANGS,                      // [[code, displayName], …] 11 国
+		langs: LANGS,                      // [[code, displayName], …] 12 国
+		_detectLang: detectLang,          // 测试：浏览器语言 → 语言代码
 		i18n: I18N,
 		tr: tr,
 		_loadHudState: loadHudState,       // 测试用：模拟重新载入存档
